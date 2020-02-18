@@ -1950,10 +1950,15 @@ void setup()
     // Start the stream for the modbus sensors; all currently supported modbus sensors use 9600 baud
     MS_DEEP_DBG("***modbusSerial.begin"); 
     #if defined CONFIG_HW_RS485PHY_DIR_PIN 
-    pinPeripheral(CONFIG_HW_RS485PHY_DIR_PIN, PIO_SERCOM_ALT/* PIO_SERCOM*/);   //Assign DIR function to pin A5
+    pinPeripheral(CONFIG_HW_RS485PHY_DIR_PIN, PIO_SERCOM_ALT);   //Assign DIR function to pin A5
     //Serial2.setPins();
     #endif //CONFIG_HW_RS485PHY_DIR_PIN 
-    delay(10);
+    #define PIN_F_D12 12
+    pinPeripheral(PIN_F_D12, PIO_OUTPUT);
+    digitalWrite(PIN_F_D12, HIGH);
+    delay(2);
+    digitalWrite(PIN_F_D12, LOW);
+    delay(1);
     modbusSerial.begin(9600);
 #endif
 
