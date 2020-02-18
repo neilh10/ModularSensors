@@ -200,8 +200,8 @@ void SERCOM5_3_Handler()
 #if defined(SERIAL2_TE_HALF_DUPLEX)
 #undef PIN_SERIAL2_RX
 #undef PAD_SERIAL2_RX
-#define PIN_SERIAL_2_RX PIN_SERIAL_2_TX 
-#define PAD_SERIAL2_RX (SercomUartTXPad) UART_TX_TE_PAD_0_2
+#define PIN_SERIAL2_RX PIN_SERIAL2_TX 
+#define PAD_SERIAL2_RX SERCOM_RX_PAD_0
 #endif 
 #if defined(SERIAL2_TE_CNTL) || defined(SERIAL2_TE_HALF_DUPLEX)
 //  Ext function dedicated TE defined by TXPO/UART_TX_TE_PAD_0_2  pin TE operation defined above
@@ -212,22 +212,24 @@ Uart Serial2( &sercom0, PIN_SERIAL2_RX, PIN_SERIAL2_TX, PAD_SERIAL2_RX,UART_TX_R
 #else 
 Uart Serial2( &sercom0, PIN_SERIAL2_RX, PIN_SERIAL2_TX, PAD_SERIAL2_RX, PAD_SERIAL2_TX); //Full duplex
 #endif //SERIAL2_TE_CNTL
-//Uart Serial2(&sercom0, 40, 41, SERCOM_RX_PAD_1, UART_TX_TE_PAD_0_2); //RS485 Half Duplex 2pin ??
+
 
 // Hand over the interrupts of the sercom port
-void SERCOM0_0_Handler()
+void SERCOM0_0_Handler() //DRE:0
 {
   Serial2.IrqHandler();
 }
-void SERCOM0_1_Handler()
+void SERCOM0_1_Handler() //TXC:1
+{
+
+  Serial2.IrqHandler();
+
+}
+void SERCOM0_2_Handler() //RXC:2
 {
   Serial2.IrqHandler();
 }
-void SERCOM0_2_Handler()
-{
-  Serial2.IrqHandler();
-}
-void SERCOM0_3_Handler()
+void SERCOM0_3_Handler() //RXS:3 CTSIC:4 RXBRK:5 ERROR:7
 {
   Serial2.IrqHandler();
 }

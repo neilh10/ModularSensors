@@ -142,7 +142,7 @@ SERCOM5 Serial1/Bee (DO/D1)   Available        EDBG/Serial5
 QSPI     Yes                     no                no                 
 */
 //RS485 sypport - ideally Should be in SERCOM.h
-#define UART_TX_TE_PAD_0_2 0x3
+#define UART_TX_TE_PAD_0_2 0x3 // Only for UART with TX on PAD0, TE on PAD2
 
 // Serial1/Sercom5 FeatherM4express Pins Rx/D1 Tx/D0
 #define PIN_SERIAL1_RX       (0ul)
