@@ -106,7 +106,8 @@ ProcessorStats::ProcessorStats(const char* version)
 #elif defined(ARDUINO_AVR_FEATHER32U4) || defined(ARDUINO_SAMD_FEATHER_M0) || \
     defined(ARDUINO_SAMD_FEATHER_M0_EXPRESS)
     _batteryPin        = 9;
-#elif defined(ADAFRUIT_FEATHER_M4_EXPRESS)
+#elif defined(ADAFRUIT_FEATHER_M4_EXPRESS) || defined(WIO_TERMINAL)
+#warning need to check WIO TERMINAL
     _batteryPin = A6;  // 20;  //Dedicated PB01 V_DIV
 #elif defined(ARDUINO_SODAQ_ONE) || defined(ARDUINO_SODAQ_ONE_BETA) || \
     defined(ARDUINO_AVR_SODAQ_NDOGO)

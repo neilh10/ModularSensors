@@ -1,0 +1,8 @@
+Doesn't fully compile - one error
+
+An anlysis of pins shows tight for extra SERCOMIO - but probably would work.
+ModularSensors-diary.docx "Wio Terminal W Screen"
+
+The Wio_terminal WiFi networking stack is evolving
+https://forum.seeedstudio.com/t/wio-terminal-networking-not-working/253615/12
+
