@@ -1,5 +1,6 @@
 /*****************************************************************************
-ms_cfg.h_LT5_lte  - ModularSensors Configuration - tgt _LT5 /LTE
+ms_cfg.h_nano - ModularSensors cfg - KellerNano MMW/LTE
+
 Written By:  Neil Hancock www.envirodiy.org/members/neilh20/
 Development Environment: PlatformIO
 Hardware Platform(s): EnviroDIY Mayfly Arduino Datalogger+RS485 Wingboard
@@ -37,7 +38,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 
 //#define ENVIRODIY_MAYFLY_TEMPERATURE 1
 //#define Decagon_CTD_UUID 1
-#define Insitu_TrollSdi12_UUID 1
+//#define Insitu_TrollSdi12_UUID 1
 
 #define WINGBOARD_KNH002 1
 #if defined WINGBOARD_KNH002
@@ -49,7 +50,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 // KellerAcculevel units can be 1 (meter) 2 (feet)
 //#define KellerAcculevel_DepthUnits 2
 
-//#define KellerNanolevel_ACT 1
+#define KellerNanolevel_ACT 1
 #endif //WINGBOARD_KNH002
 
 //Select one of following MAYFLY_BAT_xx as the source for BatterManagement Analysis
@@ -61,7 +62,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 //#define ASONG_AM23XX_UUID 1
 
 //Two heavy sensors with power useage
-#define BM_PWR_SENSOR_CONFIG_BUILD_SPECIFIC BM_PWR_HEAVY_REQ
+#define BM_PWR_SENSOR_CONFIG_BUILD_SPECIFIC BM_PWR_MEDIUM_REQ
 
 // Mayfly configuration
 // Carrier board for Digi XBEE LTE CAT-M1 and jumper from battery
@@ -71,7 +72,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define MFName_DEF "Mayfly"
 #define HwVersion_DEF MFVersion_DEF
 #define HwName_DEF MFName_DEF
-#define CONFIGURATION_DESCRIPTION_STR "tu_LT5_lte LT500"
+#define CONFIGURATION_DESCRIPTION_STR "nano LTE"
 
 #define USE_MS_SD_INI 1
 #define USE_PS_EEPROM 1
@@ -146,7 +147,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define WIFIID_CDEF "xxx"
 // NULL for none, or  password for connecting to WiFi,
 #define WIFIPWD_CDEF "yyy"
-#define MMW_TIMER_POST_TIMEOUT_MS_DEF 9000L
+#define MMW_TIMER_POST_TIMEOUT_MS_DEF 7000L
 //POST PACING ms 0-15000
 #define MMW_TIMER_POST_PACING_MS_DEF 100L
 //Post MAX Num - is num of MAX num at one go. 0 no limit
@@ -250,7 +251,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 
 #if defined UseModem_Module
 // This seems to be de-stabilizing Digi S6B
-#define DIGI_RSSI_UUID "DIGI_RSSI_UUID"
+//#define DIGI_RSSI_UUID "DIGI_RSSI_UUID"
 //#define Modem_SignalPercent_UUID    "SignalPercent_UUID"
 #endif  // UseModem_Module
 
