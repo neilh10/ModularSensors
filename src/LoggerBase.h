@@ -784,7 +784,7 @@ class Logger {
     static const uint8_t CIA_NOACTION      = 0x0;
     static const uint8_t CIA_NEW_READING   = 0x01;
     static const uint8_t CIA_POST_READINGS = 0x02;
-    static const uint8_t CIA_RLB_READINGS  = 0x04;
+    static const uint8_t CIA_RLB_READINGS  = 0x04;  // store readings, no pub"
 
     /**
      * @brief Check if the MARKED time is an even interval of the logging rate -

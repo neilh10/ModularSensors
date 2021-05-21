@@ -189,7 +189,8 @@ class BatteryManagement
         // 1    2    3    4
         {0.1, 0.2, 0.3, 0.4, 0.05},      // 0 All readings return OK
         {3.5, 3.6, 3.85, 4.00, 0.04},    // 1 BMBR_0500mA
-        {3.5, 3.6, 3.7, 3.8, 0.03},      // 2 BMBR_?000mA Uncalibrated
+        {3.4, 3.5, 3.60, 3.8, 0.03},     // 2 BMBR_1000mA calibrated 4.4Ah
+        // Could do with seperate entry for >1Ah and >4Ah
         {3.35, 3.38, 3.42, 3.46, 0.03},  // 3 PLSR_LiSi18
         {2.4, 2.5, 2.60, 2.7, 0.03},     // 4 fut Test 3*D to 2.4 to 4.8V
     // There could possibly be a MAYFLY off the ExternalVoltage ADS1115, it
