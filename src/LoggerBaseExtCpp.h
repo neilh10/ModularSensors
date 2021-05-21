@@ -694,7 +694,7 @@ void Logger::logDataAndPubReliably(uint8_t cia_val_override) {
         PRINTOUT(F("logDataAndPubReliably - overide with "),cia_val);
     }
     if (NULL != _bat_handler_atl) {
-        _bat_handler_atl(LB_PWR_USEABLE_REQ);  // Measures battery
+        _bat_handler_atl(LB_PWR_USEABLE_REQ);  // Set battery status
         if (!_bat_handler_atl(LB_PWR_SENSOR_USE_REQ)) {
             // Squash any activity
             PRINTOUT(F("logDataAndPubReliably - all cancelled"));

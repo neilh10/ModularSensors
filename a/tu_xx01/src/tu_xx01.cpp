@@ -982,8 +982,8 @@ bool isBatteryChargeGoodEnough(lb_pwr_req_t reqBatState) {
             // Check battery status
             Lbatt_status = bms.isBatteryStatusAbove(true, BM_PWR_USEABLE_REQ);
             if (BM_LBATT_UNUSEABLE_STATUS == Lbatt_status) {
-                PRINTOUT(F("---All  CANCELLED--Lbatt_V="));
                 retResult = false;
+                PRINTOUT(F("---LB_PWR_USEABLE_REQ CANCELLED--Lbatt="),Lbatt_status);
             }
             MS_DBG(F(" isBatteryChargeGoodEnoughU "), retResult,
                    bms.getBatteryVm1(), F("V status"), Lbatt_status,
@@ -993,10 +993,10 @@ bool isBatteryChargeGoodEnough(lb_pwr_req_t reqBatState) {
         case LB_PWR_SENSOR_USE_REQ:
 
 // heavy power sensors ~ use BM_PWR_LOWSTATUS
-#if 0
+#if 1
             if (BM_LBATT_LOW_STATUS >= Lbatt_status) {
                 retResult = false;
-                PRINTOUT(F("---NewReading CANCELLED--Lbatt_V="))                         ;
+                PRINTOUT(F("---LB_PWR_SENSOR_USE_REQ CANCELLED--Lbatt="),Lbatt_status);
             }
 #endif
 
@@ -1006,7 +1006,10 @@ bool isBatteryChargeGoodEnough(lb_pwr_req_t reqBatState) {
         case LB_PWR_MODEM_USE_REQ:
             // WiFi BM_LBATT_MEDIUM_STATUS
             // Cell (BM_LBATT_HEAVY_STATUS
-            if (BM_LBATT_HEAVY_STATUS > Lbatt_status) { retResult = false; }
+            if (BM_LBATT_HEAVY_STATUS > Lbatt_status) { 
+                retResult = false; 
+                PRINTOUT(F("---LB_PWR_MODEM_USE_REQ CANCELLED--Lbatt="),Lbatt_status);
+            }
             MS_DBG(F(" isBatteryChargeGoodEnoughTx"), retResult);
             // modem sensors BM_PWR_LOW_REQ
             break;
