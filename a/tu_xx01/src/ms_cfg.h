@@ -72,7 +72,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define MFName_DEF "Mayfly"
 #define HwVersion_DEF MFVersion_DEF
 #define HwName_DEF MFName_DEF
-#define CONFIGURATION_DESCRIPTION_STR "nano LTE"
+#define CONFIGURATION_DESCRIPTION_STR "nano MMW/LTE"
 
 #define USE_MS_SD_INI 1
 #define USE_PS_EEPROM 1
