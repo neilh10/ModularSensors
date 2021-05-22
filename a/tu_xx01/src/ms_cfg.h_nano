@@ -1,5 +1,5 @@
 /*****************************************************************************
-ms_cfg.h_nano - ModularSensors cfg - tst KellerNano temp/humidity MMW/WiFi
+ms_cfg.h_nano - ModularSensors cfg - KellerNano MMW/LTE
 
 Written By:  Neil Hancock www.envirodiy.org/members/neilh20/
 Development Environment: PlatformIO
@@ -32,11 +32,11 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 // Choices applied to define MAYFLY_BAT_xx 1) Stc3100 2) ExternVolage_ACT 3) Digi Mode 4) MAYFLY_BAT_A6
 
 #define MAYFLY_BAT_A6 4
-#define MAYFLY_BAT_AA0 2
+//#define MAYFLY_BAT_AA0 2
 //FUT #define MAYFLY_BAT_DIGI 3
 
 
-#define ENVIRODIY_MAYFLY_TEMPERATURE 1
+//#define ENVIRODIY_MAYFLY_TEMPERATURE 1
 //#define Decagon_CTD_UUID 1
 //#define Insitu_TrollSdi12_UUID 1
 
@@ -72,7 +72,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define MFName_DEF "Mayfly"
 #define HwVersion_DEF MFVersion_DEF
 #define HwName_DEF MFName_DEF
-#define CONFIGURATION_DESCRIPTION_STR "nano temp/humidity WiFi"
+#define CONFIGURATION_DESCRIPTION_STR "nano MMW/LTE"
 
 #define USE_MS_SD_INI 1
 #define USE_PS_EEPROM 1
@@ -115,9 +115,9 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 
 
 // Instructions: define only one  _Module
-#define DigiXBeeWifi_Module 1
+//#define DigiXBeeWifi_Module 1
 //#warning infoMayflyWithDigiXBeeWiFi
-//#define DigiXBeeCellularTransparent_Module 1
+#define DigiXBeeCellularTransparent_Module 1
 //#warning infoMayflyWithDigiXBeeCellTransparent
 // #define DigiXBeeLTE_Module 1 - unstable
 // #define TINY_GSM_MODEM_SIM800  // Select for a SIM800, SIM900, or variant

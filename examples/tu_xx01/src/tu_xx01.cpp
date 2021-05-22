@@ -1036,6 +1036,11 @@ void        modbusPinPowerMng(bool status) {
 #define PORT_SAFE(pinNum)   \
     pinMode(pinNum, INPUT); \
     digitalWrite(pinNum, LOW);
+
+#define PORT_HIGH(pinNum)   \
+    pinMode(pinNum, INPUT); \
+    digitalWrite(pinNum, HIGH);
+
 void unusedBitsMakeSafe() {
     // Set all unused Pins to a safe no current mode for sleeping
     // Mayfly variant.h: D0->23  (Analog0-7) or D24-31
@@ -1064,7 +1069,11 @@ void unusedBitsMakeSafe() {
     PORT_SAFE(20);  // Xbee RTS
     PORT_SAFE(21);
     // PORT_SAFE(22);  //Pwr Sw
-    PORT_SAFE(23);  // Xbee DTR
+#if defined  UseModem_Module
+    PORT_HIGH(23);  // Xbee DTR modemSleepRqPin HIGH for LTE SLEEP_REQ
+ #else 
+    PORT_SAFE(23);
+ #endif //UseModem_Module
     // Analog from here on
     // PORT_SAFE(24);//A0 ECData1
     PORT_SAFE(25);  // A1
@@ -1285,18 +1294,20 @@ void  managementSensorsPoll() {
 // ==========================================================================
 // Checks available power on battery.
 // 
-bool batteryCheck(bm_pwr_req_t useable_req, bool waitForGoodBattery) 
+bool batteryCheck(bm_pwr_req_t useable_req, bool waitForGoodBattery,uint8_t dbg_src) 
 {
     bool LiBattPower_Unseable=false;
     bool UserButtonAct = false;
     uint16_t lp_wait = 1;
 
+    PRINTOUT(F("batteryCheck req/wait/src"),useable_req, waitForGoodBattery,dbg_src);
     bms_SetBattery();
     do {
          #if defined MAYFLY_BAT_STC3100
         //Read the V - FUT make compatible adcRead()
         stc3100_phy.stc3100_device.readValues();
         bms.setBatteryV(stc3100_phy.stc3100_device.v.voltage_V);
+        PRINTOUT(F("Bat_V(stc3100)"),bms.getBatteryVm1());
         #else //alt Read the V - FUT make compatible adcRead()
         #endif //
         LiBattPower_Unseable =
@@ -1319,7 +1330,7 @@ bool batteryCheck(bm_pwr_req_t useable_req, bool waitForGoodBattery)
             PRINTOUT(F("---tu_xx01:Wakeup check power. Press user button to bypass"));
         }
         if (buttonPin >= 0) { UserButtonAct = digitalRead(buttonPin); }
-    } while (LiBattPower_Unseable && !UserButtonAct);
+    } while (LiBattPower_Unseable && !UserButtonAct && waitForGoodBattery);
     return !LiBattPower_Unseable;
 }
 
@@ -1399,7 +1410,7 @@ void setup() {
     }
 #endif //MAYFLY_BAT_STC3100
     // A vital check on power availability
-    batteryCheck(BM_PWR_USEABLE_REQ, true);
+    batteryCheck(BM_PWR_USEABLE_REQ, true,1);
 
     PRINTOUT(F("BatV Good ="), bms.getBatteryVm1());
 
@@ -1514,11 +1525,11 @@ void setup() {
 
 #endif  // UseModem_PushData
 
-// Sync the clock  and we have battery to spare
-#define LiIon_BAT_REQ BM_PWR_MEDIUM_REQ
+// Sync the clock  if we have good battery else assume set
+#define LiIon_BAT_REQ BM_PWR_HEAVY_REQ 
 #if defined UseModem_Module && !defined NO_FIRST_SYNC_WITH_NIST
 
-    if (batteryCheck(LiIon_BAT_REQ, true)) 
+    if (batteryCheck(LiIon_BAT_REQ, false,2)) 
     {
         MS_DBG(F("Sync with NIST "), bms.getBatteryVm1(),
            F("Req"), LiIon_BAT_REQ, F("Got"),
@@ -1554,7 +1565,7 @@ void setup() {
 
     //Setup sensors, including reading sensor data sheet that can be recorded on SD card
     PRINTOUT(F("Setting up sensors..."));
-    batteryCheck(BM_PWR_SENSOR_CONFIG_BUILD_SPECIFIC, true);
+    batteryCheck(BM_PWR_SENSOR_CONFIG_BUILD_SPECIFIC, true,3);
     varArray.setupSensors();
 // Create the log file, adding the default header to it
 // Do this last so we have the best chance of getting the time correct and
@@ -1623,7 +1634,7 @@ void setup() {
     dataLogger.setBatHandler(&isBatteryChargeGoodEnough);
 
 #if defined UseModem_Module && !defined NO_FIRST_SYNC_WITH_NIST
-    if (batteryCheck(LiIon_BAT_REQ, true)) {
+    if (batteryCheck(LiIon_BAT_REQ, false,4)) {
         dataLogger_do(LOGGER_RELIABLE_POST);
     }
 #endif // UseModem_Module && !NO_FIRST_SYNC_WITH_NIST
