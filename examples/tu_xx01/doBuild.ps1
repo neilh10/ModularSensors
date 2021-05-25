@@ -33,7 +33,7 @@ function Do-Build {
     }
 }
 
-Write-Output "`n Building $config2 `n"
+Write-Output "`n Building $config2 "
 
 if (-not (Test-Path -Path $dest_dir)) {
     #Write-Host  "The file does not exist $src_file"
@@ -43,11 +43,13 @@ if (-not (Test-Path -Path $dest_dir)) {
 $envirodiy_dir = ".pio\libdeps\mayfly\EnviroDIY_ModularSensors"
 #Remove-item $envirodiy_dir -Recurse -Force
 if (Test-Path -Path $envirodiy_dir) {
-    Write-Output  "Removing $envirodiy_dir "
+    Write-Output  "Removing $envirodiy_dir to refresh for build`n"
     Remove-item $envirodiy_dir -Recurse -Force
     if (Test-Path -Path $envirodiy_dir) {
-        Write-Output  "ERROR $envirodiy_dir still present"
+        Write-Output  "ERROR $envirodiy_dir still present`n"
     }
+} else {
+    Write-Output  " $envirodiy_dir already removed`n"
 }
 C:\Users\neilh77a\.platformio\penv\Scripts\pio run --target clean
 
