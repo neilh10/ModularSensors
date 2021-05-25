@@ -901,7 +901,7 @@ void        Logger::systemSleep(uint8_t sleep_min) {
 
     // Don't go to sleep unless there's a wake pin!
     if (_mcuWakePin < 0) {
-        MS_DBG(F("Use a non-negative wake pin to request sleep!"));
+        PRINTOUT(F("MCU not Enabled,Use a non-negative wake pin to request sleep!"), _mcuWakePin);
         return;
     }
     // Unfortunately, because of the way the alarm on the DS3231 is set up,
@@ -915,14 +915,19 @@ void        Logger::systemSleep(uint8_t sleep_min) {
     //rtc.enableInterrupts(EveryMinute);
     setExtRtcSleep();
 
-    // Clear the last interrupt flag in the RTC status register
-    // The next timed interrupt will not be sent until this is cleared
-    rtc.clearINTStatus();
-
-    // Set up a pin to hear clock interrupt and attach the wake ISR to it
+    // Set up a pin to monitor for change in clock interrupt 
+    // The RTC normally floats and requires pullup to be inactive.
+    // When activated is pulled low
+    noInterrupts(); // make a transaction, ensure no race condition.
     pinMode(_mcuWakePin, INPUT_PULLUP);
-    enableInterrupt(_mcuWakePin, wakeISR, CHANGE);
+    enableInterrupt(_mcuWakePin, wakeISR, FALLING);
+    interrupts(); 
 
+    // Clear the last interrupt flag in the RTC status register
+    // It will float high if not already there, and then be pulled low
+    // on next match
+    rtc.clearINTStatus();
+ 
 #elif defined ARDUINO_ARCH_SAMD
 
     // Make sure interrupts are enabled for the clock

@@ -1643,6 +1643,8 @@ void setup() {
 #if defined UseModem_Module && !defined NO_FIRST_SYNC_WITH_NIST
     if (batteryCheck(LiIon_BAT_REQ, false,4)) {
         dataLogger_do(LOGGER_RELIABLE_POST);
+    } else {
+//needs testing        dataLogger_do(LOGGER_NEW_READING); 
     }
 #endif // UseModem_Module && !NO_FIRST_SYNC_WITH_NIST
 

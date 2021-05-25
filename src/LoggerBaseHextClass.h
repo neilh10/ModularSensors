@@ -122,6 +122,7 @@ public:
  *
  */
 #define LOGGER_RELIABLE_POST (Logger::CIA_NEW_READING|Logger::CIA_POST_READINGS)
+#define LOGGER_NEW_READING (Logger::CIA_NEW_READING)
 void logDataAndPubReliably(uint8_t cia_val_override =0);
 
 /**
