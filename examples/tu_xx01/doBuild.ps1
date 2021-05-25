@@ -40,7 +40,7 @@ if (-not (Test-Path -Path $dest_dir)) {
     throw  "The file does not exist $dest_dir"
 }
 
-$envirodiy_dir = ".pio\libdeps\mayfly\EnviroDIY_ModularSensors"
+$envirodiy_dir = ".pio\libdeps\mayfly"
 #Remove-item $envirodiy_dir -Recurse -Force
 if (Test-Path -Path $envirodiy_dir) {
     Write-Output  "Removing $envirodiy_dir to refresh for build`n"
