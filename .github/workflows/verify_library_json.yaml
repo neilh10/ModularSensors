@@ -9,13 +9,13 @@ jobs:
     if: "!contains(github.event.head_commit.message, 'ci skip')"
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2.3.4
 
       - name: Setup Node.js
         uses: actions/setup-node@v1.4.4
 
       - name: Cache Node.js modules
-        uses: actions/cache@v2.1.4
+        uses: actions/cache@v2.1.6
         with:
           # npm cache files are stored in `~/.npm` on Linux/macOS
           path: ~/.npm
