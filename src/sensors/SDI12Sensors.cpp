@@ -727,5 +727,3 @@ String SDI12Sensors::getSensorDetails(void) {
     +String(F(" SDI12 Version tbd"));//+String(sdi12Version)+String(F("Addr"))+String(sdi12Address);    
     return sensorDetails;
 }
-=======
-#endif  // #ifndef MS_SDI12_NON_CONCURRENT
