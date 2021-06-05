@@ -395,8 +395,7 @@ bool SDI12Sensors::getResults(void) {
         // Wait for the first few charaters to arrive.  The response from a data
         // request should always have more than three characters
         uint32_t start = millis();
-        while (_SDI12Internal.available() < 3 && (millis() - start) < 1500) {}
-#if 0
+        //while (_SDI12Internal.available() < 3 && (millis() - start) < 1500) {}
         while (_SDI12Internal.available() < 3 ) {
             if((millis() - start) > 1500) {
                 PRINTOUT(F("SDI12Sensors::getResults1 ERROR waiting for response"));
@@ -405,7 +404,6 @@ bool SDI12Sensors::getResults(void) {
             }
         }
         MS_DBG(F("  Receiving results from"), getSensorNameAndLocation());
-#endif 
         // read the returned address to remove it from the buffer
         char returnedAddress = _SDI12Internal.read();
         // print out a warning if the address doesn't match up
@@ -417,14 +415,12 @@ bool SDI12Sensors::getResults(void) {
         MS_DEEP_DBG(F("    <<<"), static_cast<char>(returnedAddress));
 
         // While there is any data left in the buffer
-        while (_SDI12Internal.available() && (millis() - start) < 3000) {
-#if 0
+        //while (_SDI12Internal.available() && (millis() - start) < 3000) {
         while (_SDI12Internal.available()) {
              if( (millis() - start) > 3000) {
                 PRINTOUT(F("SDI12Sensors::getResults2 ERROR sensor took too long to send data"));
                 break;
              }
-#endif 
             // First peek to see if the next character in the buffer is a number
             int c = _SDI12Internal.peek();
             // if there's a number, a decimal, or a negative sign next in the
