@@ -352,7 +352,7 @@ uint32_t DigiXBeeWifi::getNISTTime(void) {
 #else
         ip1.fromString(ipAddr[i]);
         PRINTOUT(F("NIST lookup mdmIP["), i, "/", NIST_SERVER_RETRYS,
-                   F("] with '"), ipAddr[i]);
+                   F("] with "), ipAddr[i]);
 #endif 
         connectionMade = gsmClient.connect(ip1, TIME_PROTOCOL_PORT);
         // Need to send something before connection is made

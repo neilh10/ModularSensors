@@ -213,8 +213,15 @@ bool deszLine(File* filep);
 // Utility resources
 //void setFileTimeStampMet(File fileToStamp, uint8_t stampFlag);
 bool deszDbg(void);
+bool postLogOpen();
 bool postLogOpen(const char* postsLogNm_str);
 void postLogLine(uint8_t instance, int16_t rspParam);
+void postLogLine(const char *logMsg,bool addCR=true);
+#define PRINT_LOGLINE_P(msg_parm) \
+    char tttbuf[sizeof(msg_parm)+1]; \
+    strcpy_P(tttbuf,msg_parm);\
+    PRINTOUT(tttbuf);\
+    postLogLine(tttbuf);
 void postLogClose();
 bool listFile(File* filep, char* fn_str, char* uid);
 
