@@ -1504,6 +1504,7 @@ void setup() {
     EnviroDIYPOST.setQuedState(true);
     EnviroDIYPOST.setTimerPostTimeout_mS(ps_ram.app.provider.s.ed.timerPostTout_ms);
     EnviroDIYPOST.setTimerPostPacing_mS(ps_ram.app.provider.s.ed.timerPostPace_ms);
+    //EnviroDIYPOST.setPostMax_num(ps_ram.app.provider.s.ed.postMax_num);
 #endif //USE_PUB_MMW
 #if defined USE_PUB_TSMQTT
     TsMqttPub.begin(dataLogger, &modemPhy.gsmClient, 
