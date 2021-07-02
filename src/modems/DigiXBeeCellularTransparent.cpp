@@ -260,15 +260,19 @@ bool DigiXBeeCellularTransparent::extraModemSetup(void) {
             PRINTOUT(F("Digi Xbee3 setup Sucess. Registration '"), ui_vers,
                      "'");
 #if 0
-            //Doesn't work reliably, and doesn't show network operator
+            //Doesn't work reliably, shows a number for operator
+            // AN (access point name) 
+            // FC (Frequency Channel Number)
+            // AS (Active scan for network environment data) doesn't seem to work Cell
             String ui_scan = gsmModem.sendATGetString(GF("AS")); //Scan
             PRINTOUT(F("Cell scan '"),ui_scan,"' success",success);
-            int8_t scanLp=3;
+            delay(1000); //Allow for scanning
+            int8_t scanLp=6;
             int16_t ui_len;
             while(--scanLp) {
                 ui_scan=gsmModem.readResponseInt(1000L);
                 ui_len=ui_scan.length();
-                PRINTOUT(ui_len,"]",ui_scan,".");
+                PRINTOUT(scanLp,F(":"),ui_len,F("["),ui_scan,F("]"));
                 if (1 < ui_scan.length() ) break;
             }
 #endif
