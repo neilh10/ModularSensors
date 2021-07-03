@@ -132,7 +132,7 @@
         while (!success && resets < 2) {                                       \
             /** Check that the modem is responding to AT commands. */          \
             MS_START_DEBUG_TIMER;                                              \
-            MS_DBG(F("\nWaiting up to"), _max_atresponse_time_ms, F("ms for"), \
+            PRINTOUT(F("\nWaiting up to"), _max_atresponse_time_ms, F("ms for"), \
                    getModemName(), F("to respond to AT commands..."));         \
             success = gsmModem.testAT(_max_atresponse_time_ms + 500);          \
             if (success) {                                                     \
@@ -140,11 +140,12 @@
                        F("milliseconds!"));                                    \
             } else {                                                           \
                 /** Hard reset is there's no AT response. */                   \
-                MS_DBG(F("No response to AT commands!"));                      \
-                MS_DBG(F("Attempting a hard reset on the modem! "),            \
+                PRINTOUT(F("No response to AT commands!"));                    \
+                PRINTOUT(F("Attempting a hard reset on the modem! "),          \
                        resets + 1);                                            \
                 if (!modemHardReset()) {                                       \
                     /** Exit if we can't hard reset. */                        \
+                    PRINTOUT(F("modemHardReset failed!"));                     \
                     break;                                                     \
                 } else {                                                       \
                     resets++;                                                  \
@@ -171,7 +172,7 @@
             modemLEDOn();                                                      \
             MS_DBG(getModemName(), F("should be awake and ready to go."));     \
         } else {                                                               \
-            MS_DBG(getModemName(), F("failed to wake!"));                      \
+            PRINTOUT(getModemName(), F("failed to wake!"));                    \
         }                                                                      \
                                                                                \
         return success;                                                        \
@@ -264,7 +265,7 @@
         bool wasAwake = isModemAwake();                                      \
         if (!wasAwake) {                                                     \
             while (millis() - _millisPowerOn < _wakeDelayTime_ms) {}         \
-            MS_DBG(F("Waking up the modem to connect to the internet ...")); \
+            PRINTOUT(F("Waking up the modem to connect to the internet ...")); \
             success &= modemWake();                                          \
         } else {                                                             \
             MS_DBG(F("Modem was already awake and should be ready."));       \
