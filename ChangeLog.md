@@ -6,6 +6,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ****
 
+## v0.28.5 (2021-05-11) [Duplicate and Rename Hydros 21](https://github.com/EnviroDIY/ModularSensors/releases/tag/v0.28.5)
+
+### Downloads
+
+**[ModularSensors_Dependencies_v0.28.5.zip](https://github.com/EnviroDIY/ModularSensors/releases/download/v0.28.4/ModularSensors_Dependencies_v0.28.5.zip)**
+- contains this version of ModularSensors _and the proper versions of all of its dependencies_.
+
+### New Features
+- Created a new module for the Meter Hydros 21.
+This is exactly identical to the Decagon CTD in everything but the name.
+The Decagon CTD module still exists and can be used.
+No old code needs to be adjusted for this change.
+Moving forward, the two can be used interchangably.
+The addition was only made to stop complaints about typing in an older name.
+
+## v0.28.4 (2021-05-05) [SDI-12 Timing Sensor Customization](https://github.com/EnviroDIY/ModularSensors/releases/tag/v0.28.4)
+
+### Downloads
+
+**[ModularSensors_Dependencies_v0.28.4.zip](https://github.com/EnviroDIY/ModularSensors/releases/download/v0.28.4/ModularSensors_Dependencies_v0.28.4.zip)**
+- contains this version of ModularSensors _and the proper versions of all of its dependencies_.
+
+### Improvements
+- Allow each SDI-12 sensor to set the necessary command delay for that sensor.
+  - Per protocol, sensors are allowed to take up to 100ms after receiving a break before being ready to receive a command.
+This allows each sensor to specify what delay it needs.
+This was added to support conflicting delay needs; the RDO needed a short delay, the newest Meter sensors do not respond properly if the delay is added.
+- For SDI-12 sensors, add repeated attempts to start a measurement if the first attempt unexpectedly fails.
+
 ## v0.28.3 (2021-03-24) [Valid version number](https://github.com/EnviroDIY/ModularSensors/releases/tag/v0.28.3)
 
 ### Downloads

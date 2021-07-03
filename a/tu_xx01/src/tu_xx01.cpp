@@ -1401,7 +1401,10 @@ void setup() {
     } else {
         uint8_t dm_lp=0;
         bfgPresent = true;
-        PRINTOUT(F("STC3100s detected."));
+        Serial.print("STC3100 detected sn ");
+        for (int snlp=1;snlp<(STC3100_ID_LEN-1);snlp++) {
+            Serial.print(stc3100_bfg.serial_number[snlp],HEX);
+        }
         //managementSensorsPoll(); stc3100_bfg.v.voltage_V
         #define STCDM_POLL 20
         #define STCDM_MIN_V 2.5
@@ -1411,7 +1414,7 @@ void setup() {
             if (STCDM_MIN_V  < stc3100_bfg.v.voltage_V) break;
         }
 
-        PRINTOUT(F("STC3100s BatV/lp/cntr"), stc3100_bfg.v.voltage_V,dm_lp,stc3100_bfg.v.counter);
+        PRINTOUT(F("  BatV/lp/cntr"), stc3100_bfg.v.voltage_V,dm_lp,stc3100_bfg.v.counter);
     }
 #endif //MAYFLY_BAT_STC3100
     // A vital check on power availability
@@ -1504,6 +1507,7 @@ void setup() {
     EnviroDIYPOST.setQuedState(true);
     EnviroDIYPOST.setTimerPostTimeout_mS(ps_ram.app.provider.s.ed.timerPostTout_ms);
     EnviroDIYPOST.setTimerPostPacing_mS(ps_ram.app.provider.s.ed.timerPostPace_ms);
+    //EnviroDIYPOST.setPostMax_num(ps_ram.app.provider.s.ed.postMax_num);
 #endif //USE_PUB_MMW
 #if defined USE_PUB_TSMQTT
     TsMqttPub.begin(dataLogger, &modemPhy.gsmClient, 

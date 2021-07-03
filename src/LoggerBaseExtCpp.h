@@ -697,7 +697,10 @@ void Logger::logDataAndPubReliably(uint8_t cia_val_override) {
         _bat_handler_atl(LB_PWR_USEABLE_REQ);  // Set battery status
         if (!_bat_handler_atl(LB_PWR_SENSOR_USE_REQ)) {
             // Squash any activity
-            PRINTOUT(F("logDataAndPubReliably - all cancelled"));
+            //PRINTOUT(F("logDataAndPubReliably - all cancelled"));
+            const static char ALL_CANCELLED_pm[] EDIY_PROGMEM = 
+            "logDataAndPubReliably - all cancelled"; 
+            PRINT_LOGLINE_P(ALL_CANCELLED_pm);
             cia_val = 0;
         }
         if (!_bat_handler_atl(LB_PWR_MODEM_USE_REQ)) {
@@ -705,7 +708,10 @@ void Logger::logDataAndPubReliably(uint8_t cia_val_override) {
                 // Change publish attempt to saving for next publish attempt
                 cia_val &= ~CIA_POST_READINGS;
                 cia_val |= CIA_RLB_READINGS;  //
-                PRINTOUT(F("logDataAndPubReliably - tx cancelled"));
+                //PRINTOUT(F("logDataAndPubReliably - tx cancelled"));
+                const static char TX_CANCELLED_pm[] EDIY_PROGMEM = 
+                "logDataAndPubReliably - tx cancelled";
+                PRINT_LOGLINE_P(TX_CANCELLED_pm);
             }
         }
     }
@@ -751,6 +757,9 @@ void Logger::logDataAndPubReliably(uint8_t cia_val_override) {
                     watchDogTimer.resetWatchDog();
                     PRINTOUT(F("Connecting to the Internet with"),_logModem->getModemName());
                     if (_logModem->connectInternet()) {
+                        const static char CONNECT_INTERNET_pm[] EDIY_PROGMEM = 
+                        "Connected Internet"; 
+                        PRINT_LOGLINE_P(CONNECT_INTERNET_pm);
                         // Publish data to remotes
                         watchDogTimer.resetWatchDog();
                         // publishDataToRemotes();
@@ -773,6 +782,8 @@ void Logger::logDataAndPubReliably(uint8_t cia_val_override) {
                             // Sync the clock at noon
                             MS_DBG(F("Running a daily clock sync..."));
                             setRTClock(_logModem->getNISTTime());
+                            const static char CLOCK_SYNC_pm[] EDIY_PROGMEM ="Clock Synced"; 
+                            PRINT_LOGLINE_P(CLOCK_SYNC_pm);                            
                             watchDogTimer.resetWatchDog();
                         }
 
@@ -784,7 +795,10 @@ void Logger::logDataAndPubReliably(uint8_t cia_val_override) {
                         MS_DBG(F("Disconnecting from the Internet..."));
                         _logModem->disconnectInternet();
                     } else {
-                        PRINTOUT(F("Connect to the internet failed with"),_logModem->getModemName());
+                        //RINTOUT(F("Connect to the internet failed with"),_logModem->getModemName());
+                        const static char CONNECT_FAILED_pm[] EDIY_PROGMEM = 
+                        "Connected Internet Failed"; 
+                        PRINT_LOGLINE_P(CONNECT_FAILED_pm);
                         watchDogTimer.resetWatchDog();
                     }
                 } else {
@@ -1437,7 +1451,13 @@ bool Logger::postLogOpen(const char* postLogNam_str) {
 #endif  // MS_LOGGERBASE_POSTS
     return retVal;
 }
-
+bool Logger::postLogOpen() {
+    bool     retVal    = false;
+#if defined MS_LOGGERBASE_POSTS
+    retVal =postLogOpen(postsLogFn_str);
+#endif // 
+    return retVal;
+}
 void        Logger::postLogClose() {
 #if defined MS_LOGGERBASE_POSTS
 
@@ -1462,7 +1482,7 @@ void Logger::postLogLine(uint8_t instance, int16_t rspParam) {
         .toCharArray(tempBuffer, TEMP_BUFFER_SZ);
     postsLogHndl.print(tempBuffer);
 #endif
-    postsLogHndl.print(F(","));
+    postsLogHndl.print(F(",POST,"));
     itoa(rspParam, tempBuffer, 10);
     postsLogHndl.print(tempBuffer);
     postsLogHndl.print(F(","));
@@ -1473,6 +1493,27 @@ void Logger::postLogLine(uint8_t instance, int16_t rspParam) {
 #endif  //#if defined MS_LOGGERBASE_POSTS
 }
 
+void Logger::postLogLine(const char *logMsg,bool addCRNL) {
+#if defined MS_LOGGERBASE_POSTS 
+    bool wasOpen =true;   
+    if (!postsLogHndl.isOpen()) {
+        wasOpen=false;
+        if (!postLogOpen()) {
+            //TODO leave error
+            return;
+        } 
+    }
+    char tempBuffer[TEMP_BUFFER_SZ];
+    formatDateTime_ISO8601(getNowEpochUTC())
+        .toCharArray(tempBuffer, TEMP_BUFFER_SZ);
+    postsLogHndl.print(tempBuffer);
+    postsLogHndl.print(F(",MSG,"));
+    postsLogHndl.print(logMsg);
+    if (addCRNL)postsLogHndl.println();
+
+    if (!wasOpen) postLogClose();
+#endif //MS_LOGGERBASE_POSTS
+}
 /*
 Cleanup if necessary
 */

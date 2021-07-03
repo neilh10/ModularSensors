@@ -297,9 +297,9 @@ class EnviroDIYPublisher : public dataPublisher {
 #define TIMER_EDP_POSTED_PACING_DEF_MSEC 2000L
 #endif  // TIMER_EDP_POSTED_PACING_DEF_MSEC
     uint16_t _timerPostPacing_ms = TIMER_EDP_POSTED_PACING_DEF_MSEC;
-    uint16_t virtual setTimerPostPacing_mS(uint16_t tpt_ms) {
-        MS_DBG(F("setTPP(mS)"), tpt_ms);
-        return _timerPostPacing_ms;  // Default not updated.
+    uint16_t virtual setTimerPostPacing_mS(uint16_t tpp_ms) {
+        MS_DBG(F("setTPP(mS)"), tpp_ms);
+        return _timerPostPacing_ms = tpp_ms;
     }
 
     uint16_t getTimerPostPacing_mS() {

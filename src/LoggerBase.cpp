@@ -365,14 +365,20 @@ bool Logger::syncRTC() {
         PRINTOUT(F("This may take up to two minutes!"));
         if (_logModem->modemWake()) {
             if (_logModem->connectInternet(120000L)) {
+                const static char CONNECT_INTERNET_pm[] EDIY_PROGMEM = 
+                "Connected to internet for RTC sync with NIST"; 
+                PRINT_LOGLINE_P(CONNECT_INTERNET_pm);
                 success = setRTClock(_logModem->getNISTTime());
                 // success = true;
                 _logModem->updateModemMetadata();
             } else {
-                PRINTOUT(F("Could not connect to internet for clock sync."));
+                const static char COULD_NOT_CONNECT_INTERNET_pm[] EDIY_PROGMEM   = 
+                "Could not connect to internet for RTC sync.";
+                PRINT_LOGLINE_P(COULD_NOT_CONNECT_INTERNET_pm);
             }
         } else {
-            PRINTOUT(F("Could not wake modem for clock sync."));
+            const static char COULD_NOT_WAKE_pm[] EDIY_PROGMEM = "Could not wake modem for RTC sync.";
+            PRINT_LOGLINE_P(COULD_NOT_WAKE_pm);
         }
     }
 

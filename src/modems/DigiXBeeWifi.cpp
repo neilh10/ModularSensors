@@ -300,31 +300,32 @@ uint32_t DigiXBeeWifi::getNISTTime(void) {
 
     gsmClient.stop();
 
-/* Try up to 12 times to get a timestamp from NIST */
+    // Try up to 12 times to get a timestamp from NIST
 #if !defined NIST_SERVER_RETRYS
 #define NIST_SERVER_RETRYS 4
 #endif  // NIST_SERVER_RETRYS
     String  nistIpStr;
     __attribute__((unused)) uint8_t index = 0;
     for (uint8_t i = 0; i < NIST_SERVER_RETRYS; i++) {
-        /* Must ensure that we do not ping the daylight more than once every 4
-         * seconds */
-        /* NIST clearly specifies here that this is a requirement for all
-         * software
-         */
-        /* that accesses its servers:  https://tf.nist.gov/tf-cgi/servers.cgi */
+        // Must ensure that we do not ping the daylight more than once every 4
+        // seconds.  NIST clearly specifies here that this is a requirement for
+        // all software that accesses its servers:
+        // https://tf.nist.gov/tf-cgi/servers.cgi
         while (millis() < _lastNISTrequest + 4000) {}
 
-        /* Make TCP connection */
-        MS_DBG(F("\nConnecting to NIST daytime Server @"), millis());
+        // Make TCP connection
+        MS_DBG(F("\nConnecting to NIST daytime Server"));
         bool connectionMade = false;
 
-/* This is the IP address of time-e-wwv.nist.gov  */
-/* If it fails, options here https://tf.nist.gov/tf-cgi/servers.cgi */
-/* Uses "TIME" protocol on port 37 NIST: This protocol is expensive, since it
-  uses the complete tcp machinery to transmit only 32 bits of data.
-  FUTURE Users are *strongly* encouraged to upgrade to the network time protocol
-  (NTP), which is both more accurate and more robust.*/
+        // This is the IP address of time-e-wwv.nist.gov
+        // XBee's address lookup falters on time.nist.gov
+        // NOTE:  This "connect" only sets up the connection parameters, the TCP
+        // socket isn't actually opened until we first send data (the '!' below)
+ 
+       // Uses "TIME" protocol on port 37 NIST: This protocol is expensive, since it
+        // uses the complete tcp machinery to transmit only 32 bits of data.
+        // FUTURE Users are *strongly* encouraged to upgrade to the network time protocol
+        // (NTP), which is both more accurate and more robust.*/
 #define TIME_PROTOCOL_PORT 37
 #define IP_STR_LEN 18
         const char ipAddr[NIST_SERVER_RETRYS][IP_STR_LEN] = {
@@ -333,29 +334,35 @@ uint32_t DigiXBeeWifi::getNISTTime(void) {
             {"132, 163, 97, 3"},
             {"132, 163, 97, 4"}};
         IPAddress ip1(132, 163, 97, 1);  // Initialize
-        gsmModem.sendAT(F("LAtime.nist.gov"));
+#if 0
+        gsmModem.sendAT(F("time-e-wwv.nist.gov"));
         index = gsmModem.waitResponse(4000, nistIpStr);
         nistIpStr.trim();
         uint16_t nistIp_len = nistIpStr.length();
-        if ((nistIp_len < 7) || (nistIp_len > 20)) {
+        if ((nistIp_len < 7) || (nistIp_len > 20)) 
+        {
             ip1.fromString(ipAddr[i]);
             MS_DBG(F("Bad lookup"), nistIpStr, "'=", nistIp_len, F(" Using "),
                    ipAddr[i]);
         } else {
             ip1.fromString(nistIpStr);
-            MS_DBG(F("Good lookup mdmIP["), i, "/", NIST_SERVER_RETRYS,
+            PRINTOUT(F("Good lookup mdmIP["), i, "/", NIST_SERVER_RETRYS,
                    F("] '"), nistIpStr, "'=", nistIp_len);
         }
-
+#else
+        ip1.fromString(ipAddr[i]);
+        PRINTOUT(F("NIST lookup mdmIP["), i, "/", NIST_SERVER_RETRYS,
+                   F("] with "), ipAddr[i]);
+#endif 
         connectionMade = gsmClient.connect(ip1, TIME_PROTOCOL_PORT);
+        // Need to send something before connection is made
+        gsmClient.println('!');
 
-        /* Wait up to 5 seconds for a response */
+        // Wait up to 5 seconds for a response
         if (connectionMade) {
-            //* Wait so port can be opened! */
-            delay((i + 1) * 100L);
+            // Wait so port can be opened
+            //delay((i + 1) * 100L);
             uint32_t start = millis();
-            /* Need to send something before connection is made */
-            gsmClient.println('!');
             while (gsmClient && gsmClient.available() < 4 &&
                    millis() - start < 5000L) {}
 
@@ -385,39 +392,30 @@ bool DigiXBeeWifi::getModemSignalQuality(int16_t& rssi, int16_t& percent) {
     percent            = -9999;
     rssi               = -9999;
 
-    // The WiFi XBee needs to make an actual TCP connection and get some sort
-    // of response on that connection before it knows the signal quality.
-    // Connecting to the Google DNS servers - this doesn't really work
-    // MS_DBG(F("Opening connection to check connection strength..."));
-    // bool usedGoogle = false;
-    // if (!gsmModem.gotIPforSavedHost())
-    // {
-    //     usedGoogle = true;
-    //     IPAddress ip(8, 8, 8, 8);  // This is one of Google's IP's
-    //     gsmClient.stop();
-    //     success &= gsmClient.connect(ip, 80);
-    // }
-    // gsmClient.print('!');  // Need to send something before connection is
-    // made delay(100);  // Need this delay!  Can get away with 50, but 100 is
-    // safer.
-
-    // MS_DBG(F("Opening connection to NIST to check connection strength..."));
+    // NOTE:  using Google doesn't work because there's no reply
+    MS_DBG(F("Opening connection to NIST to check connection strength..."));
     // This is the IP address of time-c-g.nist.gov
     // XBee's address lookup falters on time.nist.gov
+    // NOTE:  This "connect" only sets up the connection parameters, the TCP
+    // socket isn't actually opened until we first send data (the '!' below)
     // IPAddress ip(132, 163, 97, 6);
     // gsmClient.connect(ip, 37);
-    // Wait again so NIST doesn't refuse us!
-    // delay(4000L);
+    // Wait so NIST doesn't refuse us!
+    //while (millis() < _lastNISTrequest + 4000) {}
     // Need to send something before connection is made
-    // gsmClient.println('!');
-    // delay(100);  // Need this delay!  Can get away with 50, but 100 is safer.
+    //gsmClient.println('!');
+    //uint32_t start = millis();
+    //delay(100);  // Need this delay!  Can get away with 50, but 100 is safer.
+    //while (gsmClient && gsmClient.available() < 4 && millis() - start < 5000L) {
+    //}
 
+    // Assume measurement from previous connection
     // Get signal quality
     // NOTE:  We can't actually distinguish between a bad modem response, no
     // modem response, and a real response from the modem of no service/signal.
     // The TinyGSM getSignalQuality function returns the same "no signal"
     // value (99 CSQ or 0 RSSI) in all 3 cases.
-    MS_DBG(F("Getting signal quality2:"));
+    MS_DBG(F("Getting signal quality:"));
     signalQual = gsmModem.getSignalQuality();
     MS_DBG(F("Raw signal quality:"), signalQual);
 

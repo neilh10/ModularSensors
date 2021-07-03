@@ -248,6 +248,7 @@ int16_t EnviroDIYPublisher::publishData(Client* outClient) {
         outClient->stop();
          MS_DBG( F("Client stopped after"), MS_PRINT_DEBUG_TIMER, F("ms"));
     } else {
+        //TODO write to DBGxxx.log
         PRINTOUT(F("\n -- Unable to Establish Connection to EnviroDIY Data "
                    "Portal --"));
     }
