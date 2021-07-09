@@ -58,7 +58,7 @@ const int  TIMER_POST_PACE_MS_MAX=5000 ;
 const int  TIMER_POST_PACE_MS_MIN=0 ;
 
 const char POST_MAX_NUM_pm[] EDIY_PROGMEM       = "POST_MAX_NUM";
-const int  POST_RANGE_MAX_NUM=500;
+const int  POST_RANGE_MAX_NUM=2000;
 const int  POST_RANGE_MIN_NUM=0;
 
 const char PROVIDER_TS_pm[] EDIY_PROGMEM           = "PROVIDER_TS";
@@ -326,9 +326,9 @@ static void epcParser() {
     }
     #endif // DigiXBeeWifi_Module
 
-    PRINTOUT(F("NETWORK CollectReadings"),epc.app.msn.s.collectReadings_num );
-    PRINTOUT(F("NETWORK sendOffset_min"),epc.app.msn.s.sendOffset_min);
-    
+    PRINTOUT(F("NETWORK COLLECT_READINGS"),epc.app.msn.s.collectReadings_num );
+    PRINTOUT(F("NETWORK SEND_OFFSET_MIN"),epc.app.msn.s.sendOffset_min);
+    PRINTOUT(F("NETWORK POST_MAX_NUM"),epc.app.msn.s.postMax_num);
 
     #if defined USE_PUB_MMW
     //[Provider_MMW]
@@ -338,7 +338,7 @@ static void epcParser() {
     PRINTOUT(F("PROVIDER_MMW Samping Feature"),     epc.app.provider.s.ed.sampling_feature);
     PRINTOUT(F("PROVIDER_MMW timerPost Tout(ms)"),  epc.app.provider.s.ed.timerPostTout_ms);
     PRINTOUT(F("PROVIDER_MMW timerPost Pacing(ms)"),epc.app.provider.s.ed.timerPostPace_ms);
-    //POST_MAX_NUM=0; Fut Not used
+    //PRINTOUT(F("PROVIDER_MMW max num posts"),       epc.app.provider.s.ed.postMax_num); //POST_MAX_NUM
     populateUuidMatchEpc(epc.app.provider.s.ed.uuid);
     #endif //USE_PUB_MMW
 
@@ -349,7 +349,7 @@ static void epcParser() {
     PRINTOUT(F("PROVIDER_TS Channel Wr Key"),       epc.app.provider.s.ts.thingSpeakChannelKey);
     PRINTOUT(F("PROVIDER_TS timerPost Tout(ms)"),   epc.app.provider.s.ed.timerPostTout_ms);
     PRINTOUT(F("PROVIDER_TS timerPost Pacing(ms)"), epc.app.provider.s.ed.timerPostPace_ms);
-    //POST_MAX_NUM=0; Fut Not used    
+    //PRINTOUT(F("PROVIDER_TS max num posts"),       epc.app.provider.s.ed.postMax_num); //POST_MAX_NUM 
     #endif // USE_PUB_TSMQTT 
 
     #if defined USE_PUB_UBIDOTS
@@ -358,7 +358,7 @@ static void epcParser() {
     PRINTOUT(F("PROVIDER_UB"),F("DeviceId"),            epc.app.provider.s.ub.deviceID);
     PRINTOUT(F("PROVIDER_UB"),F("timerPost Tout(ms)"),  epc.app.provider.s.ub.timerPostTout_ms);
     PRINTOUT(F("PROVIDER_UB"),F("timerPost Pacing(ms)"),epc.app.provider.s.ub.timerPostPace_ms);
-    //POST_MAX_NUM=0; Fut Not used
+    //PRINTOUT(F("PROVIDER_UB"),F("max num posts"),       epc.app.provider.s.ed.postMax_num); //POST_MAX_NUM
     populateUuidMatchEpc(epc.app.provider.s.ub.uuid);
     #endif // USE_PUB_UBIDOTS
 
@@ -435,23 +435,6 @@ static int inihUnhandledFn(const char* section, const char* name,
             epc.app.provider.s.ed.timerPostPace_ms = timerPostPacing_local;
             MS_DBG(F("PROVIDER_MMW Set TIMER_POST_PACE_MS: "),timerPostPacing_local);
 
-        } else if (strcmp_P(name, POST_MAX_NUM_pm) == 0) {
-            // convert  str to num with error checking
-            long postMax_num_local = strtol(value, &endptr, 10);
-            if ((postMax_num_local <= POST_RANGE_MAX_NUM) && (postMax_num_local >= POST_RANGE_MIN_NUM) &&
-                (errno != ERANGE)) 
-            {
-                //Null, default below
-            } else {
-                PRINTOUT(
-                    F("PROVIDER_MMW Set POST_MAX_NUM error; range["), 
-                    POST_RANGE_MIN_NUM,POST_RANGE_MAX_NUM,F("] read:"),postMax_num_local);
-                    postMax_num_local=MMW_TIMER_POST_MAX_MUM_DEF;
-            }
-            //postMax_num = (uint8_t)postMax_num_local;
-            epc.app.provider.s.ed.postMax_num = postMax_num_local;
-            MS_DBG(F("PROVIDER_MMW Set POST_MAX_NUM: "),postMax_num_local);
-
         } else {
 
             /* UUIDs are applied to internal sensor Array as follows:
@@ -514,7 +497,7 @@ static int inihUnhandledFn(const char* section, const char* name,
             epc.app.provider.s.ts.timerPostPace_ms = timerPostPacing_local;
             MS_DBG(F("PROVIDE_TS Set TIMER_POST_PACE_MS: "),timerPostPacing_local);
 
-        } else if (strcmp_P(name, POST_MAX_NUM_pm) == 0) {
+        /*} else if (strcmp_P(name, POST_MAX_NUM_pm) == 0) {
             // convert  str to num with error checking
             long postMax_num_local = strtol(value, &endptr, 10);
             if ((postMax_num_local <= POST_RANGE_MAX_NUM) && (postMax_num_local >= TIMER_POST_PACE_MS_MIN) &&
@@ -529,7 +512,7 @@ static int inihUnhandledFn(const char* section, const char* name,
             }
             //postMax_num = (uint8_t)postMax_num_local;
             epc.app.provider.s.ts.postMax_num = postMax_num_local;
-            MS_DBG(F("PROVIDER_TS Set POST_MAX_NUM: "),postMax_num_local);
+            MS_DBG(F("PROVIDER_TS Set POST_MAX_NUM: "),postMax_num_local); */
 
         }
     #endif // USE_PUB_TSMQTT 
@@ -583,7 +566,7 @@ static int inihUnhandledFn(const char* section, const char* name,
             epc.app.provider.s.ub.timerPostPace_ms = timerPostPacing_local;
             MS_DBG(F("PROVIDR_UBIDOTS Set TIMER_POST_PACE_MS: "),timerPostPacing_local);
 
-        } else if (strcmp_P(name, POST_MAX_NUM_pm) == 0) {
+        /*} else if (strcmp_P(name, POST_MAX_NUM_pm) == 0) {
             // convert  str to num with error checking
             long postMax_num_local = strtol(value, &endptr, 10);
             if ((postMax_num_local <= POST_RANGE_MAX_NUM) && (postMax_num_local >= POST_RANGE_MIN_NUM) &&
@@ -598,7 +581,7 @@ static int inihUnhandledFn(const char* section, const char* name,
             }
             //postMax_num = (uint8_t)postMax_num_local;
             epc.app.provider.s.ub.postMax_num = postMax_num_local;
-            MS_DBG(F("PROVIDER_UBIDOTS Set POST_MAX_NUM: "),postMax_num_local);
+            MS_DBG(F("PROVIDER_UBIDOTS Set POST_MAX_NUM: "),postMax_num_local); */
         } else {
 
             /* UBIDOTS UUIDs label are uniquuel used to identify the ubidots "variable" are applied to internal sensor Array as follows:
@@ -832,10 +815,10 @@ static int inihUnhandledFn(const char* section, const char* name,
                 (collect_readings_local >= 0) && (errno != ERANGE)) 
             {
             } else {
-                PRINTOUT(F("COMMON Set COLLECT_READINGS error; (range 0 : 30) read:"),collect_readings_local);
+                PRINTOUT(F("NETWORK Set COLLECT_READINGS error; (range 0 : 30) read:"),collect_readings_local);
                 collect_readings_local = MNGI_COLLECT_READINGS_DEF;
             }
-            MS_DBG(F("COMMON Set COLLECT_READINGS: "), collect_readings_local);
+            MS_DBG(F("NETWORK Set COLLECT_READINGS: "), collect_readings_local);
             epc.app.msn.s.collectReadings_num = (uint8_t)collect_readings_local;
 
         } else if (strcmp_P(name, SEND_OFFSET_MIN_pm) == 0) {
@@ -846,12 +829,30 @@ static int inihUnhandledFn(const char* section, const char* name,
             {
 
             } else {
-                PRINTOUT(F("COMMON Set SEND_OFFSET_MIN error; (range 0 : 30) read:"),
+                PRINTOUT(F("NETWORK Set SEND_OFFSET_MIN error; (range 0 : 30) read:"),
                 send_offset_min_local);
                 send_offset_min_local=MNGI_SEND_OFFSET_MIN_DEF;
             }
-            MS_DBG(F("COMMON Set SEND_OFFSET_MIN: "),send_offset_min_local);   
-            epc.app.msn.s.sendOffset_min =  (uint8_t)send_offset_min_local;;
+            MS_DBG(F("NETWORK Set SEND_OFFSET_MIN: "),send_offset_min_local);   
+            epc.app.msn.s.sendOffset_min =  (uint8_t)send_offset_min_local;
+
+         } else if (strcmp_P(name, POST_MAX_NUM_pm) == 0) {
+            // convert  str to num with error checking
+            long postMax_num_local = strtol(value, &endptr, 10);
+            if ((postMax_num_local <= POST_RANGE_MAX_NUM) && (postMax_num_local >= POST_RANGE_MIN_NUM) &&
+                (errno != ERANGE)) 
+            {
+                //Null, default below
+            } else {
+                PRINTOUT(
+                    F("NETWORK Set POST_MAX_NUM error; range["), 
+                    POST_RANGE_MIN_NUM,POST_RANGE_MAX_NUM,F("] read:"),postMax_num_local);
+                    postMax_num_local=MMW_TIMER_POST_MAX_MUM_DEF;
+            }
+            //postMax_num = (uint8_t)postMax_num_local;
+            epc.app.msn.s.postMax_num = postMax_num_local;
+            MS_DBG(F("NETWORK Set POST_MAX_NUM: "),postMax_num_local);
+
         } else
 
         {
@@ -1022,7 +1023,7 @@ void localAppStorageInit()
     strcpy_P((char*)epc.app.msn.s.WiFiPwd,(char*)F(MSCN_WIFIPWD_DEF_STR)); 
     epc.app.msn.s.collectReadings_num =MNGI_COLLECT_READINGS_DEF;
     epc.app.msn.s.sendOffset_min = MNGI_SEND_OFFSET_MIN_DEF;
-
+    epc.app.msn.s.postMax_num = MMW_TIMER_POST_MAX_MUM_DEF;  
 
     epc.app.provider.provider_type=  PROVID_TYPE_MMW;
     strcpy_P((char*)epc.app.provider.s.ed.cloudId, (char*) F(PROVID_DEF_STR));
@@ -1030,7 +1031,7 @@ void localAppStorageInit()
     strcpy_P((char*)epc.app.provider.s.ed.sampling_feature, (char*)F(PROVID_DEF_STR));
     epc.app.provider.s.ed.timerPostTout_ms = MMW_TIMER_POST_TIMEOUT_MS_DEF;
     epc.app.provider.s.ed.timerPostPace_ms = MMW_TIMER_POST_PACING_MS_DEF; 
-    epc.app.provider.s.ed.postMax_num = MMW_TIMER_POST_MAX_MUM_DEF;  
+    //POST_MAX_NUM epc.app.provider.s.ed.postMax_num = MMW_TIMER_POST_MAX_MUM_DEF;  
     for (int uuid_lp=0;uuid_lp <PROVID_UUID_SENSOR_CNTMAX_SZ;uuid_lp++) 
     {
         epc.app.provider.s.ed.uuid[uuid_lp].name[0] = PROVID_NULL_TERMINATOR;
@@ -1044,7 +1045,7 @@ void localAppStorageInit()
     strcpy_P((char*)epc.app.provider.s.ts.thingSpeakChannelKey, (char*)F(PROVID_DEF_STR));
     epc.app.provider.s.ts.timerPostTout_ms = MMW_TIMER_POST_TIMEOUT_MS_DEF;
     epc.app.provider.s.ts.timerPostPace_ms = MMW_TIMER_POST_PACING_MS_DEF; 
-    epc.app.provider.s.ts.postMax_num = MMW_TIMER_POST_MAX_MUM_DEF;  
+    //POST_MAX_NUM epc.app.provider.s.ts.postMax_num = MMW_TIMER_POST_MAX_MUM_DEF;  
 
     // UBIDOTS init
     strcpy_P((char*)epc.app.provider.s.ub.cloudId, (char*) F(PROVID_DEF_STR));
@@ -1052,7 +1053,7 @@ void localAppStorageInit()
     strcpy_P((char*)epc.app.provider.s.ub.deviceID, (char*)F(PROVID_DEF_STR));
     epc.app.provider.s.ub.timerPostTout_ms = MMW_TIMER_POST_TIMEOUT_MS_DEF;
     epc.app.provider.s.ub.timerPostPace_ms = MMW_TIMER_POST_PACING_MS_DEF; 
-    epc.app.provider.s.ub.postMax_num = MMW_TIMER_POST_MAX_MUM_DEF;  
+    //POST_MAX_NUM epc.app.provider.s.ub.postMax_num = MMW_TIMER_POST_MAX_MUM_DEF;  
     for (int uuid_lp=0;uuid_lp <PROVID_UUID_SENSOR_CNTMAX_SZ;uuid_lp++) 
     {
         epc.app.provider.s.ub.uuid[uuid_lp].name[0] = PROVID_NULL_TERMINATOR;
@@ -1124,8 +1125,9 @@ void readAvrEeprom() {
             F("\n APN="),(char*)epc.app.msn.s.apn, 
             F("\n WiFiId="),(char*)epc.app.msn.s.WiFiId,
             F(" WiFiPwd="),(char*)epc.app.msn.s.WiFiPwd,
-            F("\n\r CollectReadings="), epc.app.msn.s.collectReadings_num,
-            F(" SendOffset(min)="), epc.app.msn.s.sendOffset_min
+            F("\n\r COLLECT_READINGS="), epc.app.msn.s.collectReadings_num,
+            F(" SEND_OFFSET_MIN="), epc.app.msn.s.sendOffset_min,
+            F(" POST_MAX_NUM="),epc.app.msn.s.postMax_num 
             );
 
     // List values for PROVIDER_XX 
@@ -1136,8 +1138,8 @@ void readAvrEeprom() {
             F("\n PROVIDER_MMW Reg Token="),(char*)epc.app.provider.s.ed.registration_token,
             F("\n PROVIDER_MMW Sampling Feature="),(char*)epc.app.provider.s.ed.sampling_feature,
             F("\n PROVIDER_MMW timerPostTout(ms)="), epc.app.provider.s.ed.timerPostTout_ms,
-            F("\n PROVIDER_MMW timerPostPace(ms)="), epc.app.provider.s.ed.timerPostPace_ms,
-            F("\n PROVIDER_MMW postMax="), epc.app.provider.s.ed.postMax_num
+            F("\n PROVIDER_MMW timerPostPace(ms)="), epc.app.provider.s.ed.timerPostPace_ms
+            //F("\n PROVIDER_MMW postMax="), epc.app.provider.s.ed.postMax_num
             );
     PRINTOUT(F("  PROVIDER_MMW UUIDs (none unless listed), Max="),PROVID_UUID_SENSOR_CNTMAX_SZ);
     for (int uuid_lp=0;uuid_lp <PROVID_UUID_SENSOR_CNTMAX_SZ;uuid_lp++) {
@@ -1157,8 +1159,8 @@ void readAvrEeprom() {
             F("\n PROVIDER_TS TS_CHANNEL_ID="),(char*)epc.app.provider.s.ts.thingSpeakChannelID,
             F("\n PROVIDER_TS TS_CHANNEL_KEY="),(char*)epc.app.provider.s.ts.thingSpeakChannelID,
             F("\n PROVIDER_TS timerPostTout(ms)="), epc.app.provider.s.ts.timerPostTout_ms,
-            F("\n PROVIDER_TS timerPostPace(ms)="), epc.app.provider.s.ts.timerPostPace_ms,
-            F("\n PROVIDER_TS postMax="), epc.app.provider.s.ts.postMax_num
+            F("\n PROVIDER_TS timerPostPace(ms)="), epc.app.provider.s.ts.timerPostPace_ms
+            //F("\n PROVIDER_TS postMax="), epc.app.provider.s.ts.postMax_num
             );
 #endif //USE_PUB_TSMQTT
 
@@ -1168,8 +1170,8 @@ void readAvrEeprom() {
             F("\n PROVIDER_UBIDOTS Auth Token="),(char*)epc.app.provider.s.ub.authentificationToken,
             F("\n PROVIDER_UBIDOTS Device id="),(char*)epc.app.provider.s.ub.deviceID,
             F("\n PROVIDER_UBIDOTS timerPostTout(ms)="), epc.app.provider.s.ub.timerPostTout_ms,
-            F("\n PROVIDER_UBIDOTS timerPostPace(ms)="), epc.app.provider.s.ub.timerPostPace_ms,
-            F("\n PROVIDER_UBIDOTS postMax="), epc.app.provider.s.ub.postMax_num
+            F("\n PROVIDER_UBIDOTS timerPostPace(ms)="), epc.app.provider.s.ub.timerPostPace_ms
+            //F("\n PROVIDER_UBIDOTS postMax="), epc.app.provider.s.ub.postMax_num
             );
     PRINTOUT(F("  PROVIDER_UBIDOTS Variable mapping  (none unless listed), Max="),PROVID_UUID_SENSOR_CNTMAX_SZ);
     //                PRINTOUT(PROVIDER_UBIDOTS_pm,F("Set TIMER_POST_TOUT_MS error; range["),

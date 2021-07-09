@@ -969,9 +969,8 @@ void Logger::publishDataQuedToRemotes(bool internetPresent) {
                     if (sd1_card_fatfs.exists(serzQuedFn)) {
                         uint16_t tot_posted           = 0;
                         uint16_t cnt_for_pwr_analysis = 1;
-                        deszQuedStart();
-                        while ((dslStatus = deszQuedLine()) &&
-                               cnt_for_pwr_analysis) {
+                         deszQuedStart();
+                        while ((dslStatus = deszQuedLine()) )  {
 
                             /*At least one publish has been sucessfull.
                              * Slow Down sending based on publishers acceptance rate
@@ -993,7 +992,6 @@ void Logger::publishDataQuedToRemotes(bool internetPresent) {
                             // Check for enough battery power
                             if (cnt_for_pwr_analysis++ >=
                                 _sendAtOneTimeMaxX_num) {
-                                cnt_for_pwr_analysis = 1;
                                 if (NULL != _bat_handler_atl) {
                                     // Measure  battery
                                     _bat_handler_atl(LB_PWR_USEABLE_REQ);
@@ -1001,10 +999,17 @@ void Logger::publishDataQuedToRemotes(bool internetPresent) {
                                             LB_PWR_MODEM_USE_REQ)) {
                                         // stop transmission
                                         cnt_for_pwr_analysis = 0;
+                                        PRINTOUT(F("pubDQTR not enough power available"));
+                                        break;
                                     }
                                 }
+                                cnt_for_pwr_analysis = 1;
                             }
-                        }
+                            if (tot_posted  >= _postMax_num) {
+                                PRINTOUT(F("pubDQTR POST_MAX_NUM reached"), tot_posted);
+                                break; /// unsent lines are copied through
+                            }
+                        } //while
 // increment status of number attempts
 #if 0
                         if (deszq_line[DESLZ_STATUS_POS]++ >=

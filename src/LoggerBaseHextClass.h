@@ -67,6 +67,20 @@ uint8_t getSendPacingDelay(void) {
 #define SERIALIZE_sendPacingDelay_mSec 2
 uint16_t _sendPacingDelay_mSec = SERIALIZE_sendPacingDelay_mSec;
 
+    uint16_t setPostMax_num(uint16_t mp_num) {
+        MS_DBG(F("setMaxPost_num"), mp_num);
+        return _postMax_num = mp_num;
+    }
+
+    uint16_t getPostMax_num() {
+        MS_DBG(F("getPostMax_num"), _postMax_num;);
+        return _postMax_num;
+    }   
+#if !defined LB_POSTMAX_NUM_DEF 
+#define LB_POSTMAX_NUM_DEF 96L //MMW_TIMER_POST_MAX_MUM_DEF
+#endif  // LB_POSTMAX_NUM_DEF
+    uint16_t _postMax_num = LB_POSTMAX_NUM_DEF; //See MMW_TIMER_POST_MAX_MUM_DEF    
+
 // ===================================================================== //
 // Public functions for a "reading .ini" file
 // ===================================================================== //

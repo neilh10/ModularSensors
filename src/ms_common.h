@@ -174,6 +174,7 @@ typedef struct {
     uint8_t WiFiPwd[MSCN_WIFI_PWD_SZ];  // 32??
     uint8_t collectReadings_num; // 1-30
     uint8_t sendOffset_min;      //0-30
+    uint16_t postMax_num; //0 no limit,1~2000  
 } msn01_t;
 #define MSN_ACTIVE msn01_t
 
@@ -239,7 +240,6 @@ typedef struct {
     char    sampling_feature[PROVID_MW_SAMPLING_FEAUTRE_SZ];
     uint16_t timerPostTout_ms; // Gateway Timeout (ms)
     uint16_t timerPostPace_ms; // Gateway Pacing (ms)
-    uint16_t postMax_num; //0 no limit, else max num POSTs one session
     ini_name_value_t uuid[PROVID_UUID_SENSOR_CNTMAX_SZ];
 } provid_envirodiy01_t;
 typedef struct {
@@ -256,7 +256,6 @@ const char* thingSpeakChannelKey =   17x "XXXXXXXXXXXXXXXX";  // The Write API K
     char    thingSpeakChannelKey [PROVID_TSCHANNELKEY_SZ];
     uint16_t timerPostTout_ms; // Gateway Timeout (ms)
     uint16_t timerPostPace_ms; // Gateway Pacing (ms)
-    uint16_t postMax_num; //0 no limit, else max num POSTs one session
     //uuid[] not used sequential 
 } provid_thingspeak01_t;
 
@@ -268,7 +267,6 @@ typedef struct {
     char    deviceID[PROVID_UB_DEVICEID_SZ];
     uint16_t timerPostTout_ms; // Gateway Timeout (ms)
     uint16_t timerPostPace_ms; // Gateway Pacing (ms)
-    uint16_t postMax_num; //0 no limit, else max num POSTs one session
     ini_name_value_t uuid[PROVID_UUID_SENSOR_CNTMAX_SZ];
 } provid_ubidots01_t;
 typedef struct {

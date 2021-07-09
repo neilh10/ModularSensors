@@ -196,8 +196,7 @@ const int8_t modemVccPin =
     -2;  // MCU pin controlling modem power (-1 if not applicable)
 const int8_t modemStatusPin =
     19;  // MCU pin used to read modem status (-1 if not applicable)
-const int8_t modemResetPin =
-    20;  // MCU pin connected to modem reset pin (-1 if unconnected)
+const int8_t modemResetPin = -1;//20? MCU modem reset pin (-1 if unconnected)
 const int8_t modemSleepRqPin =
     23;  // MCU pin used for modem sleep/wake request (-1 if not applicable)
 const int8_t modemLEDPin = redLED;  // MCU pin connected an LED to show modem
@@ -1507,8 +1506,7 @@ void setup() {
     EnviroDIYPOST.setQuedState(true);
     EnviroDIYPOST.setTimerPostTimeout_mS(ps_ram.app.provider.s.ed.timerPostTout_ms);
     EnviroDIYPOST.setTimerPostPacing_mS(ps_ram.app.provider.s.ed.timerPostPace_ms);
-    //EnviroDIYPOST.setPostMax_num(ps_ram.app.provider.s.ed.postMax_num);
-#endif //USE_PUB_MMW
+ #endif //USE_PUB_MMW
 #if defined USE_PUB_TSMQTT
     TsMqttPub.begin(dataLogger, &modemPhy.gsmClient, 
                 ps_ram.app.provider.s.ts.thingSpeakMQTTKey,
@@ -1531,6 +1529,7 @@ void setup() {
 
     dataLogger.setSendEveryX(ps_ram.app.msn.s.collectReadings_num);
     dataLogger.setSendOffset(ps_ram.app.msn.s.sendOffset_min);  // delay Minutes
+    dataLogger.setPostMax_num(ps_ram.app.msn.s.postMax_num); 
 
 #endif  // UseModem_PushData
 
