@@ -1506,7 +1506,7 @@ void setup() {
     EnviroDIYPOST.setQuedState(true);
     EnviroDIYPOST.setTimerPostTimeout_mS(ps_ram.app.provider.s.ed.timerPostTout_ms);
     EnviroDIYPOST.setTimerPostPacing_mS(ps_ram.app.provider.s.ed.timerPostPace_ms);
- #endif //USE_PUB_MMW
+#endif //USE_PUB_MMW
 #if defined USE_PUB_TSMQTT
     TsMqttPub.begin(dataLogger, &modemPhy.gsmClient, 
                 ps_ram.app.provider.s.ts.thingSpeakMQTTKey,

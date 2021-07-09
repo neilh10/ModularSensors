@@ -73,7 +73,7 @@ uint16_t _sendPacingDelay_mSec = SERIALIZE_sendPacingDelay_mSec;
     }
 
     uint16_t getPostMax_num() {
-        MS_DBG(F("getPostMax_num"), _postMax_num;);
+        MS_DBG(F("getPostMax_num"), _postMax_num);
         return _postMax_num;
     }   
 #if !defined LB_POSTMAX_NUM_DEF 
@@ -217,6 +217,7 @@ bool deszRdelClose(bool deleteFile = false);
 bool serzQuedStart(char uniqueId);  // Use 1st, & sets filename
 bool deszQuedStart(void);
 #define deszQuedLine() deszLine(&serzQuedFile)
+uint16_t serzQuedFlushFile();
 bool serzQuedCloseFile(bool action);
 /*
 bool deszQuedCleanup(bool debug = false);
