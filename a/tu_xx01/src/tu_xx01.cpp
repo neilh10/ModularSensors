@@ -1544,7 +1544,7 @@ void setup() {
            bms.isBatteryStatusAbove(true, LiIon_BAT_REQ));
 
 #if defined DigiXBeeWifi_Module
-        // For the WiFi module, it may not be configured if no nscfg.ini file
+        // For the WiFi module, it may not be configured if no ms_cfg.ini file
         // present,
         // this supports the standalone logger, but need to get time at
         // factory/ms_cfg.ini present

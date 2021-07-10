@@ -1005,7 +1005,7 @@ void Logger::publishDataQuedToRemotes(bool internetPresent) {
                                 }
                                 cnt_for_pwr_analysis = 1;
                             }
-                            if (tot_posted  >= _postMax_num) {
+                            if ((tot_posted  >= _postMax_num) && (0 != _postMax_num)) {
                                 PRINTOUT(F("pubDQTR POST_MAX_NUM reached"), tot_posted);
                                 break; /// unsent lines are copied through
                             }
