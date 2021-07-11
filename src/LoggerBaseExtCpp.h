@@ -581,13 +581,37 @@ int8_t Logger::inihParseFile(ini_handler_atl485 handler_fn) {
     return error;
 }
 
-bool Logger::parseIniSd(const char* ini_fn, ini_handler_atl485 unhandledFnReq) {
-    uint8_t ini_err;
+bool Logger::parseIniSd(const char* ini_filename, ini_handler_atl485 unhandledFnReq) {
+    //Parses a 'ini' file.
+    // if there is ini_filename+'0' parse and then rename so won't be parsed again
+    // if there is ini_filename+'1' parse and then rename so won't be parsed again
+    // if there is ini_filename parse
+
     // Initialise the SD card
     // skip everything else if there's no SD card, otherwise it might hang
     if (!initializeSDCard()) return false;
 
-    if (logFile.open(ini_fn)) {
+    //const char ini_ext='0';
+    parseAndRename('0', ini_filename, unhandledFnReq);
+    if (parseAndRename('1', ini_filename, unhandledFnReq)) {
+        /// Good bye world, reset  
+        forceSysReset(0,4567);
+    }
+    if (sd1_card_fatfs.exists(ini_filename)) {
+        parseIniFile(ini_filename, unhandledFnReq);
+    } else {
+        PRINTOUT(F("Parse ini; No file "), ini_filename);
+        return false;
+    }
+    return true;
+}
+
+bool Logger::parseIniFile(const char * ini_filename, ini_handler_atl485 unhandledFnReq) {
+   uint8_t ini_err;
+   bool retStatus;
+   retStatus = logFile.open(ini_filename); 
+   if (retStatus) {
+        PRINTOUT( ini_filename,F(": parsing----"));
 #if PROCESS_LOCAL_INIH
         unhandledFn1 = unhandledFnReq;
         ini_err =
@@ -596,18 +620,64 @@ bool Logger::parseIniSd(const char* ini_fn, ini_handler_atl485 unhandledFnReq) {
         ini_err = inihParseFile(unhandledFnReq);  // handle found sections
 #endif                                    //
         logFile.close();
-        PRINTOUT(F("Parse ini; "), ini_fn);
         if (ini_err) {
             PRINTOUT(F("Error on line :"), ini_err);
         } else {
             PRINTOUT(F("Completed."));
         }
+    } 
+    return retStatus;
+}//parseIniFile
+
+bool Logger::parseAndRename(const char ini_ext, const char* ini_filename, ini_handler_atl485 unhandledFnReq) {
+    bool retStatus=true; //Was action completed
+#define FN_EXT_LEN_DEF strlen(ini_filename)+3
+    String fn_ext(FN_EXT_LEN_DEF);
+    fn_ext = ini_filename;
+    fn_ext += ini_ext;
+
+    // Check if exists 0 or 1 variants, parse and rename 
+    if (sd1_card_fatfs.exists(fn_ext)) {
+        String fn_ren(strlen(ini_filename)+4);
+        fn_ren = ini_filename;
+        fn_ren += ini_ext;
+        fn_ren += "run";
+
+        parseIniFile(fn_ext.c_str(), unhandledFnReq);
+        PRINTOUT(F("ParseIniSd  "), fn_ext,F("renamed to "),fn_ren);
+
+        if (sd1_card_fatfs.exists(fn_ren)) {
+            // delete so can rename next file
+            if (!sd1_card_fatfs.remove(fn_ren)) {
+                PRINTOUT(F("piSd err couldn't del "), fn_ren);
+            }
+        }
+        if (!sd1_card_fatfs.rename(fn_ext,fn_ren)) {
+            if (sd1_card_fatfs.remove(fn_ext)) {
+                PRINTOUT(F("piSd err couldn't rename "), fn_ext,F(" deleted"));
+            }else {
+                PRINTOUT(F("piSd err del/ren "), fn_ext);
+                retStatus = false;
+            }
+        }
     } else {
-        PRINTOUT(F("Parse ini; No file "), ini_fn);
-        return false;
+        MS_DBG(F("ParseIniSd not found file"), fn_ext);
+        retStatus = false;
     }
-    return true;
-}
+    return retStatus;
+} //parseAndRename
+
+void Logger::forceSysReset(uint8_t source, uint16_t simpleMagicNumber) {
+    
+    if (4567 !=simpleMagicNumber) return;
+
+    PRINTOUT(F("Forcing reset"), source);
+    delay(20);
+    watchDogTimer.setupWatchDog(1);
+    watchDogTimer.enableWatchDog();
+    delay(100000); //Expect watchdog to kick in within 8secs
+} //forceReset
+
 #ifdef USE_MS_SD_INI
 void Logger::setPs_cache(persistent_store_t* ps_ram) {
     ps_cache = ps_ram;
@@ -969,9 +1039,8 @@ void Logger::publishDataQuedToRemotes(bool internetPresent) {
                     if (sd1_card_fatfs.exists(serzQuedFn)) {
                         uint16_t tot_posted           = 0;
                         uint16_t cnt_for_pwr_analysis = 1;
-                        deszQuedStart();
-                        while ((dslStatus = deszQuedLine()) &&
-                               cnt_for_pwr_analysis) {
+                         deszQuedStart();
+                        while ((dslStatus = deszQuedLine()) )  {
 
                             /*At least one publish has been sucessfull.
                              * Slow Down sending based on publishers acceptance rate
@@ -993,7 +1062,6 @@ void Logger::publishDataQuedToRemotes(bool internetPresent) {
                             // Check for enough battery power
                             if (cnt_for_pwr_analysis++ >=
                                 _sendAtOneTimeMaxX_num) {
-                                cnt_for_pwr_analysis = 1;
                                 if (NULL != _bat_handler_atl) {
                                     // Measure  battery
                                     _bat_handler_atl(LB_PWR_USEABLE_REQ);
@@ -1001,10 +1069,17 @@ void Logger::publishDataQuedToRemotes(bool internetPresent) {
                                             LB_PWR_MODEM_USE_REQ)) {
                                         // stop transmission
                                         cnt_for_pwr_analysis = 0;
+                                        PRINTOUT(F("pubDQTR not enough power available"));
+                                        break;
                                     }
                                 }
+                                cnt_for_pwr_analysis = 1;
                             }
-                        }
+                            if ((tot_posted  >= _postMax_num) && (0 != _postMax_num)) {
+                                PRINTOUT(F("pubDQTR POST_MAX_NUM reached"), tot_posted);
+                                break; /// unsent lines are copied through
+                            }
+                        } //while
 // increment status of number attempts
 #if 0
                         if (deszq_line[DESLZ_STATUS_POS]++ >=
@@ -1014,7 +1089,8 @@ void Logger::publishDataQuedToRemotes(bool internetPresent) {
 #endif  // if z
         // deszQuedCloseFile() is serzQuedCloseFile(true)
                         if (tot_posted) {
-                            // At least one POST was accepted
+                            // At least one POST was accepted, if 2 or more, the last may have failed
+                            // and still be in deszq_line
                             serzQuedCloseFile(true);
                         } else {
                             serzQuedCloseFile(false);
@@ -1052,120 +1128,129 @@ bool Logger::serzQuedStart(char uniqueId) {
 
 bool Logger::serzQuedCloseFile(bool flush) {
     /* This closes the file, removing the sent messages
-     The algorithim is, rename to a temporary file,
-     copy unsent lines to the new file.
-     Assumes serzQuedFile points incoming file
+     Assumes serzQuedFile points incoming file if flush==true
     */
-    bool    retBool;
-    int16_t retNum;
-    File    tgtoutFile;
-#define TEMP_BASE_FN_STR "DEL01.TXT"
-    const char* tempFn = TEMP_BASE_FN_STR;
+    bool    retBool=true;
 
-    if (flush) {
-        // Check if exists and delete
-        if (sd1_card_fatfs.exists(tempFn)) {
-            if (!sd1_card_fatfs.remove(tempFn)) {
-                PRINTOUT(F("seQCF remove1 err"), serzQuedFn);
-                sd1_Err("seQCF err6 remove");
-            }
-        }
-        // rename to temp file so can copy to same Name
-        retBool = serzQuedFile.rename(tempFn);
-        if (!retBool) {
-            PRINTOUT(F("seQCF rename1 err"), tempFn);
-            // sd1_Err("seQCF rename2");
-            return false;
-        } else {
-            MS_DBG(F("seQCF rename "), serzQuedFn, F("to"), tempFn);
-        }
-        // or sd1_card_fatfs.rename()
-        /*serzQuedFile.close();
-        retBool = tempFile.open(tempFn, O_READ);
-        if (!retBool) {
-            PRINTOUT(F("seQCF open1 err"), tempFn);
-            // sd1_Err("seQCF rename2");
-            return false;
-        }*/
+    if (flush) {   
+        // There may be 0, or more of unsent records left in serzQued
+        uint16_t num_lines = serzQuedFlushFile();
 
-        retBool = tgtoutFile.open(serzQuedFn, (O_WRITE | O_CREAT));
-        if (!retBool) {
-            PRINTOUT(F("seQCF open2 err"), serzQuedFn);
-            // sd1_Err("seQCF open4");
-            return false;
-        }
-
-        /* There may be 0, or more of unsent records to copy from tempFile to
-        tgtoutFile How to determine if 0 */
-        int16_t  num_char  = strlen(deszq_line);
-        uint16_t num_lines = 0;
-        // First write out the recently attemtpted
-        MS_DBG(F("First("), num_char, F("):"), deszq_line, F(":"));
-        if (num_char) {  // Test could be min size, but this unknown
-            retNum = tgtoutFile.write(deszq_line, num_char);
-            if (retNum != num_char) {
-                PRINTOUT(F("seQCF tgtoutFile write1 err"), num_char);
-                // sd1_Err("seQCF write2");
-            } else {
-                MS_DBG(F("seQCF cpy lines across"));
-                while (0 < (num_char = serzQuedFile.fgets(deszq_line,
-                                                          QUEFILE_MAX_LINE))) {
-                    retNum = tgtoutFile.write(deszq_line, num_char);
-                    // Squelch last char LF
-                    deszq_line[sizeof(deszq_line) - 1] = 0;
-                    MS_DBG(deszq_line);
-                    if (retNum != num_char) {
-                        PRINTOUT(F("seQCF tgtoutFile write3 err"), num_char,
-                                 retNum);
-                        // sd1_Err("seQCF write4");
-                        break;
-                    }
-                    num_lines++;
-                }
-            }
-        }
         PRINTOUT(F("seQCF Que for next pass unsent records"), num_lines);
         desz_pending_records = num_lines;
 
-        retBool = tgtoutFile.close();
+    } else { // !flush simple clean
+        retBool = serzQuedFile.close();
         if (!retBool) {
-            sd1_Err("seQCF tgtoutFile.close1 err");
+            sd1_Err("seQCF serzQuedFile.close2 err");
             return false;
         }
     }
-    retBool = serzQuedFile.close();
-    if (!retBool) {
-        sd1_Err("seQCF serzQuedFile.close2 err");
-        return false;
-    }
-#if 0
-#define TEMPBUF2_SZ QUEFILE_MAX_LINE
-    char tempBuffer[TEMPBUF2_SZ] = "";
-    // tgtoutFile.getName(tempBuffer, TEMPBUF_SZ);
-    // MS_DBG(F("seQCF closing"), tempBuffer, flush, F("top:"));
-    // tgtoutFile.rewind();
-
-    retBool = serzQuedFile.open(serzQuedFn, O_READ);
-    if (!retBool) {
-        // sd1_Err("seQCF serzQuedFile.open2");
-        PRINTOUT(F("seQCF serzQuedFile.open2 err"), serzQuedFn);
-        return false;
-    }
-    for (uint8_t flp = 0; flp < 5; flp++) {
-        tempBuffer[0] = 0;
-        retNum        = serzQuedFile.fgets(tempBuffer, TEMPBUF2_SZ);
-        PRINTOUT(flp, F("]"), retNum, (":"), tempBuffer);
-        if (0 >= retNum) {
-            if (0 == retNum) break;  // Normal
-            sd1_Err("seQCF fgets list");
-            break;
-        }
-    }
-    retBool = serzQuedFile.close();
-#endif  // if x Debug
-    if (!retBool) { PRINTOUT(F("seQCF err close serzQuedFile")); }
     return retBool;
 }
+
+#define TEMP_BASE_FN_STR "TMP01.TXT"
+#define QUEOLD_BASE_FN_STR "QUEDEL01.TXT"
+inline uint16_t Logger::serzQuedFlushFile() {
+    /*  The flush algorithim is, 
+     copy unsent lines to a temporary_file.
+     Assumes serzQuedFile points incoming file
+     when complete rename serzQuedFile  to delete_file
+     rename temporary_file to serzQuedFile to complete flush
+    */
+    const char* tempFn = TEMP_BASE_FN_STR;
+    const char* queDelFn = QUEOLD_BASE_FN_STR;
+    File    tgtoutFile;
+    int16_t retNum;
+    int16_t  num_char ;
+    uint16_t num_lines = 0;   
+    bool    retBool;
+
+    // Check if exists and delete
+    if (sd1_card_fatfs.exists(tempFn)) {
+        if (!sd1_card_fatfs.remove(tempFn)) {
+            PRINTOUT(F("seQFF remove1 err"), tempFn);
+            sd1_Err("seQFF err6 remove");
+        } else {
+            MS_DBG(F("seQFF remove "), tempFn);
+        }
+    }  
+    retBool = tgtoutFile.open(tempFn, (O_WRITE | O_CREAT));
+    if (!retBool) {
+        PRINTOUT(F("seQFF open2 err"), tempFn);
+        // sd1_Err("seQCF open4");
+        //todo close all other files
+        return 0;
+    } else {
+        MS_DBG(F("seQFF opened "), tempFn);
+    }
+
+    num_char  = strlen(deszq_line);
+    if (num_char) {  // Test could be min size, but this unknown
+        MS_DBG(F("seQFF Last POST Failed "),  deszq_line);
+        retNum = tgtoutFile.write(deszq_line, num_char);
+        if (retNum != num_char) {
+            PRINTOUT(F("seQFF tgtoutFile write1 err"), num_char);
+            // sd1_Err("seQCF write2");
+        }
+    } 
+
+    MS_DBG(F("seQFF cpy lines across"));
+    while (0 < (num_char = serzQuedFile.fgets(deszq_line,
+                                                QUEFILE_MAX_LINE))) {
+        retNum = tgtoutFile.write(deszq_line, num_char);
+        // Squelch last char LF
+        deszq_line[sizeof(deszq_line) - 1] = 0;
+        MS_DBG(deszq_line);
+        if (retNum != num_char) {
+            PRINTOUT(F("seQFF tgtoutFile write3 err"), num_char,
+                        retNum);
+            // sd1_Err("seQFF write4");
+            break;
+        }
+        num_lines++;
+    }
+
+    //Cleanup flushed serzQuedFile to del_file as debugging aid
+    if (sd1_card_fatfs.exists(queDelFn)) {
+        if (!sd1_card_fatfs.remove(queDelFn)) {
+            PRINTOUT(F("seQFF remove2 err"), queDelFn);
+            sd1_Err("seQFF err7 remove");
+        }
+    }     
+
+    retBool = serzQuedFile.rename(queDelFn);
+    if (!retBool) {
+        PRINTOUT(F("seQFF rename1 err"), queDelFn);
+        //Problem - may never empty serzQuedFile - should reboot?
+        retBool = serzQuedFile.close();
+        sd1_card_fatfs.remove(serzQuedFn);
+        // sd1_Err("seQFF rename2");
+        //return num_lines;
+    } else {
+        MS_DBG(F("seQFF cleanup rename "), serzQuedFn, F("to"), queDelFn);
+
+        retBool = serzQuedFile.close();
+        if (!retBool) {
+            sd1_Err("seQFF serzQuedFile.close2 err");
+            return  num_lines;
+        } else {MS_DBG(F("seQFF close serzQuedFile")); }
+
+        retBool = tgtoutFile.rename(serzQuedFn);
+        if (!retBool) {
+            sd1_Err("seQFF tgtoutFile.rename err");
+            return  num_lines;
+        } else {MS_DBG(F("seQFF rename "), tempFn, F("to"), serzQuedFn); }
+
+        retBool = tgtoutFile.close();
+        if (!retBool) {
+            sd1_Err("seQFF tgtoutFile.close1 err");
+            return  num_lines;
+        } else {MS_DBG(F("seQFF closed tgtoutFile")); }
+    }
+
+    return  num_lines;
+} //serzQuedFlushFile
 
 /*
 For serialize, create ASCII CSV records of the form

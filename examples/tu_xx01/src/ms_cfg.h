@@ -1,7 +1,5 @@
 /*****************************************************************************
-ms_cfg.h_ub_test  - ModularSensors Configuration - testing to UBIDOTS/WiFi
-- Temperature/Humidity 
-210326 STATUS 0.28.3 updated cc, not tested
+ms_cfg.h_nano - ModularSensors cfg - KellerNano MMW/LTE
 
 Written By:  Neil Hancock www.envirodiy.org/members/neilh20/
 Development Environment: PlatformIO
@@ -42,7 +40,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 //#define Decagon_CTD_UUID 1
 //#define Insitu_TrollSdi12_UUID 1
 
-//#define WINGBOARD_KNH002 1
+#define WINGBOARD_KNH002 1
 #if defined WINGBOARD_KNH002
 //This supports RS485 1.9W and STC3100
 //#define USE_STC3100_DD 1
@@ -52,18 +50,18 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 // KellerAcculevel units can be 1 (meter) 2 (feet)
 //#define KellerAcculevel_DepthUnits 2
 
-//#define KellerNanolevel_ACT 1
+#define KellerNanolevel_ACT 1
 #endif //WINGBOARD_KNH002
 
 //Select one of following MAYFLY_BAT_xx as the source for BatterManagement Analysis
-#define MAYFLY_BAT_CHOICE MAYFLY_BAT_A6
+//#define MAYFLY_BAT_CHOICE MAYFLY_BAT_A6
 //#define MAYFLY_BAT_CHOICE MAYFLY_BAT_AA0
-//#define MAYFLY_BAT_CHOICE MAYFLY_BAT_STC3100
+#define MAYFLY_BAT_CHOICE MAYFLY_BAT_STC3100
 // FUT #define MAYFLY_BAT_CHOICE  MAYFLY_BAT_DIGI
 
-#define ASONG_AM23XX_UUID 1
+//#define ASONG_AM23XX_UUID 1
 
-// sensors with low power useage
+//Two heavy sensors with power useage
 #define BM_PWR_SENSOR_CONFIG_BUILD_SPECIFIC BM_PWR_LOW_REQ
 
 // Mayfly configuration
@@ -74,7 +72,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define MFName_DEF "Mayfly"
 #define HwVersion_DEF MFVersion_DEF
 #define HwName_DEF MFName_DEF
-#define CONFIGURATION_DESCRIPTION_STR "tu_test basic WiFi"
+#define CONFIGURATION_DESCRIPTION_STR "nano MMW/LTE"
 
 #define USE_MS_SD_INI 1
 #define USE_PS_EEPROM 1
@@ -133,11 +131,11 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 // UseModem_PushData.
 #define UseModem_Module 1
 #define UseModem_PushData 1
-//Select buildtime Publishers  supported. Not all publishers can be supported
+//Select buildtime Publishers  supported. 
 // The persisten resources (EEPROM) are allocated as a baselevel no matter what options 
-//#define USE_PUB_MMW      1
+#define USE_PUB_MMW      1
 //#define USE_PUB_TSMQTT   1
-#define  USE_PUB_UBIDOTS 1
+//#define  USE_PUB_UBIDOTS 1
 
 // Required for TinyGsmClient.h
 #define TINY_GSM_MODEM_XBEE
@@ -153,7 +151,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 //POST PACING ms 0-15000
 #define MMW_TIMER_POST_PACING_MS_DEF 100L
 //Post MAX Num - is num of MAX num at one go. 0 no limit
-#define MMW_TIMER_POST_MAX_MUM_DEF 0 
+#define MMW_TIMER_POST_MAX_MUM_DEF 100 
 //Manage Internet - common for all providers
 #define MNGI_COLLECT_READINGS_DEF 1
 #define MNGI_SEND_OFFSET_MIN_DEF 0

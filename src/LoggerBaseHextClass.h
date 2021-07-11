@@ -67,12 +67,29 @@ uint8_t getSendPacingDelay(void) {
 #define SERIALIZE_sendPacingDelay_mSec 2
 uint16_t _sendPacingDelay_mSec = SERIALIZE_sendPacingDelay_mSec;
 
+    uint16_t setPostMax_num(uint16_t mp_num) {
+        MS_DBG(F("setMaxPost_num"), mp_num);
+        return _postMax_num = mp_num;
+    }
+
+    uint16_t getPostMax_num() {
+        MS_DBG(F("getPostMax_num"), _postMax_num);
+        return _postMax_num;
+    }   
+#if !defined LB_POSTMAX_NUM_DEF 
+#define LB_POSTMAX_NUM_DEF 96L //MMW_TIMER_POST_MAX_MUM_DEF
+#endif  // LB_POSTMAX_NUM_DEF
+    uint16_t _postMax_num = LB_POSTMAX_NUM_DEF; //See MMW_TIMER_POST_MAX_MUM_DEF    
+
 // ===================================================================== //
 // Public functions for a "reading .ini" file
 // ===================================================================== //
 
 public:
-bool parseIniSd(const char* ini_fn, ini_handler_atl485 handler_fn);
+bool parseIniSd(const char* ini_filename, ini_handler_atl485 handler_fn);
+bool parseIniFile(const char* ini_filename, ini_handler_atl485 unhandledFnReq);
+bool parseAndRename(const char ini_ext, const char* ini_filename, ini_handler_atl485 unhandledFnReq);
+void forceSysReset(uint8_t source, uint16_t simpleCheck);
 #ifdef USE_MS_SD_INI
 void setPs_cache(persistent_store_t* ps_ram);
 void printFileHeaderExtra(Stream* stream);
@@ -203,6 +220,7 @@ bool deszRdelClose(bool deleteFile = false);
 bool serzQuedStart(char uniqueId);  // Use 1st, & sets filename
 bool deszQuedStart(void);
 #define deszQuedLine() deszLine(&serzQuedFile)
+uint16_t serzQuedFlushFile();
 bool serzQuedCloseFile(bool action);
 /*
 bool deszQuedCleanup(bool debug = false);
