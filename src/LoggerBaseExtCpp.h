@@ -581,13 +581,37 @@ int8_t Logger::inihParseFile(ini_handler_atl485 handler_fn) {
     return error;
 }
 
-bool Logger::parseIniSd(const char* ini_fn, ini_handler_atl485 unhandledFnReq) {
-    uint8_t ini_err;
+bool Logger::parseIniSd(const char* ini_filename, ini_handler_atl485 unhandledFnReq) {
+    //Parses a 'ini' file.
+    // if there is ini_filename+'0' parse and then rename so won't be parsed again
+    // if there is ini_filename+'1' parse and then rename so won't be parsed again
+    // if there is ini_filename parse
+
     // Initialise the SD card
     // skip everything else if there's no SD card, otherwise it might hang
     if (!initializeSDCard()) return false;
 
-    if (logFile.open(ini_fn)) {
+    //const char ini_ext='0';
+    parseAndRename('0', ini_filename, unhandledFnReq);
+    if (parseAndRename('1', ini_filename, unhandledFnReq)) {
+        /// Good bye world, reset  
+        forceSysReset(0,4567);
+    }
+    if (sd1_card_fatfs.exists(ini_filename)) {
+        parseIniFile(ini_filename, unhandledFnReq);
+    } else {
+        PRINTOUT(F("Parse ini; No file "), ini_filename);
+        return false;
+    }
+    return true;
+}
+
+bool Logger::parseIniFile(const char * ini_filename, ini_handler_atl485 unhandledFnReq) {
+   uint8_t ini_err;
+   bool retStatus;
+   retStatus = logFile.open(ini_filename); 
+   if (retStatus) {
+        PRINTOUT( ini_filename,F(": parsing----"));
 #if PROCESS_LOCAL_INIH
         unhandledFn1 = unhandledFnReq;
         ini_err =
@@ -596,18 +620,64 @@ bool Logger::parseIniSd(const char* ini_fn, ini_handler_atl485 unhandledFnReq) {
         ini_err = inihParseFile(unhandledFnReq);  // handle found sections
 #endif                                    //
         logFile.close();
-        PRINTOUT(F("Parse ini; "), ini_fn);
         if (ini_err) {
             PRINTOUT(F("Error on line :"), ini_err);
         } else {
             PRINTOUT(F("Completed."));
         }
+    } 
+    return retStatus;
+}//parseIniFile
+
+bool Logger::parseAndRename(const char ini_ext, const char* ini_filename, ini_handler_atl485 unhandledFnReq) {
+    bool retStatus=true; //Was action completed
+#define FN_EXT_LEN_DEF strlen(ini_filename)+3
+    String fn_ext(FN_EXT_LEN_DEF);
+    fn_ext = ini_filename;
+    fn_ext += ini_ext;
+
+    // Check if exists 0 or 1 variants, parse and rename 
+    if (sd1_card_fatfs.exists(fn_ext)) {
+        String fn_ren(strlen(ini_filename)+4);
+        fn_ren = ini_filename;
+        fn_ren += ini_ext;
+        fn_ren += "run";
+
+        parseIniFile(fn_ext.c_str(), unhandledFnReq);
+        PRINTOUT(F("ParseIniSd  "), fn_ext,F("renamed to "),fn_ren);
+
+        if (sd1_card_fatfs.exists(fn_ren)) {
+            // delete so can rename next file
+            if (!sd1_card_fatfs.remove(fn_ren)) {
+                PRINTOUT(F("piSd err couldn't del "), fn_ren);
+            }
+        }
+        if (!sd1_card_fatfs.rename(fn_ext,fn_ren)) {
+            if (sd1_card_fatfs.remove(fn_ext)) {
+                PRINTOUT(F("piSd err couldn't rename "), fn_ext,F(" deleted"));
+            }else {
+                PRINTOUT(F("piSd err del/ren "), fn_ext);
+                retStatus = false;
+            }
+        }
     } else {
-        PRINTOUT(F("Parse ini; No file "), ini_fn);
-        return false;
+        MS_DBG(F("ParseIniSd not found file"), fn_ext);
+        retStatus = false;
     }
-    return true;
-}
+    return retStatus;
+} //parseAndRename
+
+void Logger::forceSysReset(uint8_t source, uint16_t simpleMagicNumber) {
+    
+    if (4567 !=simpleMagicNumber) return;
+
+    PRINTOUT(F("Forcing reset"), source);
+    delay(20);
+    watchDogTimer.setupWatchDog(1);
+    watchDogTimer.enableWatchDog();
+    delay(100000); //Expect watchdog to kick in within 8secs
+} //forceReset
+
 #ifdef USE_MS_SD_INI
 void Logger::setPs_cache(persistent_store_t* ps_ram) {
     ps_cache = ps_ram;

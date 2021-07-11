@@ -86,7 +86,10 @@ uint16_t _sendPacingDelay_mSec = SERIALIZE_sendPacingDelay_mSec;
 // ===================================================================== //
 
 public:
-bool parseIniSd(const char* ini_fn, ini_handler_atl485 handler_fn);
+bool parseIniSd(const char* ini_filename, ini_handler_atl485 handler_fn);
+bool parseIniFile(const char* ini_filename, ini_handler_atl485 unhandledFnReq);
+bool parseAndRename(const char ini_ext, const char* ini_filename, ini_handler_atl485 unhandledFnReq);
+void forceSysReset(uint8_t source, uint16_t simpleCheck);
 #ifdef USE_MS_SD_INI
 void setPs_cache(persistent_store_t* ps_ram);
 void printFileHeaderExtra(Stream* stream);
