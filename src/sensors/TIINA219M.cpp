@@ -13,7 +13,7 @@ TIINA219M::TIINA219M(TwoWire* theI2C, int8_t powerPin, uint8_t i2cAddressHex,
                    uint8_t measurementsToAverage)
     : Sensor("TIINA219", INA219_NUM_VARIABLES, INA219_WARM_UP_TIME_MS,
              INA219_STABILIZATION_TIME_MS, INA219_MEASUREMENT_TIME_MS, powerPin,
-             -1, measurementsToAverage) {
+             -1, measurementsToAverage, TINA219M_INC_CALC_VARIABLES) {
     _i2cAddressHex = i2cAddressHex;
     _i2c           = theI2C;
 }
@@ -21,7 +21,7 @@ TIINA219M::TIINA219M(int8_t powerPin, uint8_t i2cAddressHex,
                    uint8_t measurementsToAverage)
     : Sensor("TIINA219M", INA219_NUM_VARIABLES, INA219_WARM_UP_TIME_MS,
              INA219_STABILIZATION_TIME_MS, INA219_MEASUREMENT_TIME_MS, powerPin,
-             -1, measurementsToAverage) {
+             -1, measurementsToAverage, TINA219M_INC_CALC_VARIABLES) {
     _i2cAddressHex = i2cAddressHex;
     _i2c           = &Wire;
     _ina219_pollmask    = INA219_POLLMASK_ALL;

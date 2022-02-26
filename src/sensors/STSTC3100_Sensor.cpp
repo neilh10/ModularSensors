@@ -16,7 +16,7 @@ STSTC3100_Sensor::STSTC3100_Sensor(TwoWire* theI2C,
                          uint32_t warmUpTime_ms, uint32_t stabilizationTime_ms,
                          uint32_t measurementTime_ms)
     : Sensor(sensorName, numReturnedVars, warmUpTime_ms, stabilizationTime_ms,
-             measurementTime_ms, -1, -1, measurementsToAverage) {
+             measurementTime_ms, -1, -1, measurementsToAverage, STSTC3100SENSOR_INC_CALC_VARIABLES) {
     _i2c           = theI2C;
 }
 STSTC3100_Sensor::STSTC3100_Sensor(
@@ -25,7 +25,7 @@ STSTC3100_Sensor::STSTC3100_Sensor(
                          uint32_t stabilizationTime_ms,
                          uint32_t measurementTime_ms)
     : Sensor(sensorName, numReturnedVars, warmUpTime_ms, stabilizationTime_ms,
-             measurementTime_ms, -1, -1, measurementsToAverage) {
+             measurementTime_ms, -1, -1, measurementsToAverage, STSTC3100SENSOR_INC_CALC_VARIABLES) {
     _i2c           = &Wire;
 }
 

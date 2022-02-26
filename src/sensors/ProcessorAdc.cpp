@@ -104,7 +104,7 @@ processorAdc::processorAdc(int8_t powerPin, uint8_t adcChannel, float gain,
                            uint8_t measurementsToAverage)
     : Sensor("processorAdc", PROC_ADC_NUM_VARIABLES, PROC_ADC_WARM_UP_TIME_MS,
              PROC_ADC_STABILIZATION_TIME_MS, PROC_ADC_MEASUREMENT_TIME_MS,
-             powerPin, -1, measurementsToAverage) {
+             powerPin, -1, measurementsToAverage, PROCESSORADC_INC_CALC_VARIABLES) {
     _adcChannel = adcChannel;
     _gain       = gain;
 }

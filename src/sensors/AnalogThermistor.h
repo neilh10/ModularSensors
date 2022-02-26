@@ -36,7 +36,11 @@
 #include "math.h"
 
 // Sensor Specific Defines
+/// @brief Sensor::_numReturnedValues; we only get one value from the analog thermistor sensor.
 #define ANALOGTHERMISTOR_NUM_VARIABLES 1
+/// @brief Sensor::_incCalcValues; we don't calculate any additional values
+#define ANALOGTHERMISTOR_INC_CALC_VARIABLES 0
+
 #define ANALOGTHERMISTOR_WARM_UP_TIME_MS 0
 #define ANALOGTHERMISTOR_STABILIZATION_TIME_MS 0
 #define ANALOGTHERMISTOR_MEASUREMENT_TIME_MS 0

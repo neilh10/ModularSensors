@@ -107,7 +107,7 @@ analogThermistor::analogThermistor(int8_t powerPin, int8_t adcPin,
              ANALOGTHERMISTOR_WARM_UP_TIME_MS,
              ANALOGTHERMISTOR_STABILIZATION_TIME_MS,
              ANALOGTHERMISTOR_MEASUREMENT_TIME_MS, powerPin, adcPin,
-             measurementsToAverage) {
+             measurementsToAverage, ANALOGTHERMISTOR_INC_CALC_VARIABLES) {
     //_version = version;
     //_TemperaturePowerPin= -1;
     _TemperatureAdcPin = adcPin, _thermistorType = APTT_NCP15XH193F03RC;
