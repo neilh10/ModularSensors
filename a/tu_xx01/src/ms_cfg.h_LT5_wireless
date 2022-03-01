@@ -1,5 +1,6 @@
 /*****************************************************************************
-ms_cfg.h_LT5_lte  - ModularSensors Configuration - tgt _LT5 /LTE
+ms_cfg.h_LT5_lte  - ModularSensors Configuration - tgt _LT5/Modbus +LTE
+Status 220301: 0.32.2rs485 updated cc, not tested
 Written By:  Neil Hancock www.envirodiy.org/members/neilh20/
 Development Environment: PlatformIO
 Hardware Platform(s): EnviroDIY Mayfly Arduino Datalogger+RS485 Wingboard
@@ -36,7 +37,9 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 
 //#define ENVIRODIY_MAYFLY_TEMPERATURE 1
 //#define Decagon_CTD_UUID 1
+//For Insitu_Troll specify one or none 
 #define Insitu_TrollSdi12_UUID 1
+//#define Insitu_TrollModbus_UUID 1
 
 #define WINGBOARD_KNH002 1
 #if defined WINGBOARD_KNH002
@@ -164,12 +167,25 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #endif  // Decagon_CTD_UUID
 
 
-#ifdef Insitu_TrollSdi12_UUID
+#if defined Insitu_TrollSdi12_UUID || defined Insitu_TrollModbus_UUID
 // Mayfly definitions
-#define ITROLL_DEPTH_UUID "ITROLL_DEPTH_UUID"
-#define ITROLL_TEMP_UUID "ITROLL_TEMP_UUID"
+#ifdef Insitu_TrollModbus_UUID
+#define InsituLTrs485_ACT 1 //-not working
+#ifdef InsituLTrs485_ACT
+#define CONFIG_SENSOR_RS485_PHY 1
+#define InsituLTrs485_Depth_UUID "ITROLLM_DEPTH_UUID"
+#define InsituLTrs485_Temp_UUID "ITROLLM_TEMP_UUID"
+#define InsituLTrs485ModbusAddress_DEF 0x01
+// Default is 19200 lets hope serial works with it.
+#define MODBUS_BAUD_RATE 19200
+#endif  // InsituLTrs485_ACT
+#elif defined Insitu_TrollSdi12_UUID
+#define ITROLLS_DEPTH_UUID "ITROLL_DEPTH_UUID"
+#define ITROLLS_TEMP_UUID "ITROLL_TEMP_UUID"
 //#define ITROLL_PRESSURE_UUID  "ITROLL_PRESSURE_UUID"
-#endif  // Insitu_Troll_UUID
+#endif  // Insitu_TrollSdi12_UUID
+#endif  // Insitu_Trollxxx
+
 
 
 #ifdef KellerAcculevel_ACT
@@ -185,16 +201,6 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define CONFIG_SENSOR_RS485_PHY 1
 #define KellerNanolevelModbusAddress_DEF 0x01
 #endif  // KellerNanolevel_ACT
-
-//#define InsituLTrs485_ACT 1 -not working
-#ifdef InsituLTrs485_ACT
-#define CONFIG_SENSOR_RS485_PHY 1
-#define InsituLTrs485_Height_UUID "KellerNanolevel_Height_UUID"
-#define InsituLTrs485_Temp_UUID "KellerNanolevel_Temp_UUID"
-#define InsituLTrs485ModbusAddress_DEF 0x01
-// Default is 19200 lets hope serial works with it.
-#define MODBUS_BAUD_RATE 19200
-#endif  // InsituLTrs485_ACT
 
 #ifdef CONFIG_SENSOR_RS485_PHY
 // Mayfly definitions

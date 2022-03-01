@@ -1,7 +1,6 @@
 /*****************************************************************************
-ms_cfg.h_EC  - ModularSensors Configuration - tgt relative _EC
-Status: 210326: updated cc but not tested
-
+ms_cfg.h_LT5_lte  - ModularSensors Configuration - tgt _LT5/Modbus +LTE
+Status 220301: 0.32.2rs485 updated cc, not tested
 Written By:  Neil Hancock www.envirodiy.org/members/neilh20/
 Development Environment: PlatformIO
 Hardware Platform(s): EnviroDIY Mayfly Arduino Datalogger+RS485 Wingboard
@@ -23,7 +22,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 //**************************************************************************
 // This configuration is for a standard Mayfly0.5b
 // Sensors Used - two std to begin then
-#define AnalogProcEC_ACT 1
+//#define AnalogProcEC_ACT 1
 // Power Availability monitoring decisions use LiIon Voltge,
 // Battery Voltage measurements can be derived from a number of sources
 // MAYFLY_BAT_A6  - standard measures Solar Charging or LiIon battry V which ever is greated
@@ -31,17 +30,18 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 // MAYFLY_BAT_STC3100  sensor IC on RS485 WINGBOARD_KNH002
 // MAYFLY_BAT_DIGI Digi Modem LTE with onboard battery measurement
 // Choices applied to define MAYFLY_BAT_xx 1) Stc3100 2) ExternVolage_ACT 3) Digi Mode 4) MAYFLY_BAT_A6
-
-//#define MAYFLY_BAT_A6 4
-#define MAYFLY_BAT_AA0 2
+#define MAYFLY_BAT_A6 4
+//#define MAYFLY_BAT_AA0 2
 //FUT #define MAYFLY_BAT_DIGI 3
 
 
 //#define ENVIRODIY_MAYFLY_TEMPERATURE 1
 //#define Decagon_CTD_UUID 1
-//#define Insitu_TrollSdi12_UUID 1
+//For Insitu_Troll specify one or none 
+#define Insitu_TrollSdi12_UUID 1
+//#define Insitu_TrollModbus_UUID 1
 
-//#define WINGBOARD_KNH002 1
+#define WINGBOARD_KNH002 1
 #if defined WINGBOARD_KNH002
 //This supports RS485 1.9W and STC3100
 //#define USE_STC3100_DD 1
@@ -51,18 +51,18 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 // KellerAcculevel units can be 1 (meter) 2 (feet)
 //#define KellerAcculevel_DepthUnits 2
 
-#define KellerNanolevel_ACT 1
+//#define KellerNanolevel_ACT 1
 #endif //WINGBOARD_KNH002
 
 //Select one of following MAYFLY_BAT_xx as the source for BatterManagement Analysis
 //#define MAYFLY_BAT_CHOICE MAYFLY_BAT_A6
-#define MAYFLY_BAT_CHOICE MAYFLY_BAT_AA0
-//#define MAYFLY_BAT_CHOICE MAYFLY_BAT_STC3100
+//#define MAYFLY_BAT_CHOICE MAYFLY_BAT_AA0
+#define MAYFLY_BAT_CHOICE MAYFLY_BAT_STC3100
 // FUT #define MAYFLY_BAT_CHOICE  MAYFLY_BAT_DIGI
 
 //#define ASONG_AM23XX_UUID 1
 
-// sensors with low power useage
+//Two heavy sensors with power useage
 #define BM_PWR_SENSOR_CONFIG_BUILD_SPECIFIC BM_PWR_LOW_REQ
 
 // Mayfly configuration
@@ -73,7 +73,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define MFName_DEF "Mayfly"
 #define HwVersion_DEF MFVersion_DEF
 #define HwName_DEF MFName_DEF
-#define CONFIGURATION_DESCRIPTION_STR "Electrical Conductivity WiFi S6/LTE XB3-C-A2"
+#define CONFIGURATION_DESCRIPTION_STR "tu_LT5_lte LT500/SDI12"
 
 #define USE_MS_SD_INI 1
 #define USE_PS_EEPROM 1
@@ -115,26 +115,17 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define loggingInterval_MAX_CDEF_MIN 6 * 60
 
 
-// Instructions: define only one  _Module
-//#define DigiXBeeWifi_Module 1
-//#warning infoMayflyWithDigiXBeeWiFi
-//#define DigiXBeeCellularTransparent_Module 1
-//#warning infoMayflyWithDigiXBeeCellTransparent
-// #define DigiXBeeLTE_Module 1 - unstable
-// #define TINY_GSM_MODEM_SIM800  // Select for a SIM800, SIM900, or variant
-// thereof #define TINY_GSM_MODEM_UBLOX  // Select for most u-blox cellular
-// modems #define TINY_GSM_MODEM_ESP8266  // Select for an ESP8266 using the
-// DEFAULT AT COMMAND FIRMWARE End TinyGsmClient.h options
-#if defined(DigiXBeeWifi_Module) || defined(DigiXBeeCellularTransparent_Module)
+// Supports DigiXBeeCellularTransparent & DigiXBeeWifi
+#define UseModem_Module 1
+#if UseModem_Module 
 // The Modem is used to push data and also sync Time
 // In standalong logger, no internet, Modem can be required at factor to do a
 // sync Time Normally enable both of the following. In standalone, disable
 // UseModem_PushData.
-#define UseModem_Module 1
-//#define UseModem_PushData 1
+#define UseModem_PushData 1
 //Select buildtime Publishers  supported. 
 // The persisten resources (EEPROM) are allocated as a baselevel no matter what options 
-//#define USE_PUB_MMW      1
+#define USE_PUB_MMW      1
 //#define USE_PUB_TSMQTT   1
 //#define  USE_PUB_UBIDOTS 1
 
@@ -156,9 +147,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 //Manage Internet - common for all providers
 #define MNGI_COLLECT_READINGS_DEF 1
 #define MNGI_SEND_OFFSET_MIN_DEF 0
-#endif  // Modules
-
-// end of _Module
+#endif  // UseModem_Module 
 
 // This might need revisiting
 #define ARD_ANLAOG_MULTIPLEX_PIN A6
@@ -178,12 +167,25 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #endif  // Decagon_CTD_UUID
 
 
-#ifdef Insitu_TrollSdi12_UUID
+#if defined Insitu_TrollSdi12_UUID || defined Insitu_TrollModbus_UUID
 // Mayfly definitions
-#define ITROLL_DEPTH_UUID "ITROLL_DEPTH_UUID"
-#define ITROLL_TEMP_UUID "ITROLL_TEMP_UUID"
+#ifdef Insitu_TrollModbus_UUID
+#define InsituLTrs485_ACT 1 //-not working
+#ifdef InsituLTrs485_ACT
+#define CONFIG_SENSOR_RS485_PHY 1
+#define InsituLTrs485_Depth_UUID "ITROLLM_DEPTH_UUID"
+#define InsituLTrs485_Temp_UUID "ITROLLM_TEMP_UUID"
+#define InsituLTrs485ModbusAddress_DEF 0x01
+// Default is 19200 lets hope serial works with it.
+#define MODBUS_BAUD_RATE 19200
+#endif  // InsituLTrs485_ACT
+#elif defined Insitu_TrollSdi12_UUID
+#define ITROLLS_DEPTH_UUID "ITROLL_DEPTH_UUID"
+#define ITROLLS_TEMP_UUID "ITROLL_TEMP_UUID"
 //#define ITROLL_PRESSURE_UUID  "ITROLL_PRESSURE_UUID"
-#endif  // Insitu_Troll_UUID
+#endif  // Insitu_TrollSdi12_UUID
+#endif  // Insitu_Trollxxx
+
 
 
 #ifdef KellerAcculevel_ACT
@@ -199,16 +201,6 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define CONFIG_SENSOR_RS485_PHY 1
 #define KellerNanolevelModbusAddress_DEF 0x01
 #endif  // KellerNanolevel_ACT
-
-//#define InsituLTrs485_ACT 1 -not working
-#ifdef InsituLTrs485_ACT
-#define CONFIG_SENSOR_RS485_PHY 1
-#define InsituLTrs485_Height_UUID "KellerNanolevel_Height_UUID"
-#define InsituLTrs485_Temp_UUID "KellerNanolevel_Temp_UUID"
-#define InsituLTrs485ModbusAddress_DEF 0x01
-// Default is 19200 lets hope serial works with it.
-#define MODBUS_BAUD_RATE 19200
-#endif  // InsituLTrs485_ACT
 
 #ifdef CONFIG_SENSOR_RS485_PHY
 // Mayfly definitions
@@ -252,7 +244,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 
 #if defined UseModem_Module
 // This seems to be de-stabilizing Digi S6B
-//#define DIGI_RSSI_UUID "DIGI_RSSI_UUID"
+#define DIGI_RSSI_UUID "DIGI_RSSI_UUID"
 //#define Modem_SignalPercent_UUID    "SignalPercent_UUID"
 #endif  // UseModem_Module
 
