@@ -1,6 +1,6 @@
 /*****************************************************************************
-ms_cfg.h_LT5_lte  - ModularSensors Configuration - tgt _LT5 Acculevel /LTE
-Status 210326: 0.28.3 updated cc, not tested
+ms_cfg.h_LT5_wireless - ModularSensors Config - MMW _LT5 Acculevel/modbus +LTE/WiFi
+Status 220303: 0.32.2 
 Written By:  Neil Hancock www.envirodiy.org/members/neilh20/
 Development Environment: PlatformIO
 Hardware Platform(s): EnviroDIY Mayfly Arduino Datalogger+RS485 Wingboard

@@ -1,5 +1,5 @@
 /*****************************************************************************
-ms_cfg.h_LT5_lte  - ModularSensors Configuration - tgt _LT5/Modbus +LTE
+ms_cfg.h_LT5_wireless  - ModularSensors Configuration - tgt _LT5/Modbus +LTE/WiFi
 Status 220301: 0.32.2rs485 updated cc, not tested
 Written By:  Neil Hancock www.envirodiy.org/members/neilh20/
 Development Environment: PlatformIO
@@ -173,8 +173,8 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define InsituLTrs485_ACT 1 //-not working
 #ifdef InsituLTrs485_ACT
 #define CONFIG_SENSOR_RS485_PHY 1
-#define InsituLTrs485_Depth_UUID "ITROLLM_DEPTH_UUID"
-#define InsituLTrs485_Temp_UUID "ITROLLM_TEMP_UUID"
+#define InsituLTrs485_Depth_UUID "ITROLL_DEPTH_UUID"
+#define InsituLTrs485_Temp_UUID "ITROLL_TEMP_UUID"
 #define InsituLTrs485ModbusAddress_DEF 0x01
 // Default is 19200 lets hope serial works with it.
 #define MODBUS_BAUD_RATE 19200

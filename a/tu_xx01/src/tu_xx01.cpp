@@ -325,7 +325,7 @@ const byte ltModbusAddress =
 const uint8_t ltNumberReadings =
     3;  // The manufacturer recommends taking and averaging a few readings
 
-// Create a Keller Nanolevel sensor object
+// Create a Insitu LT sensor object
 
 InsituLevelTroll InsituLT_snsr(ltModbusAddress, modbusSerial, rs485AdapterPower,
                                modbusSensorPower, max485EnablePin,
@@ -1033,9 +1033,9 @@ void unusedBitsMakeSafe() {
     // PORT_SAFE( 1); Tx0  TTy
     // PORT_SAFE( 2); Rx1  Xb?
     // PORT_SAFE( 3); Tx1  Xb?
-#if !defined KellerXxxLevel_ACT
-    PORT_SAFE(04);
-    PORT_SAFE(05);
+#if !defined KellerXxxLevel_ACT && !defined InsituLTrs485_ACT 
+    //PORT_SAFE(04);
+    //PORT_SAFE(05);
 #endif  // KellerXxxLevel_ACT
     PORT_SAFE(06);
     // PORT_SAFE(07); SDI12
@@ -1548,6 +1548,9 @@ void setup() {
 #if defined KellerAcculevel_ACT
     acculevel_snsr.registerPinPowerMng(&modbusPinPowerMng);
 #endif  // KellerAcculevel_ACT
+#if defined InsituLTrs485_ACT 
+    InsituLT_snsr.registerPinPowerMng(&modbusPinPowerMng);
+#endif  // InsituLTrs485_ACT 
     PRINTOUT(F("Setting up file on SD card"));
     dataLogger.turnOnSDcard(
         true);  // true = wait for card to settle after power up
