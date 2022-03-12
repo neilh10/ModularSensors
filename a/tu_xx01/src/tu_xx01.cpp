@@ -1550,6 +1550,9 @@ void setup() {
 #endif  // KellerAcculevel_ACT
 #if defined InsituLTrs485_ACT 
     InsituLT_snsr.registerPinPowerMng(&modbusPinPowerMng);
+    #if ! defined SENSORMODBUSMASTER_NO_DBG
+    InsituLT_snsr.setDebugStream(&Serial);
+    #endif //SENSORMODBUSMASTER_NO_DBG
 #endif  // InsituLTrs485_ACT 
     PRINTOUT(F("Setting up file on SD card"));
     dataLogger.turnOnSDcard(

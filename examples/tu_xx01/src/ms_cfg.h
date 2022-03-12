@@ -1,8 +1,5 @@
 /*****************************************************************************
-ms_cfg.h_ub_test  - ModularSensors Configuration - testing to UBIDOTS/WiFi
-- Temperature/Humidity 
-210326 STATUS 0.28.3 updated cc, not tested
-
+ms_cfg.h_LT5_lte  - ModularSensors Configuration - tgt _LT5 /LTE
 Written By:  Neil Hancock www.envirodiy.org/members/neilh20/
 Development Environment: PlatformIO
 Hardware Platform(s): EnviroDIY Mayfly Arduino Datalogger+RS485 Wingboard
@@ -32,7 +29,6 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 // MAYFLY_BAT_STC3100  sensor IC on RS485 WINGBOARD_KNH002
 // MAYFLY_BAT_DIGI Digi Modem LTE with onboard battery measurement
 // Choices applied to define MAYFLY_BAT_xx 1) Stc3100 2) ExternVolage_ACT 3) Digi Mode 4) MAYFLY_BAT_A6
-
 #define MAYFLY_BAT_A6 4
 //#define MAYFLY_BAT_AA0 2
 //FUT #define MAYFLY_BAT_DIGI 3
@@ -40,9 +36,9 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 
 //#define ENVIRODIY_MAYFLY_TEMPERATURE 1
 //#define Decagon_CTD_UUID 1
-//#define Insitu_TrollSdi12_UUID 1
+#define Insitu_TrollSdi12_UUID 1
 
-//#define WINGBOARD_KNH002 1
+#define WINGBOARD_KNH002 1
 #if defined WINGBOARD_KNH002
 //This supports RS485 1.9W and STC3100
 //#define USE_STC3100_DD 1
@@ -56,14 +52,14 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #endif //WINGBOARD_KNH002
 
 //Select one of following MAYFLY_BAT_xx as the source for BatterManagement Analysis
-#define MAYFLY_BAT_CHOICE MAYFLY_BAT_A6
+//#define MAYFLY_BAT_CHOICE MAYFLY_BAT_A6
 //#define MAYFLY_BAT_CHOICE MAYFLY_BAT_AA0
-//#define MAYFLY_BAT_CHOICE MAYFLY_BAT_STC3100
+#define MAYFLY_BAT_CHOICE MAYFLY_BAT_STC3100
 // FUT #define MAYFLY_BAT_CHOICE  MAYFLY_BAT_DIGI
 
-#define ASONG_AM23XX_UUID 1
+//#define ASONG_AM23XX_UUID 1
 
-// sensors with low power useage
+//Two heavy sensors with power useage
 #define BM_PWR_SENSOR_CONFIG_BUILD_SPECIFIC BM_PWR_LOW_REQ
 
 // Mayfly configuration
@@ -74,7 +70,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define MFName_DEF "Mayfly"
 #define HwVersion_DEF MFVersion_DEF
 #define HwName_DEF MFName_DEF
-#define CONFIGURATION_DESCRIPTION_STR "tu_test basic WiFi"
+#define CONFIGURATION_DESCRIPTION_STR "tu_LT5_lte LT500/SDI12"
 
 #define USE_MS_SD_INI 1
 #define USE_PS_EEPROM 1
@@ -116,28 +112,19 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define loggingInterval_MAX_CDEF_MIN 6 * 60
 
 
-// Instructions: define only one  _Module
-#define DigiXBeeWifi_Module 1
-//#warning infoMayflyWithDigiXBeeWiFi
-//#define DigiXBeeCellularTransparent_Module 1
-//#warning infoMayflyWithDigiXBeeCellTransparent
-// #define DigiXBeeLTE_Module 1 - unstable
-// #define TINY_GSM_MODEM_SIM800  // Select for a SIM800, SIM900, or variant
-// thereof #define TINY_GSM_MODEM_UBLOX  // Select for most u-blox cellular
-// modems #define TINY_GSM_MODEM_ESP8266  // Select for an ESP8266 using the
-// DEFAULT AT COMMAND FIRMWARE End TinyGsmClient.h options
-#if defined(DigiXBeeWifi_Module) || defined(DigiXBeeCellularTransparent_Module)
+// Supports DigiXBeeCellularTransparent & DigiXBeeWifi
+#define UseModem_Module 1
+#if UseModem_Module 
 // The Modem is used to push data and also sync Time
 // In standalong logger, no internet, Modem can be required at factor to do a
 // sync Time Normally enable both of the following. In standalone, disable
 // UseModem_PushData.
-#define UseModem_Module 1
 #define UseModem_PushData 1
-//Select buildtime Publishers  supported. Not all publishers can be supported
+//Select buildtime Publishers  supported. 
 // The persisten resources (EEPROM) are allocated as a baselevel no matter what options 
-//#define USE_PUB_MMW      1
+#define USE_PUB_MMW      1
 //#define USE_PUB_TSMQTT   1
-#define  USE_PUB_UBIDOTS 1
+//#define  USE_PUB_UBIDOTS 1
 
 // Required for TinyGsmClient.h
 #define TINY_GSM_MODEM_XBEE
@@ -157,9 +144,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 //Manage Internet - common for all providers
 #define MNGI_COLLECT_READINGS_DEF 1
 #define MNGI_SEND_OFFSET_MIN_DEF 0
-#endif  // Modules
-
-// end of _Module
+#endif  // UseModem_Module 
 
 // This might need revisiting
 #define ARD_ANLAOG_MULTIPLEX_PIN A6
@@ -253,7 +238,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 
 #if defined UseModem_Module
 // This seems to be de-stabilizing Digi S6B
-//#define DIGI_RSSI_UUID "DIGI_RSSI_UUID"
+#define DIGI_RSSI_UUID "DIGI_RSSI_UUID"
 //#define Modem_SignalPercent_UUID    "SignalPercent_UUID"
 #endif  // UseModem_Module
 

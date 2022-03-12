@@ -177,7 +177,8 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define InsituLTrs485_Temp_UUID "ITROLL_TEMP_UUID"
 #define InsituLTrs485ModbusAddress_DEF 0x01
 // Default is 19200 lets hope serial works with it.
-#define MODBUS_BAUD_RATE 19200
+//#define MODBUS_BAUD_RATE 19200
+#define MODBUS_BAUD_RATE 9600
 #endif  // InsituLTrs485_ACT
 #elif defined Insitu_TrollSdi12_UUID
 #define ITROLLS_DEPTH_UUID "ITROLL_DEPTH_UUID"
