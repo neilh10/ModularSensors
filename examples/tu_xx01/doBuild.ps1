@@ -17,6 +17,7 @@ $dest_dir = "..\..\..\releases"
 function Do-Build {
     $dest_file = -join($dest_dir,"\mayfly_",$config1, "_",$config2,$hext,".hex")
     $dest_file2= -join($dest_dir,"\mayfly_",$config1, "_",$config2,$hext,".elf")
+    $dest_file3= -join($dest_dir,"\mayfly_",$config1, "_",$config2,$hext,".map")
     $src_file  = -join("src\ms_cfg.h","$hext" )
 
     if (-not (Test-Path -Path $src_file)) {
@@ -31,6 +32,7 @@ function Do-Build {
         pio run
         move .\.pio\build\mayfly\firmware.hex  $dest_file
         #move .\.pio\build\mayfly\firmware.elf  $dest_file2
+        move .\.pio\build\mayfly\firmware.map  $dest_file3
         Write-Output "**** Build Output in $dest_file"
     }
 }
