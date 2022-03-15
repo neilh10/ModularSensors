@@ -1353,8 +1353,8 @@ void setup() {
     // sensors use 9600 baud
     MS_DEEP_DBG("***modbusSerial.begin");
     delay(10);
-
-    modbusSerial.begin(MODBUS_BAUD_RATE);
+    PRINTOUT(F("modbus Baudrate:"),MODBUS_BAUD_RATE,F("config:"),MODBUS_SERIAL_CONFIG);
+    modbusSerial.begin(MODBUS_BAUD_RATE, MODBUS_SERIAL_CONFIG);
     modbusPinPowerMng(false);  // Turn off pins
 #endif
 

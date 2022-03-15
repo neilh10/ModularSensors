@@ -176,9 +176,12 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define InsituLTrs485_Depth_UUID "ITROLL_DEPTH_UUID"
 #define InsituLTrs485_Temp_UUID "ITROLL_TEMP_UUID"
 #define InsituLTrs485ModbusAddress_DEF 0x01
-// Default is 19200 lets hope serial works with it.
-//#define MODBUS_BAUD_RATE 19200
-#define MODBUS_BAUD_RATE 9600
+// Setup for LT500 is 19200 1Start 8Data, 1Parity Even 1Stop
+//#define MODBUS_BAUD_RATE 9600
+#define MODBUS_BAUD_RATE 19200
+//Default for AltsoftSerial is SERIAL_8N1
+//#define MODBUS_SERIAL_CONFIG SERIAL_8N1
+#define MODBUS_SERIAL_CONFIG SERIAL_8E1 
 #endif  // InsituLTrs485_ACT
 #elif defined Insitu_TrollSdi12_UUID
 #define ITROLLS_DEPTH_UUID "ITROLL_DEPTH_UUID"
