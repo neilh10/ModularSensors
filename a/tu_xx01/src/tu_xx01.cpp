@@ -1,18 +1,18 @@
 /*****************************************************************************
-tu_ctd.cpp
+tu_xx01.cpp
 Based on examples/logging_to_MMW.ino
-Adapted by Matt Bartney
- and Neil Hancock
- Based on fork <tbd>
-Written By:  Sara Damiano (sdamiano@stroudcenter.org)
+Adapted by Neil Hancock from Matt Barney 
+
+Orginially Written By:  Sara Damiano (sdamiano@stroudcenter.org)
 Development Environment: PlatformIO
 Hardware Platform: EnviroDIY Mayfly Arduino Datalogger
 Software License: BSD-3.
-  Copyright (c) 2020, Neil Hancock
+  Copyright (c) 2022, Neil Hancock
   Copyright (c) 2020, Trout Unlimited, Stroud Water Research Center (SWRC)
   and the EnviroDIY Development Team
 
-This shows most of the standard functions of the library at once.
+This implements a reliable interface to a specific set of sensors and some
+paramters are configured in a file on the uSD ms_cfg.ini
 
 DISCLAIMER:
 THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
