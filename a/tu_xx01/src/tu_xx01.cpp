@@ -798,7 +798,8 @@ Variable* variableList[] = {
     pLionBatExt_var,
 #endif
 #if defined MAYFLY_BAT_A6
-    new ProcessorStats_Battery(&mcuBoardPhy, ProcessorStats_Batt_UUID),
+    //new ProcessorStats_Battery(&mcuBoardPhy, ProcessorStats_Batt_UUID),
+    new ProcessorStats_Vbatlow(&mcuBoardPhy, ProcessorStats_Batt_UUID),
 #endif  // MAYFLY_BAT_A6
 #if defined AnalogProcEC_ACT
     // Do Analog processing measurements.
