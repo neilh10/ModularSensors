@@ -280,7 +280,7 @@
       "platforms": "atmelavr, atmelsam"
     },
     {
-      "name": "SensorModbusMaster",
+      "name": "SensorModbusMasterXxx",
       "owner": "envirodiy",
       "library id": "1824",
       "url": "https://github.com/EnviroDIY/SensorModbusMaster.git",
