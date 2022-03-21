@@ -1,6 +1,6 @@
 /*****************************************************************************
-ms_cfg.h_LT5_wireless - ModularSensors Config - MMW _LT5 Acculevel/modbus +LTE/WiFi
-Status 220303: 0.32.2 
+ms_cfg.h_LT5KA_wireless - ModularSensors Config - MMW _LT5 Acculevel/modbus +LTE/WiFi
+Status 220330: 0.32.2 
 Written By:  Neil Hancock www.envirodiy.org/members/neilh20/
 Development Environment: PlatformIO
 Hardware Platform(s): EnviroDIY Mayfly Arduino Datalogger+RS485 Wingboard
@@ -71,7 +71,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define MFName_DEF "Mayfly"
 #define HwVersion_DEF MFVersion_DEF
 #define HwName_DEF MFName_DEF
-#define CONFIGURATION_DESCRIPTION_STR "tu_LT5KA_lte LT500,Acculevel"
+#define CONFIGURATION_DESCRIPTION_STR "LT500/SDI12+Acculevel/Modbus Digi WiFi S6/LTE XB3-C-A2 MMW"
 
 #define USE_MS_SD_INI 1
 #define USE_PS_EEPROM 1
@@ -167,8 +167,8 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 
 #ifdef Insitu_TrollSdi12_UUID
 // Mayfly definitions
-#define ITROLLS_DEPTH_UUID "ITROLLS_DEPTH_UUID"
-#define ITROLLS_TEMP_UUID "ITROLLS_TEMP_UUID"
+#define ITROLL_DEPTH_UUID "ITROLL_DEPTH_UUID"
+#define ITROLL_TEMP_UUID "ITROLL_TEMP_UUID"
 //#define ITROLL_PRESSURE_UUID  "ITROLL_PRESSURE_UUID"
 #endif  // Insitu_Troll_UUID
 
@@ -186,16 +186,6 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define CONFIG_SENSOR_RS485_PHY 1
 #define KellerNanolevelModbusAddress_DEF 0x01
 #endif  // KellerNanolevel_ACT
-
-//#define InsituLTrs485_ACT 1 -not working
-#ifdef InsituLTrs485_ACT
-#define CONFIG_SENSOR_RS485_PHY 1
-#define InsituLTrs485_Height_UUID "KellerNanolevel_Height_UUID"
-#define InsituLTrs485_Temp_UUID "KellerNanolevel_Temp_UUID"
-#define InsituLTrs485ModbusAddress_DEF 0x01
-// Default is 19200 lets hope serial works with it.
-#define MODBUS_BAUD_RATE 19200
-#endif  // InsituLTrs485_ACT
 
 #ifdef CONFIG_SENSOR_RS485_PHY
 // Mayfly definitions

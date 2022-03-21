@@ -1,6 +1,6 @@
 /*****************************************************************************
-ms_cfg.h_LT5_wireless  - ModularSensors Configuration - tgt _LT5/Modbus +LTE/WiFi
-Status 220301: 0.32.2rs485 updated cc, not tested
+ms_cfg.h_LT5_wireless - ModularSensors Config - MMW _LT5/Modbus +LTE/WiFi
+Status 220320: 0.32.2rs485 
 Written By:  Neil Hancock www.envirodiy.org/members/neilh20/
 Development Environment: PlatformIO
 Hardware Platform(s): EnviroDIY Mayfly Arduino Datalogger+RS485 Wingboard
@@ -38,8 +38,8 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 //#define ENVIRODIY_MAYFLY_TEMPERATURE 1
 //#define Decagon_CTD_UUID 1
 //For Insitu_Troll specify one or none 
-//#define Insitu_TrollSdi12_UUID 1
-#define Insitu_TrollModbus_UUID 1
+#define Insitu_TrollSdi12_UUID 1
+//#define Insitu_TrollModbus_UUID 1
 
 #define WINGBOARD_KNH002 1
 #if defined WINGBOARD_KNH002
@@ -73,7 +73,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define MFName_DEF "Mayfly"
 #define HwVersion_DEF MFVersion_DEF
 #define HwName_DEF MFName_DEF
-#define CONFIGURATION_DESCRIPTION_STR "tu_LT5_lte LT500/SDI12"
+#define CONFIGURATION_DESCRIPTION_STR "LT500/SDI12 Digi WiFi S6/LTE XB3-C-A2 MMW"
 
 #define USE_MS_SD_INI 1
 #define USE_PS_EEPROM 1

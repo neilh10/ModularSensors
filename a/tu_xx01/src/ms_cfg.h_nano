@@ -116,7 +116,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 
 // Supports DigiXBeeCellularTransparent & DigiXBeeWifi
 #define UseModem_Module 1
-#if UseModem_Module 
+#if defined UseModem_Module 
 // The Modem is used to push data and also sync Time
 // In standalong logger, no internet, Modem can be required at factor to do a
 // sync Time Normally enable both of the following. In standalone, disable

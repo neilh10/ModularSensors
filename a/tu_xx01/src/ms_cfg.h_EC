@@ -1,6 +1,6 @@
 /*****************************************************************************
 ms_cfg.h_EC  - ModularSensors Configuration - tgt relative _EC
-Status: 210326: updated cc and tested
+Status: 220219: updated to use comms but not tested
 
 Written By:  Neil Hancock www.envirodiy.org/members/neilh20/
 Development Environment: PlatformIO

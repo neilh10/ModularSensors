@@ -4,10 +4,31 @@ LOGGER_ID =TU_RC_ECtst02 ;Auto Site Reference
 LOGGING_INTERVAL_MINUTES=15
 LIION_TYPE = 3 ;0=Any 1=LiIon0.5A 2=1AH 3=LiSOCL2 4=3Leclanche
 TIME_ZONE=-8  ; -12 to +12
-GEOGRAPHICAL_ID="TU EC DemoCreek#02 Monitor" 
+GEOGRAPHICAL_ID="220221 EC DemoCreek#02 Monitor" 
 
 [NETWORK]
+;max32 3456789012345678901
+apn=VZWINTERNET ;revX
+;WiFiId=Ssid
+;WiFiPwd=pwd
+;Generic
+;SEND_QUE_SZ_NUM=10 ;SIZE of QUE to be stored. Def 700
+COLLECT_READINGS=1 ; Number of readings to collect before send 0to30
+;SEND_OFFSET_MIN=1 ;minutes to wait after collection complete 0-30
+POST_MAX_NUM =200 ;Upload on access 
 
+[PROVIDER_MMW]
+CLOUD_ID=monitormywatershed.org
+REGISTRATION_TOKEN= 0cf7c40a-232e-457d-87d6-cea5c0757fec ; registration token
+SAMPLING_FEATURE=   236c674b-69b9-43af-b0d6-33d67b870ecc ; Sampling feature
+
+TIMER_POST_TOUT_MS=15000; Gateway Timeout (ms)
+TIMER_POST_PACE_MS=1000; Pacing between POSTs
+
+;Not more than 12
+Batt_UUID=                 3bebd4a3-8b54-4f92-ba55-5fd2fd021358 ;Battery EnviroDIY_Mayfly_Batt
+SampleNumber_UUID=         8c57835f-a32f-4d62-82dc-0ba09f04cf52 ;Sequence EnviroDIY_Mayfly_SampleNum
+EC1_UUID=                  7182846e-46e0-4a10-b110-9bc32de4aca9 ;use above
 
 ;[BOOT]
 ;BOARD_NAME=mayfly

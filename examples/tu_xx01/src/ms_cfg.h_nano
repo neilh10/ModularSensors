@@ -1,5 +1,5 @@
 /*****************************************************************************
-ms_cfg.h_nano - ModularSensors cfg - KellerNano MMW/WiFi
+ms_cfg.h_nano - ModularSensors cfg - KellerNano/Modbus + MMW/WiFi
 
 Written By:  Neil Hancock www.envirodiy.org/members/neilh20/
 Development Environment: PlatformIO
@@ -72,7 +72,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define MFName_DEF "Mayfly"
 #define HwVersion_DEF MFVersion_DEF
 #define HwName_DEF MFName_DEF
-#define CONFIGURATION_DESCRIPTION_STR "Nano MMW Digi WiFi S6/LTE XB3-C-A2"
+#define CONFIGURATION_DESCRIPTION_STR "Nano/Modbus Digi WiFi S6/LTE XB3-C-A2 MMW"
 
 #define USE_MS_SD_INI 1
 #define USE_PS_EEPROM 1
@@ -115,21 +115,12 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 
 
 // Supports DigiXBeeCellularTransparent & DigiXBeeWifi
-//#define DigiXBeeWifi_Module 1
-//#warning infoMayflyWithDigiXBeeWiFi
-//#define DigiXBeeCellularTransparent_Module 1
-//#warning infoMayflyWithDigiXBeeCellTransparent
-// #define DigiXBeeLTE_Module 1 - unstable
-// #define TINY_GSM_MODEM_SIM800  // Select for a SIM800, SIM900, or variant
-// thereof #define TINY_GSM_MODEM_UBLOX  // Select for most u-blox cellular
-// modems #define TINY_GSM_MODEM_ESP8266  // Select for an ESP8266 using the
-// DEFAULT AT COMMAND FIRMWARE End TinyGsmClient.h options
-#if 1 //defined(DigiXBeeWifi_Module) || defined(DigiXBeeCellularTransparent_Module)
+#define UseModem_Module 1
+#if defined UseModem_Module 
 // The Modem is used to push data and also sync Time
 // In standalong logger, no internet, Modem can be required at factor to do a
 // sync Time Normally enable both of the following. In standalone, disable
 // UseModem_PushData.
-#define UseModem_Module 1
 #define UseModem_PushData 1
 //Select buildtime Publishers  supported. 
 // The persisten resources (EEPROM) are allocated as a baselevel no matter what options 
@@ -155,9 +146,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 //Manage Internet - common for all providers
 #define MNGI_COLLECT_READINGS_DEF 1
 #define MNGI_SEND_OFFSET_MIN_DEF 0
-#endif  // Modules
-
-// end of _Module
+#endif  // UseModem_Module 
 
 // This might need revisiting
 #define ARD_ANLAOG_MULTIPLEX_PIN A6
@@ -177,12 +166,25 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #endif  // Decagon_CTD_UUID
 
 
-#ifdef Insitu_TrollSdi12_UUID
+#if defined Insitu_TrollSdi12_UUID || defined Insitu_TrollModbus_UUID
 // Mayfly definitions
-#define ITROLL_DEPTH_UUID "ITROLL_DEPTH_UUID"
-#define ITROLL_TEMP_UUID "ITROLL_TEMP_UUID"
+#ifdef Insitu_TrollModbus_UUID
+#define InsituLTrs485_ACT 1 //-not working
+#ifdef InsituLTrs485_ACT
+#define CONFIG_SENSOR_RS485_PHY 1
+#define InsituLTrs485_Depth_UUID "ITROLLM_DEPTH_UUID"
+#define InsituLTrs485_Temp_UUID "ITROLLM_TEMP_UUID"
+#define InsituLTrs485ModbusAddress_DEF 0x01
+// Default is 19200 lets hope serial works with it.
+#define MODBUS_BAUD_RATE 19200
+#endif  // InsituLTrs485_ACT
+#elif defined Insitu_TrollSdi12_UUID
+#define ITROLLS_DEPTH_UUID "ITROLL_DEPTH_UUID"
+#define ITROLLS_TEMP_UUID "ITROLL_TEMP_UUID"
 //#define ITROLL_PRESSURE_UUID  "ITROLL_PRESSURE_UUID"
-#endif  // Insitu_Troll_UUID
+#endif  // Insitu_TrollSdi12_UUID
+#endif  // Insitu_Trollxxx
+
 
 
 #ifdef KellerAcculevel_ACT
@@ -198,16 +200,6 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define CONFIG_SENSOR_RS485_PHY 1
 #define KellerNanolevelModbusAddress_DEF 0x01
 #endif  // KellerNanolevel_ACT
-
-//#define InsituLTrs485_ACT 1 -not working
-#ifdef InsituLTrs485_ACT
-#define CONFIG_SENSOR_RS485_PHY 1
-#define InsituLTrs485_Height_UUID "KellerNanolevel_Height_UUID"
-#define InsituLTrs485_Temp_UUID "KellerNanolevel_Temp_UUID"
-#define InsituLTrs485ModbusAddress_DEF 0x01
-// Default is 19200 lets hope serial works with it.
-#define MODBUS_BAUD_RATE 19200
-#endif  // InsituLTrs485_ACT
 
 #ifdef CONFIG_SENSOR_RS485_PHY
 // Mayfly definitions
