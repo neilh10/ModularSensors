@@ -187,16 +187,6 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define KellerNanolevelModbusAddress_DEF 0x01
 #endif  // KellerNanolevel_ACT
 
-//#define InsituLTrs485_ACT 1 -not working
-#ifdef InsituLTrs485_ACT
-#define CONFIG_SENSOR_RS485_PHY 1
-#define InsituLTrs485_Height_UUID "KellerNanolevel_Height_UUID"
-#define InsituLTrs485_Temp_UUID "KellerNanolevel_Temp_UUID"
-#define InsituLTrs485ModbusAddress_DEF 0x01
-// Default is 19200 lets hope serial works with it.
-#define MODBUS_BAUD_RATE 19200
-#endif  // InsituLTrs485_ACT
-
 #ifdef CONFIG_SENSOR_RS485_PHY
 // Mayfly definitions
 #define CONFIG_HW_RS485PHY_TX_PIN 5  // Mayfly OCRA1 map AltSoftSerial Tx pin

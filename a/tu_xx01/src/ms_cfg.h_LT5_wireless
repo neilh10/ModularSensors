@@ -1,6 +1,6 @@
 /*****************************************************************************
-ms_cfg.h_LT5_wireless - ModularSensors Config - MMW _LT5/Modbus +LTE/WiFi
-Status 220320: 0.32.2rs485 
+ms_cfg.h_LT5_wireless - ModularSensors Config - MMW _LT5/SDI12 +LTE/WiFi
+Status 220320: 0.32.2 
 Written By:  Neil Hancock www.envirodiy.org/members/neilh20/
 Development Environment: PlatformIO
 Hardware Platform(s): EnviroDIY Mayfly Arduino Datalogger+RS485 Wingboard
