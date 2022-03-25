@@ -25,6 +25,7 @@ AnalogElecConductivityM::AnalogElecConductivityM(int8_t  powerPin,
     _EcPowerPin            = powerPin;
     _EcAdcPin              = dataPin;
     _Rseries_ohms          = Rseries_ohms;
+    _sensorEC_Konst        = sensorEC_Konst;
     _ptrWaterTemperature_C = NULL;
 }
 // Destructor
