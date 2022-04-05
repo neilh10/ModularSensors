@@ -167,8 +167,8 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 
 #ifdef Insitu_TrollSdi12_UUID
 // Mayfly definitions
-#define ITROLL_DEPTH_UUID "ITROLL_DEPTH_UUID"
-#define ITROLL_TEMP_UUID "ITROLL_TEMP_UUID"
+#define ITROLLS_DEPTH_UUID "ITROLL_DEPTH_UUID"
+#define ITROLLS_TEMP_UUID "ITROLL_TEMP_UUID"
 //#define ITROLL_PRESSURE_UUID  "ITROLL_PRESSURE_UUID"
 #endif  // Insitu_Troll_UUID
 
@@ -178,6 +178,9 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define KellerXxlevel_Temp_UUID "KellerXxlevel_Temp_UUID"
 #define CONFIG_SENSOR_RS485_PHY 1
 #define KellerAcculevelModbusAddress_DEF 0x01
+// Setup for Keller Acculevel is 900 1Start 8Data, Parity None 1Stop
+#define MODBUS_BAUD_RATE 9600
+#define MODBUS_SERIAL_CONFIG SERIAL_8N1
 #endif  // KellerAcculevel_ACT
 
 #ifdef KellerNanolevel_ACT
@@ -185,6 +188,9 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define KellerXxlevel_Temp_UUID "KellerXxlevel_Temp_UUID"
 #define CONFIG_SENSOR_RS485_PHY 1
 #define KellerNanolevelModbusAddress_DEF 0x01
+// Setup for Keller Nanolevel is 900 1Start 8Data, Parity None 1Stop
+#define MODBUS_BAUD_RATE 9600
+#define MODBUS_SERIAL_CONFIG SERIAL_8N1
 #endif  // KellerNanolevel_ACT
 
 #ifdef CONFIG_SENSOR_RS485_PHY
