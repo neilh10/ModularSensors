@@ -673,8 +673,9 @@ Variable* pLionBatExt_var =
 // Read's the battery voltage
 // NOTE: This will actually return the battery level from the previous update!
 float getBatteryVoltageProc() {
-    if (mcuBoardPhy.sensorValues[0] == PS_SENSOR_INVALID) mcuBoardPhy.update();
-    return mcuBoardPhy.sensorValues[0];
+    #define BATTERY_VOLTAGE_OPT PROCESSOR_VBATLOW_VAR_NUM
+    if (mcuBoardPhy.sensorValues[BATTERY_VOLTAGE_OPT] == PS_SENSOR_INVALID) mcuBoardPhy.update();
+    return mcuBoardPhy.sensorValues[BATTERY_VOLTAGE_OPT];
 }
 #define bms_SetBattery() bms.setBatteryV(getBatteryVoltageProc());
 #endif  //MAYFLY_BAT_A6
@@ -1171,13 +1172,17 @@ bool batteryCheck(bm_pwr_req_t useable_req, bool waitForGoodBattery,uint8_t dbg_
     PRINTOUT(F("batteryCheck req/wait/src"),useable_req, waitForGoodBattery,dbg_src);
     bms_SetBattery();
     do {
-         #if defined MAYFLY_BAT_STC3100
+         #if MAYFLY_BAT_CHOICE == MAYFLY_BAT_STC3100
         //Read the V - FUT make compatible adcRead()
         stc3100_phy.stc3100_device.readValues();
         bms.setBatteryV(stc3100_phy.stc3100_device.v.voltage_V);
         PRINTOUT(F("Bat_V(stc3100)"),bms.getBatteryVm1());
+        #elif MAYFLY_BAT_CHOICE == MAYFLY_BAT_AA0 
+        PRINTOUT(F("Bat_V(Ext) tbd"));
+        #elif  MAYFLY_BAT_CHOICE == MAYFLY_BAT_A6
+        PRINTOUT(F("Bat_V(low)"),mcuBoardPhy.sensorValues[BATTERY_VOLTAGE_OPT]);
         #else //alt Read the V - FUT make compatible adcRead()
-#warning need to have alternate Vbat method
+        PRINTOUT(F("Bat_V(undef)"));
         #endif //
         LiBattPower_Unseable =
             ((BM_LBATT_UNUSEABLE_STATUS ==

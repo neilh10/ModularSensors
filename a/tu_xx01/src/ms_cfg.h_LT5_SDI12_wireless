@@ -1,5 +1,5 @@
 /*****************************************************************************
-ms_cfg.h_LT5_wireless - ModularSensors Config - MMW _LT5/SDI12 +LTE/WiFi
+ms_cfg.h_LT5_SDI12_wireless - ModularSensors Config - MMW _LT5/SDI12 +LTE/WiFi
 Status 220320: 0.32.2 
 Written By:  Neil Hancock www.envirodiy.org/members/neilh20/
 Development Environment: PlatformIO
@@ -55,9 +55,9 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #endif //WINGBOARD_KNH002
 
 //Select one of following MAYFLY_BAT_xx as the source for BatterManagement Analysis
-//#define MAYFLY_BAT_CHOICE MAYFLY_BAT_A6
+#define MAYFLY_BAT_CHOICE MAYFLY_BAT_A6
 //#define MAYFLY_BAT_CHOICE MAYFLY_BAT_AA0
-#define MAYFLY_BAT_CHOICE MAYFLY_BAT_STC3100
+//#define MAYFLY_BAT_CHOICE MAYFLY_BAT_STC3100
 // FUT #define MAYFLY_BAT_CHOICE  MAYFLY_BAT_DIGI
 
 //#define ASONG_AM23XX_UUID 1
@@ -170,7 +170,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #if defined Insitu_TrollSdi12_UUID || defined Insitu_TrollModbus_UUID
 // Mayfly definitions
 #ifdef Insitu_TrollModbus_UUID
-#define InsituLTrs485_ACT 1 //-not working
+#define InsituLTrs485_ACT 1
 #ifdef InsituLTrs485_ACT
 #define CONFIG_SENSOR_RS485_PHY 1
 #define InsituLTrs485_Depth_UUID "ITROLL_DEPTH_UUID"

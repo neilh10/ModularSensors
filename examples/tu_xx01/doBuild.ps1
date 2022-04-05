@@ -58,20 +58,14 @@ if (Test-Path -Path $envirodiy_dir) {
 pio run --target clean
 
 
-$hext = "_EC"
-Do-Build
-
-$hext = "_LT5_wireless"
-Do-Build
-
-#$hext = "_LT5_wifi"
-#Do-Build
-
 $hext = "_LT5KA_wireless"
 Do-Build
 
-#$hext = "_LT5KA_wifi"
-#Do-Build
+$hext = "_LT5_Mdbus_wireless"
+Do-Build
+
+$hext = "_LT5_SDI12_wireless"
+Do-Build
 
 $hext = "_nano"
 Do-Build
@@ -83,4 +77,7 @@ $hext = "_ts_test"
 Do-Build
 
 $hext = "_ub_test"
+Do-Build
+
+$hext = "_EC"
 Do-Build
