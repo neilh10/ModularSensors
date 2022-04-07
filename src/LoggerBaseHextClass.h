@@ -119,6 +119,7 @@ void printFileHeaderExtra(Stream* stream);
 // virtual bool parseIniSd(const char *ini_fn,ini_handler handler_fn);
 void        SDusbPoll(uint8_t sdActions);
 #if defined USE_RTCLIB
+#include "RTClib.h"
 USE_RTCLIB* rtcExtPhyObj();
 #endif  // USE_RTCLIB
 static bool usbDriveActive(void);

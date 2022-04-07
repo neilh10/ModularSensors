@@ -17,6 +17,7 @@ $dest_dir = "..\..\..\releases"
 function Do-Build {
     $dest_file = -join($dest_dir,"\mayfly_",$config1, "_",$config2,$hext,".hex")
     $dest_file2= -join($dest_dir,"\mayfly_",$config1, "_",$config2,$hext,".elf")
+    $dest_file3= -join($dest_dir,"\mayfly_",$config1, "_",$config2,$hext,".map")
     $src_file  = -join("src\ms_cfg.h","$hext" )
 
     if (-not (Test-Path -Path $src_file)) {
@@ -31,6 +32,7 @@ function Do-Build {
         pio run
         move .\.pio\build\mayfly\firmware.hex  $dest_file
         #move .\.pio\build\mayfly\firmware.elf  $dest_file2
+        move .\.pio\build\mayfly\firmware.map  $dest_file3
         Write-Output "**** Build Output in $dest_file"
     }
 }
@@ -56,20 +58,14 @@ if (Test-Path -Path $envirodiy_dir) {
 pio run --target clean
 
 
-$hext = "_EC"
-Do-Build
-
-$hext = "_LT5_wireless"
-Do-Build
-
-#$hext = "_LT5_wifi"
-#Do-Build
-
 $hext = "_LT5KA_wireless"
 Do-Build
 
-#$hext = "_LT5KA_wifi"
-#Do-Build
+$hext = "_LT5_Mdbus_wireless"
+Do-Build
+
+$hext = "_LT5_SDI12_wireless"
+Do-Build
 
 $hext = "_nano"
 Do-Build
@@ -81,4 +77,7 @@ $hext = "_ts_test"
 Do-Build
 
 $hext = "_ub_test"
+Do-Build
+
+$hext = "_EC"
 Do-Build

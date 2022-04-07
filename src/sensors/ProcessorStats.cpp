@@ -163,17 +163,20 @@ bool ProcessorStats::addSingleMeasurementResult(void) {
 #endif  // ARDUINO_ARCH_AVR
     
 #if defined(ARDUINO_AVR_ENVIRODIY_MAYFLY)
+    uint16_t adc_temp=0;
+    uint8_t adc_lp;
+    //Setup for  1.1,1.0, 0.5,0.5b
+    float adc_correction=4.7;
     if (strcmp(_version, "v0.3") == 0 || strcmp(_version, "v0.4") == 0) {
-        // Get the battery voltage
-        float rawBattery    = analogRead(_batteryPin);
-        sensorValue_battery = (3.3 / 1023.) * 1.47 * rawBattery;
+        adc_correction = 1.47 ;
     }
-    if (strcmp(_version, "v0.5") == 0 || strcmp(_version, "v0.5b") ||
-        strcmp(_version, "v1.0") || strcmp(_version, "v1.1") == 0) {
-        // Get the battery voltage
-        float rawBattery    = analogRead(_batteryPin);
-        sensorValue_battery = (3.3 / 1023.) * 4.7 * rawBattery;
+
+    // Get the battery voltage  2^^2 times for noise reduction
+    for (adc_lp=0;adc_lp<4;adc_lp++) {
+        adc_temp += analogRead(_batteryPin);
     }
+    float rawBattery    = adc_temp>>2;
+    sensorValue_battery = (3.3 / 1023.) * adc_correction * rawBattery;
 
 #elif defined(ARDUINO_AVR_FEATHER32U4) || defined(ARDUINO_SAMD_FEATHER_M0) || \
     defined(ARDUINO_SAMD_FEATHER_M0_EXPRESS) ||                               \
@@ -240,6 +243,34 @@ bool ProcessorStats::addSingleMeasurementResult(void) {
     MS_DBG(F("SampNum="), (unsigned int)sampNum);
 
     verifyAndAddMeasurementResult(PROCESSOR_SAMPNUM_VAR_NUM, sampNum);
+
+    // Create a sliding window of sensorValue_battery samples
+    //and use the lowest value.
+    uint8_t svb_lp=0;
+    float svb_lowest=sensorValue_battery;
+    if (svbInit) {
+        //Insert the latest reading into the next slot
+        svb_sliding[svb_idx]=sensorValue_battery;
+        if (++svb_idx >= PROCESSOR_VBATLOW_WINDOW_SZ) {
+            //MS_DEEP_DBG(F("Vbatlow idx rst"),svb_idx);
+            svb_idx=0;
+        } 
+        //Check all slots and find the lowest reading
+        for (svb_lp=0;svb_lp<PROCESSOR_VBATLOW_WINDOW_SZ ;svb_lp++){
+            if (svb_lowest>svb_sliding[svb_lp]) {
+                svb_lowest=svb_sliding[svb_lp];
+                MS_DEEP_DBG(F("Vbatlow i:"),svb_lp, svb_lowest);
+            }
+        }
+    } else {
+        for (svb_lp=0;svb_lp<PROCESSOR_VBATLOW_WINDOW_SZ ;svb_lp++){
+            svb_sliding[svb_lp]=svb_lowest;
+        }
+        svbInit=true;
+    }
+    MS_DBG(F("Vbatlow"), svb_lowest);
+    verifyAndAddMeasurementResult(PROCESSOR_VBATLOW_VAR_NUM,
+                                  svb_lowest);
 
     // Unset the time stamp for the beginning of this measurement
     _millisMeasurementRequested = 0;

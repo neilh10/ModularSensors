@@ -60,9 +60,11 @@
 /** @ingroup sensor_stc3100 */
 /**@{*/
 
-/// @brief Sensor::_numReturnedValues; the STC3100 can report 3 values at present - possibly more in future
+/// @brief Sensor::_numReturnedValues; the STC3100 can report 4 values at present - possibly more in future
 ////
 #define STC3100_NUM_VARIABLES 4
+/// @brief Sensor::_incCalcValues; we don't calculate any additional values
+#define STSTC3100SENSOR_INC_CALC_VARIABLES 0 
 
 // Sensor Specific Defines
 /** @ingroup sensor_stc3100 */

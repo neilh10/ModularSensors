@@ -49,7 +49,11 @@
 #include "SensorBase.h"
 #include "VariableBase.h"
 
+/// @brief Sensor::_numReturnedValues; we only get one value from the analog processors ADC sensor.
 #define PROC_ADC_NUM_VARIABLES 1
+/// @brief Sensor::_incCalcValues; we don't calculate any additional values
+#define PROCESSORADC_INC_CALC_VARIABLES 0
+
 // Using the warm-up time of the ADS1115
 #define PROC_ADC_WARM_UP_TIME_MS 2
 // Assume a voltage is instantly ready

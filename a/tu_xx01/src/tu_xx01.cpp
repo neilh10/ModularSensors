@@ -1,18 +1,18 @@
 /*****************************************************************************
-tu_ctd.cpp
+tu_xx01.cpp
 Based on examples/logging_to_MMW.ino
-Adapted by Matt Bartney
- and Neil Hancock
- Based on fork <tbd>
-Written By:  Sara Damiano (sdamiano@stroudcenter.org)
+Adapted by Neil Hancock from Matt Barney 
+
+Orginially Written By:  Sara Damiano (sdamiano@stroudcenter.org)
 Development Environment: PlatformIO
 Hardware Platform: EnviroDIY Mayfly Arduino Datalogger
 Software License: BSD-3.
-  Copyright (c) 2020, Neil Hancock
+  Copyright (c) 2022, Neil Hancock
   Copyright (c) 2020, Trout Unlimited, Stroud Water Research Center (SWRC)
   and the EnviroDIY Development Team
 
-This shows most of the standard functions of the library at once.
+This implements a reliable interface to a specific set of sensors and some
+paramters are configured in a file on the uSD ms_cfg.ini
 
 DISCLAIMER:
 THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
@@ -119,7 +119,7 @@ const int8_t sensorPowerPin =
 typedef enum {BT_MAYFLY_0_5, BT_MAYFLY_1_0, BT_last} bt_BoardType_t;
 const char*    mcuBoardVersion_1_x = "v1.0";
 const char*    mcuBoardVersion_0_5 = "v0.5b";
-ProcessorStats mcuBoardPhy(mcuBoardVersion_1_x);
+ProcessorStats mcuBoardPhy(mcuBoardVersion_1_x); //Define board default
 
 // ==========================================================================
 //    Settings for Additional Serial Ports
@@ -229,6 +229,36 @@ const bool useCTSforStatus =
 #endif             // UseModem_Module
 
 // ==========================================================================
+// Create a reference to the serial port for modbus
+// Extra hardware and software serial ports are created in the "Settings for
+// Additional Serial Ports" section
+#if defined(KellerAcculevel_ACT) || defined(KellerNanolevel_ACT) || defined InsituLTrs485_ACT 
+#if defined SerialModbus && (defined ARDUINO_ARCH_SAMD || defined ATMEGA2560)
+HardwareSerial& modbusSerial = SerialModbus;  // Use hardware serial if possible
+#else
+AltSoftSerial& modbusSerial =
+    altSoftSerialPhy;  // For software serial if needed
+// NeoSWSerial &modbusSerial = neoSSerial1;  // For software serial if needed
+#endif //SerialModbus
+// byte acculevelModbusAddress = KellerAcculevelModbusAddress;  // The modbus
+// address of KellerAcculevel
+const int8_t rs485AdapterPower =
+    rs485AdapterPower_DEF;  // Pin to switch RS485 adapter power on and off (-1
+                            // if unconnected)
+const int8_t modbusSensorPower =
+    modbusSensorPower_DEF;  // Pin to switch sensor power on and off (-1 if
+                            // unconnected)
+const int8_t max485EnablePin =
+    max485EnablePin_DEF;  // Pin connected to the RE/DE on the 485 chip (-1 if
+                          // unconnected)
+
+const int8_t RS485PHY_TX_PIN  = CONFIG_HW_RS485PHY_TX_PIN;
+const int8_t RS485PHY_RX_PIN  = CONFIG_HW_RS485PHY_RX_PIN;
+const int8_t RS485PHY_DIR_PIN = CONFIG_HW_RS485PHY_DIR_PIN;
+
+#endif  // KellerXx Insitu
+
+// ==========================================================================
 // Units conversion functions
 // ==========================================================================
 #define SENSOR_T_DEFAULT_F -0.009999
@@ -278,7 +308,39 @@ const int8_t SDI12Data = 7;  // The SDI12 data pin
 DecagonCTD ctdPhy(*CTDSDI12address, SDI12Power, SDI12Data, CTDNumberReadings);
 #endif  // Decagon_CTD_UUID
 
-#if defined Insitu_TrollSdi12_UUID
+// ==========================================================================
+//    Insitu Level/Aqua Troll High Accuracy Submersible Level Transmitter
+// wip Tested for Level Troll 500
+// ==========================================================================
+#ifdef InsituLTrs485_ACT  //Insitu_TrollModbus_UUID 
+#include <sensors/InsituTrollModbus.h>
+
+const byte ltModbusAddress =
+    InsituLTrs485ModbusAddress_DEF;  // The modbus address of InsituLTrs485
+// const int8_t rs485AdapterPower = sensorPowerPin;  // Pin to switch RS485
+// adapter power on and off (-1 if unconnected) const int8_t modbusSensorPower =
+// A3;  // Pin to switch sensor power on and off (-1 if unconnected) const
+// int8_t max485EnablePin = -1;  // Pin connected to the RE/DE on the 485 chip
+// (-1 if unconnected)
+const uint8_t ltNumberReadings =
+    3;  // The manufacturer recommends taking and averaging a few readings
+
+// Create a Insitu LT sensor object
+
+InsituLevelTroll InsituLT_snsr(ltModbusAddress, modbusSerial, rs485AdapterPower,
+                               modbusSensorPower, max485EnablePin,
+                               ltNumberReadings);
+
+// Create pressure, temperature, and height variable pointers for the Nanolevel
+// Variable *nanolevPress =  new InsituLTrs485_Pressure(&InsituLT_snsr,
+// "12345678-abcd-1234-efgh-1234567890ab"); Variable *nanolevTemp =   new
+// InsituLTrs485_Temp(&InsituLT_snsr, "12345678-abcd-1234-efgh-1234567890ab");
+// Variable *nanolevHeight = new InsituLTrs485_Height(&InsituLT_snsr,
+// "12345678-abcd-1234-efgh-1234567890ab");
+
+#endif  // InsituLTrs485_ACT
+#if defined Insitu_TrollSdi12_UUID //|| defined Insitu_TrollModbus_UUID
+
 // ==========================================================================
 //    Insitu Aqua/Level Troll Pressure, Temperature, and Depth Sensor
 // ==========================================================================
@@ -293,39 +355,7 @@ const int8_t IT_SDI12Data = 7;  // The SDI12 data pin
 // Create a  ITROLL sensor object
 InsituTrollSdi12a itrollPhy(*ITROLLSDI12address, IT_SDI12Power, IT_SDI12Data,
                            ITROLLNumberReadings);
-#endif  // Insitu_TrollSdi12_UUID
-
-// ==========================================================================
-//    Insitu Level/Aqua Troll High Accuracy Submersible Level Transmitter
-// wip Tested for Level Troll 500
-// ==========================================================================
-#ifdef InsituLTrs485_ACT
-#include <sensors/InsituTrollModbus.h>
-
-const byte ltModbusAddress =
-    InsituLTrs485ModbusAddress_DEF;  // The modbus address of InsituLTrs485
-// const int8_t rs485AdapterPower = sensorPowerPin;  // Pin to switch RS485
-// adapter power on and off (-1 if unconnected) const int8_t modbusSensorPower =
-// A3;  // Pin to switch sensor power on and off (-1 if unconnected) const
-// int8_t max485EnablePin = -1;  // Pin connected to the RE/DE on the 485 chip
-// (-1 if unconnected)
-const uint8_t ltNumberReadings =
-    3;  // The manufacturer recommends taking and averaging a few readings
-
-// Create a Keller Nanolevel sensor object
-
-InsituLevelTroll InsituLT_snsr(ltModbusAddress, modbusSerial, rs485AdapterPower,
-                               modbusSensorPower, max485EnablePin,
-                               ltNumberReadings);
-
-// Create pressure, temperature, and height variable pointers for the Nanolevel
-// Variable *nanolevPress =  new InsituLTrs485_Pressure(&InsituLT_snsr,
-// "12345678-abcd-1234-efgh-1234567890ab"); Variable *nanolevTemp =   new
-// InsituLTrs485_Temp(&InsituLT_snsr, "12345678-abcd-1234-efgh-1234567890ab");
-// Variable *nanolevHeight = new InsituLTrs485_Height(&InsituLT_snsr,
-// "12345678-abcd-1234-efgh-1234567890ab");
-
-#endif  // InsituLTrs485_ACT
+#endif  // Insitu_TrollXxx
 
 // ==========================================================================
 //   Analog Electrical Conductivity using the processors analog pins
@@ -347,33 +377,6 @@ AnalogElecConductivityM analogEC_phy(ECpwrPin, ECdataPin1, EC_RELATIVE_OHMS);
 #if defined(KellerAcculevel_ACT) || defined(KellerNanolevel_ACT)
 #define KellerXxxLevel_ACT 1
 //#include <sensors/KellerAcculevel.h>
-
-// Create a reference to the serial port for modbus
-// Extra hardware and software serial ports are created in the "Settings for
-// Additional Serial Ports" section
-#if defined SerialModbus && (defined ARDUINO_ARCH_SAMD || defined ATMEGA2560)
-HardwareSerial& modbusSerial = SerialModbus;  // Use hardware serial if possible
-#else
-AltSoftSerial& modbusSerial =
-    altSoftSerialPhy;  // For software serial if needed
-// NeoSWSerial &modbusSerial = neoSSerial1;  // For software serial if needed
-#endif
-
-// byte acculevelModbusAddress = KellerAcculevelModbusAddress;  // The modbus
-// address of KellerAcculevel
-const int8_t rs485AdapterPower =
-    rs485AdapterPower_DEF;  // Pin to switch RS485 adapter power on and off (-1
-                            // if unconnected)
-const int8_t modbusSensorPower =
-    modbusSensorPower_DEF;  // Pin to switch sensor power on and off (-1 if
-                            // unconnected)
-const int8_t max485EnablePin =
-    max485EnablePin_DEF;  // Pin connected to the RE/DE on the 485 chip (-1 if
-                          // unconnected)
-
-const int8_t RS485PHY_TX_PIN  = CONFIG_HW_RS485PHY_TX_PIN;
-const int8_t RS485PHY_RX_PIN  = CONFIG_HW_RS485PHY_RX_PIN;
-const int8_t RS485PHY_DIR_PIN = CONFIG_HW_RS485PHY_DIR_PIN;
 
 #endif  // defined KellerAcculevel_ACT  || defined KellerNanolevel_ACT
 
@@ -587,7 +590,6 @@ Variable*  pLionBatStc3100_var =
 #endif //MAYFLY_BAT_STC3100
 
 
-//#ifdef MAYFLY_BAT_AA0
 #if defined ExternalVoltage_Volt0_UUID
 // ==========================================================================
 //    External Voltage via TI ADS1115
@@ -658,7 +660,7 @@ Variable* pLionBatExt_var =
                            // value from http://vocabulary.odm2.org/units/
                  "extVolt0",  // var code
                  ExternalVoltage_Volt0_UUID);
-#endif  // MAYFLY_BAT_AA0
+#endif  // ExternalVoltage_Volt0_UUID
 
 #if defined MAYFLY_BAT_CHOICE
 #if MAYFLY_BAT_CHOICE == MAYFLY_BAT_STC3100
@@ -671,8 +673,9 @@ Variable* pLionBatExt_var =
 // Read's the battery voltage
 // NOTE: This will actually return the battery level from the previous update!
 float getBatteryVoltageProc() {
-    if (mcuBoardPhy.sensorValues[0] == PS_SENSOR_INVALID) mcuBoardPhy.update();
-    return mcuBoardPhy.sensorValues[0];
+    #define BATTERY_VOLTAGE_OPT PROCESSOR_VBATLOW_VAR_NUM
+    if (mcuBoardPhy.sensorValues[BATTERY_VOLTAGE_OPT] == PS_SENSOR_INVALID) mcuBoardPhy.update();
+    return mcuBoardPhy.sensorValues[BATTERY_VOLTAGE_OPT];
 }
 #define bms_SetBattery() bms.setBatteryV(getBatteryVoltageProc());
 #endif  //MAYFLY_BAT_A6
@@ -796,7 +799,8 @@ Variable* variableList[] = {
     pLionBatExt_var,
 #endif
 #if defined MAYFLY_BAT_A6
-    new ProcessorStats_Battery(&mcuBoardPhy, ProcessorStats_Batt_UUID),
+    //new ProcessorStats_Battery(&mcuBoardPhy, ProcessorStats_Batt_UUID),
+    new ProcessorStats_Vbatlow(&mcuBoardPhy, ProcessorStats_Batt_UUID),
 #endif  // MAYFLY_BAT_A6
 #if defined AnalogProcEC_ACT
     // Do Analog processing measurements.
@@ -812,10 +816,16 @@ Variable* variableList[] = {
     // new DecagonCTD_Temp(&ctdPhy, CTD10_TEMP_UUID),
     CTDTempFcalc,
 #endif  // Decagon_CTD_UUID
-#if defined Insitu_TrollSdi12_UUID
-    new InsituTrollSdi12a_Depth(&itrollPhy, ITROLL_DEPTH_UUID),
-    new InsituTrollSdi12a_Temp(&itrollPhy, ITROLL_TEMP_UUID),
-#endif  // Insitu_TrollSdi12_UUID
+#if   defined Insitu_TrollModbus_UUID
+//#if defined InsituLTrs485_ACT
+    //   new insituLevelTroll_Pressure(&InsituLT_snsr, "UUID"),
+    new InsituLevelTroll_Temp(&InsituLT_snsr, InsituLTrs485_Temp_UUID),
+    new InsituLevelTroll_Height(&InsituLT_snsr, InsituLTrs485_Depth_UUID),
+//#endif  // InsituLTrs485_ACT
+#elif defined Insitu_TrollSdi12_UUID
+    new InsituTrollSdi12a_Depth(&itrollPhy, ITROLLS_DEPTH_UUID),
+    new InsituTrollSdi12a_Temp(&itrollPhy, ITROLLS_TEMP_UUID),
+#endif  // Insitu_TrollXx
 #if defined KellerAcculevel_ACT
 // new KellerAcculevel_Pressure(&acculevel, "UUID"),
 #if KellerAcculevel_DepthUnits > 1
@@ -829,11 +839,6 @@ Variable* variableList[] = {
     //   new KellerNanolevel_Pressure(&nanolevel_snsr, "UUID"),
     new KellerNanolevel_Temp(&nanolevel_snsr, KellerXxlevel_Temp_UUID),
     new KellerNanolevel_Height(&nanolevel_snsr, KellerXxlevel_Height_UUID),
-#endif  // SENSOR_CONFIG_KELLER_NANOLEVEL
-#if defined InsituLTrs485_ACT
-    //   new insituLevelTroll_Pressure(&InsituLT_snsr, "UUID"),
-    new InsituLevelTroll_Temp(&InsituLT_snsr, InsituLTrs485_Temp_UUID),
-    new InsituLevelTroll_Height(&InsituLT_snsr, InsituLTrs485_Height_UUID),
 #endif  // SENSOR_CONFIG_KELLER_NANOLEVEL
 // new BoschBME280_Temp(&bme280, "12345678-abcd-1234-ef00-1234567890ab"),
 // new BoschBME280_Humidity(&bme280, "12345678-abcd-1234-ef00-1234567890ab"),
@@ -1002,7 +1007,7 @@ bool isBatteryChargeGoodEnough(lb_pwr_req_t reqBatState) {
 // ==========================================================================
 // Manages the Modbus Physical Pins.
 // Pins pulled high when powered off will cause a ghost power leakage.
-#if defined KellerXxxLevel_ACT
+#if defined KellerXxxLevel_ACT || defined InsituLTrs485_ACT 
 void        modbusPinPowerMng(bool status) {
     MS_DBG(F("  **** modbusPinPower"), status);
 #if 1
@@ -1013,7 +1018,7 @@ void        modbusPinPowerMng(bool status) {
     }
 #endif
 }
-#endif  // KellerXxxLevel_ACT
+#endif  // KellerXxxLevel_ACT InsituLTrs485_ACT
 
 #define PORT_SAFE(pinNum)   \
     pinMode(pinNum, INPUT); \
@@ -1030,9 +1035,9 @@ void unusedBitsMakeSafe() {
     // PORT_SAFE( 1); Tx0  TTy
     // PORT_SAFE( 2); Rx1  Xb?
     // PORT_SAFE( 3); Tx1  Xb?
-#if !defined KellerXxxLevel_ACT
-    PORT_SAFE(04);
-    PORT_SAFE(05);
+#if !defined KellerXxxLevel_ACT && !defined InsituLTrs485_ACT 
+    //PORT_SAFE(04);
+    //PORT_SAFE(05);
 #endif  // KellerXxxLevel_ACT
     PORT_SAFE(06);
     // PORT_SAFE(07); SDI12
@@ -1167,13 +1172,17 @@ bool batteryCheck(bm_pwr_req_t useable_req, bool waitForGoodBattery,uint8_t dbg_
     PRINTOUT(F("batteryCheck req/wait/src"),useable_req, waitForGoodBattery,dbg_src);
     bms_SetBattery();
     do {
-         #if defined MAYFLY_BAT_STC3100
+         #if MAYFLY_BAT_CHOICE == MAYFLY_BAT_STC3100
         //Read the V - FUT make compatible adcRead()
         stc3100_phy.stc3100_device.readValues();
         bms.setBatteryV(stc3100_phy.stc3100_device.v.voltage_V);
         PRINTOUT(F("Bat_V(stc3100)"),bms.getBatteryVm1());
+        #elif MAYFLY_BAT_CHOICE == MAYFLY_BAT_AA0 
+        PRINTOUT(F("Bat_V(Ext) tbd"));
+        #elif  MAYFLY_BAT_CHOICE == MAYFLY_BAT_A6
+        PRINTOUT(F("Bat_V(low)"),mcuBoardPhy.sensorValues[BATTERY_VOLTAGE_OPT]);
         #else //alt Read the V - FUT make compatible adcRead()
-#warning need to have alternate Vbat method
+        PRINTOUT(F("Bat_V(undef)"));
         #endif //
         LiBattPower_Unseable =
             ((BM_LBATT_UNUSEABLE_STATUS ==
@@ -1350,8 +1359,8 @@ void setup() {
     // sensors use 9600 baud
     MS_DEEP_DBG("***modbusSerial.begin");
     delay(10);
-
-    modbusSerial.begin(MODBUS_BAUD_RATE);
+    PRINTOUT(F("modbus Baudrate:"),MODBUS_BAUD_RATE,F("config:"),MODBUS_SERIAL_CONFIG);
+    modbusSerial.begin(MODBUS_BAUD_RATE, MODBUS_SERIAL_CONFIG);
     modbusPinPowerMng(false);  // Turn off pins
 #endif
 
@@ -1486,7 +1495,7 @@ void setup() {
 #if defined UseModem_Module && !defined NO_FIRST_SYNC_WITH_NIST
 
     // The comms module  is supported and its expected to be configured.
-    // ToDo Test - there may be a runtime use=case where it exists but shouldn't be used?
+    // ToDo Test - there may be a runtime use case where it exists but shouldn't be used?
     if (batteryCheck(LiIon_BAT_REQ, false,2)) 
     {
         MS_DBG(F("Sync with NIST "), bms.getBatteryVm1(),
@@ -1545,6 +1554,12 @@ void setup() {
 #if defined KellerAcculevel_ACT
     acculevel_snsr.registerPinPowerMng(&modbusPinPowerMng);
 #endif  // KellerAcculevel_ACT
+#if defined InsituLTrs485_ACT 
+    InsituLT_snsr.registerPinPowerMng(&modbusPinPowerMng);
+    #if ! defined SENSORMODBUSMASTER_NO_DBG
+    InsituLT_snsr.setDebugStream(&Serial);
+    #endif //SENSORMODBUSMASTER_NO_DBG
+#endif  // InsituLTrs485_ACT 
     PRINTOUT(F("Setting up file on SD card"));
     dataLogger.turnOnSDcard(
         true);  // true = wait for card to settle after power up

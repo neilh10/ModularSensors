@@ -128,6 +128,8 @@
 
 /// @brief Sensor::_numReturnedValues; the INA219 can report 3 values.
 #define INA219_NUM_VARIABLES 3
+/// @brief Sensor::_incCalcValues; we don't calculate any additional values
+#define TINA219M_INC_CALC_VARIABLES 0
 
 /**
  * @anchor sensor_ina219_timing
