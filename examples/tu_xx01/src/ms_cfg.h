@@ -1,7 +1,6 @@
 /*****************************************************************************
-ms_cfg.h_ub_test  - ModularSensors Configuration - testing to UBIDOTS/WiFi
-- Temperature/Humidity 
-210326 STATUS 0.28.3 updated cc, not tested
+ms_cfg.h_EC  - ModularSensors Configuration - tgt relative _EC
+Status: 220219: updated to use comms but not tested
 
 Written By:  Neil Hancock www.envirodiy.org/members/neilh20/
 Development Environment: PlatformIO
@@ -24,7 +23,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 //**************************************************************************
 // This configuration is for a standard Mayfly0.5b
 // Sensors Used - two std to begin then
-//#define AnalogProcEC_ACT 1
+#define AnalogProcEC_ACT 1
 // Power Availability monitoring decisions use LiIon Voltge,
 // Battery Voltage measurements can be derived from a number of sources
 // MAYFLY_BAT_A6  - standard measures Solar Charging or LiIon battry V which ever is greated
@@ -52,7 +51,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 // KellerAcculevel units can be 1 (meter) 2 (feet)
 //#define KellerAcculevel_DepthUnits 2
 
-//#define KellerNanolevel_ACT 1
+#define KellerNanolevel_ACT 1
 #endif //WINGBOARD_KNH002
 
 //Select one of following MAYFLY_BAT_xx as the source for BatterManagement Analysis
@@ -61,20 +60,22 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 //#define MAYFLY_BAT_CHOICE MAYFLY_BAT_STC3100
 // FUT #define MAYFLY_BAT_CHOICE  MAYFLY_BAT_DIGI
 
-#define ASONG_AM23XX_UUID 1
+//#define ASONG_AM23XX_UUID 1
 
-// sensors with low power useage
-#define BM_PWR_SENSOR_CONFIG_BUILD_SPECIFIC BM_PWR_LOW_REQ
+// sensors with low power useage -
+#define BM_PWR_SENSOR_CONFIG_BUILD_SPECIFIC BM_PWR_MEDIUM_REQ
+// with Modem use above ^^ else use below \|/
+//#define BM_PWR_SENSOR_CONFIG_BUILD_SPECIFIC BM_PWR_LOW_REQ
+
 
 // Mayfly configuration
 // Carrier board for Digi XBEE LTE CAT-M1 and jumper from battery
 // Digi WiFi S6 plugged in directly
 // For debug: C4 removed, strap for AA2/Vbat AA3/SolarV,
-#define MFVersion_DEF "v0.5b"
-#define MFName_DEF "Mayfly"
-#define HwVersion_DEF MFVersion_DEF
-#define HwName_DEF MFName_DEF
-#define CONFIGURATION_DESCRIPTION_STR "tu_test basic WiFi"
+//Assume Mayfly, and version determined on boot See mcuBoardVersion_
+//#define MFName_DEF "Mayfly"
+//#define HwName_DEF MFName_DEF
+#define CONFIGURATION_DESCRIPTION_STR "Electrical Conductivity MMW Digi WiFi S6/LTE XB3-C-A2"
 
 #define USE_MS_SD_INI 1
 #define USE_PS_EEPROM 1
@@ -116,28 +117,19 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define loggingInterval_MAX_CDEF_MIN 6 * 60
 
 
-// Instructions: define only one  _Module
-#define DigiXBeeWifi_Module 1
-//#warning infoMayflyWithDigiXBeeWiFi
-//#define DigiXBeeCellularTransparent_Module 1
-//#warning infoMayflyWithDigiXBeeCellTransparent
-// #define DigiXBeeLTE_Module 1 - unstable
-// #define TINY_GSM_MODEM_SIM800  // Select for a SIM800, SIM900, or variant
-// thereof #define TINY_GSM_MODEM_UBLOX  // Select for most u-blox cellular
-// modems #define TINY_GSM_MODEM_ESP8266  // Select for an ESP8266 using the
-// DEFAULT AT COMMAND FIRMWARE End TinyGsmClient.h options
-#if defined(DigiXBeeWifi_Module) || defined(DigiXBeeCellularTransparent_Module)
+// Supports DigiXBeeCellularTransparent & DigiXBeeWifi
+#define UseModem_Module 1
+#if UseModem_Module 
 // The Modem is used to push data and also sync Time
 // In standalong logger, no internet, Modem can be required at factor to do a
 // sync Time Normally enable both of the following. In standalone, disable
 // UseModem_PushData.
-#define UseModem_Module 1
 #define UseModem_PushData 1
-//Select buildtime Publishers  supported. Not all publishers can be supported
+//Select buildtime Publishers  supported. 
 // The persisten resources (EEPROM) are allocated as a baselevel no matter what options 
-//#define USE_PUB_MMW      1
+#define USE_PUB_MMW      1
 //#define USE_PUB_TSMQTT   1
-#define  USE_PUB_UBIDOTS 1
+//#define  USE_PUB_UBIDOTS 1
 
 // Required for TinyGsmClient.h
 #define TINY_GSM_MODEM_XBEE
@@ -157,9 +149,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 //Manage Internet - common for all providers
 #define MNGI_COLLECT_READINGS_DEF 1
 #define MNGI_SEND_OFFSET_MIN_DEF 0
-#endif  // Modules
-
-// end of _Module
+#endif  // UseModem_Module 
 
 // This might need revisiting
 #define ARD_ANLAOG_MULTIPLEX_PIN A6

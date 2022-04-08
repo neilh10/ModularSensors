@@ -851,9 +851,9 @@ void Logger::logDataAndPubReliably(uint8_t cia_val_override) {
 #define NIST_SYNC_RATE NIST_SYNC_DAY
 #endif //NIST_SYNC_HOURLY
                         uint32_t logIntvl_sec = _loggingIntervalMinutes * 60; 
-                        uint32_t timeToday_sec = markedEpochTime % NIST_SYNC_RATE;
+                        uint32_t timeToday_sec = markedUTCEpochTime % NIST_SYNC_RATE;
                         bool doSyncTimeCheck = (timeToday_sec< logIntvl_sec);
-                        /*MS_DBG*/PRINTOUT(F("SyncTimeCheck "),doSyncTimeCheck," modulo_sec",timeToday_sec," Time",Logger::markedEpochTime);
+                        /*MS_DBG*/PRINTOUT(F("SyncTimeCheck "),doSyncTimeCheck," modulo_sec",timeToday_sec," Time",Logger::markedUTCEpochTime);
                         if (doSyncTimeCheck) {
                             MS_DBG(F("Running an NIST clock sync..."));
                             if(setRTClock(_logModem->getNISTTime())) {
@@ -1306,9 +1306,9 @@ status,<marked epoch time> n*[<,values>]
 bool Logger::serzRdel_Line() {
     if (serzRdelFile.open(serzRdelFn_str, RDEL_OFLAG)) {
         uint16_t outputSz;
-        // String csvString(Logger::markedEpochTime);
+        // String csvString(Logger::markedUTCEpochTime);
         outputSz = serzRdelFile.print("0,");  // Start READINGS_STATUS
-        outputSz += serzRdelFile.print(Logger::markedEpochTime);
+        outputSz += serzRdelFile.print(Logger::markedUTCEpochTime);
         for (uint8_t i = 0; i < getArrayVarCount(); i++) {
             // csvString += ',';
             outputSz += serzRdelFile.print(',' + getValueStringAtI(i));
@@ -1317,7 +1317,7 @@ bool Logger::serzRdel_Line() {
         // setFileAccessTime(serzRdelFile);
         serzRdelFile.close();
         MS_DEEP_DBG(F("serzRdel_Line on"), serzRdelFn_str, F(" at "),
-               markedEpochTime, F(" size="), outputSz);
+               markedUTCEpochTime, F(" size="), outputSz);
     } else {
         PRINTOUT(F("serzRdel_Line; No file"), serzRdelFn_str);
         return false;
