@@ -19,7 +19,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2.4.0
+        uses: actions/checkout@v3
 
       - name: Set environment variable for current library version
         run: |
@@ -30,7 +30,7 @@ jobs:
           echo "ZIP_NAME=$ZIP_FILE" >> $GITHUB_ENV
 
       - name: Set up python
-        uses: actions/setup-python@v2.3.0
+        uses: actions/setup-python@v3
 
       - name: Install PlatformIO
         run: |
@@ -162,4 +162,4 @@ jobs:
       # Publish the new release to the PlatformIO package manager
       - name: Publish release to the PlatformIO package manager
         id: publish-pio
-        run: pio package publish --owner EnviroDIY --non-interactive
+        run: pio package publish --owner envirodiy --non-interactive
