@@ -540,6 +540,7 @@ int8_t Logger::getTZOffset(void) {
 
 // This gets the current epoch time (unix time, ie, the number of seconds
 // from January 1, 1970 00:00:00 UTC) and corrects it to the specified time zone
+#if defined MS_SAMD_DS3231 || not defined ARDUINO_ARCH_SAMD
 
 uint32_t Logger::getNowEpoch(void) {
     // Depreciated in 0.33.0, left in for compatiblity
@@ -553,7 +554,6 @@ uint32_t Logger::getNowLocalEpoch(void) {
     return currentEpochTime;
 }
 
-#if defined MS_SAMD_DS3231 || not defined ARDUINO_ARCH_SAMD
 
 uint32_t Logger::getNowUTCEpoch(void) {
     uint32_t currentEpochTime = rtc.now().getEpoch();
@@ -575,18 +575,6 @@ void Logger::setNowUTCEpoch(uint32_t ts) {
 #elif defined ARDUINO_ARCH_SAMD
 
 uint32_t Logger::getNowUTCEpoch(void) {
-    return zero_sleep_rtc.getEpoch();
-}
-void Logger::setNowUTCEpoch(uint32_t ts) {
-    zero_sleep_rtc.setEpoch(ts);
-}
-
-uint32_t Logger::getNowEpoch(void) {
-    // Depreciated in 0.27.4, left in for compatiblity
-    return getNowUTCEpoch();
-}
-
-uint32_t Logger::getNowUTCEpoch(void) {
     uint32_t currentEpochTime = zero_sleep_rtc.getEpoch();
     if (!isRTCSane(currentEpochTime)) {
         PRINTOUT(F("Bad time, resetting clock."), currentEpochTime, " ",
@@ -597,10 +585,13 @@ uint32_t Logger::getNowUTCEpoch(void) {
     }
     return currentEpochTime;
 }
-
+void Logger::setNowUTCEpoch(uint32_t ts) {
+    zero_sleep_rtc.setEpoch(ts);
+}
 uint32_t Logger::getNowLocalEpoch(void) {
     return (uint32_t)(getNowUTCEpoch() + (_loggerRTCOffset * HOURS_TO_SECS));
 }
+
 #endif
 
 // This converts the current UNIX timestamp (ie, the number of seconds
@@ -713,7 +704,7 @@ bool Logger::setRTClock(uint32_t UTCEpochSeconds) {
     MS_DBG("         Time Returned by rtcExt:", nowExtUTCEpoch_sec,
            "->(T=", getTimeZone(), ")",
            formatDateTime_ISO8601(nowExtUTCEpoch_sec));
-    time_diff_sec = abs((long)((uint64_t)nowExtUTCEpoch_sec) -
+    uint32_t time_diff_sec = abs((long)((uint64_t)nowExtUTCEpoch_sec) -
                         (long)((uint64_t)UTCEpochSeconds));
     if (time_diff_sec > NIST_TIME_DIFF_SEC) {
         rtcExtPhy.adjust(UTCEpochSeconds);  // const DateTime& dt);
