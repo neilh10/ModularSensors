@@ -762,36 +762,6 @@ class Logger {
     static void setNowUTCEpoch(uint32_t ts);
 
     /**
-     * @brief Get Epoch Time with no offsets
-     */
-    static uint32_t getNowEpochUTC(void);
-    /**
-     * @brief Get Epoch time with zone offset
-     */
-    static uint32_t getNowEpochTz(void);
-
-    /**
-     * @brief Set the real time clock to the given number of seconds from
-     * January 1, 1970.
-     * Superseded 0.27.5 use setNowEpochUTC()
-     * 
-     * The validity of the timestamp is not checked in any way!  In practice,
-     * setRTClock(ts) should be used to avoid setting the clock to an obviously
-     * invalid value.  The input value should be *in the timezone of the RTC.*
-     *
-     * @param ts The number of seconds since 1970.
-     */
-    #define SETNOWEPOCH_FN
-    #if defined SETNOWEPOCH_FN
-    static void setNowEpoch(uint32_t ts);
-    #endif // SETNOWEPOCH_FN
-
-    /**
-     * @brief Set Epoch time with no offsets
-     */
-    static void setNowEpochUTC(uint32_t ts); 
-
-    /**
      * @brief Convert the number of seconds from January 1, 1970 to a DateTime
      * object instance.
      *  Superseded 0.27.5 use dtFromEpochUTC()

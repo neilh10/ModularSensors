@@ -764,7 +764,7 @@ void Logger::logDataAndPubReliably(uint8_t cia_val_override) {
     uint8_t cia_val = checkInterval();
     if (cia_val_override) {
         cia_val = cia_val_override;
-        wakeUpTime_secs = getNowEpochTz();//Set reference time
+        wakeUpTime_secs = getNowLocalEpoch();//Set reference time
         markTime();
         PRINTOUT(F("logDataAndPubReliably - overide with "),cia_val);
     }
@@ -851,9 +851,9 @@ void Logger::logDataAndPubReliably(uint8_t cia_val_override) {
 #define NIST_SYNC_RATE NIST_SYNC_DAY
 #endif //NIST_SYNC_HOURLY
                         uint32_t logIntvl_sec = _loggingIntervalMinutes * 60; 
-                        uint32_t timeToday_sec = markedUTCEpochTime % NIST_SYNC_RATE;
+                        uint32_t timeToday_sec = markedLocalEpochTime % NIST_SYNC_RATE;
                         bool doSyncTimeCheck = (timeToday_sec< logIntvl_sec);
-                        /*MS_DBG*/PRINTOUT(F("SyncTimeCheck "),doSyncTimeCheck," modulo_sec",timeToday_sec," Time",Logger::markedUTCEpochTime);
+                        /*MS_DBG*/PRINTOUT(F("SyncTimeCheck "),doSyncTimeCheck," modulo_sec",timeToday_sec," Time",Logger::markedLocalEpochTime);
                         if (doSyncTimeCheck) {
                             MS_DBG(F("Running an NIST clock sync..."));
                             if(setRTClock(_logModem->getNISTTime())) {
@@ -1306,9 +1306,9 @@ status,<marked epoch time> n*[<,values>]
 bool Logger::serzRdel_Line() {
     if (serzRdelFile.open(serzRdelFn_str, RDEL_OFLAG)) {
         uint16_t outputSz;
-        // String csvString(Logger::markedUTCEpochTime);
+        // String csvString(Logger::markedLocalEpochTime);
         outputSz = serzRdelFile.print("0,");  // Start READINGS_STATUS
-        outputSz += serzRdelFile.print(Logger::markedUTCEpochTime);
+        outputSz += serzRdelFile.print(Logger::markedLocalEpochTime);
         for (uint8_t i = 0; i < getArrayVarCount(); i++) {
             // csvString += ',';
             outputSz += serzRdelFile.print(',' + getValueStringAtI(i));
@@ -1317,7 +1317,7 @@ bool Logger::serzRdel_Line() {
         // setFileAccessTime(serzRdelFile);
         serzRdelFile.close();
         MS_DEEP_DBG(F("serzRdel_Line on"), serzRdelFn_str, F(" at "),
-               markedUTCEpochTime, F(" size="), outputSz);
+               markedLocalEpochTime, F(" size="), outputSz);
     } else {
         PRINTOUT(F("serzRdel_Line; No file"), serzRdelFn_str);
         return false;
@@ -1551,7 +1551,7 @@ bool Logger::postLogOpen(const char* postLogNam_str) {
 #if defined MS_LOGGERBASE_POSTS
     // Generate the file name from logger ID and date
     // Create rotating log of 4 chars YYMM - formatDateTime is YYYY MM DD
-     String nameTemp = formatDateTime_str(getNowEpochTz());
+     String nameTemp = formatDateTime_str(getNowLocalEpoch());
 
     // Drop middle _ and get YYMM
     String fileName = String(postLogNam_str + nameTemp.substring(2, 4) + nameTemp.substring(5, 7) + ".log");
@@ -1606,7 +1606,7 @@ void Logger::postLogLine(uint32_t tmr_ms, int16_t rspParam) {
 
     char tempBuffer[TEMP_BUFFER_SZ];
     //Print internal time
-    formatDateTime_str(getNowEpochTz())
+    formatDateTime_str(getNowLocalEpoch())
         .toCharArray(tempBuffer, TEMP_BUFFER_SZ);
     postsLogHndl.print(tempBuffer);
 #endif
@@ -1634,7 +1634,7 @@ void Logger::postLogLine(const char *logMsg,bool addCRNL) {
     }
     char tempBuffer[TEMP_BUFFER_SZ];
     //Print internal time
-    formatDateTime_str(getNowEpochTz())
+    formatDateTime_str(getNowLocalEpoch())
         .toCharArray(tempBuffer, TEMP_BUFFER_SZ);    
     postsLogHndl.print(tempBuffer);
     postsLogHndl.print(F(",MSG,"));

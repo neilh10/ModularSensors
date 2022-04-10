@@ -1129,7 +1129,7 @@ void  managementSensorsPoll() {
         //Create a time traceability header 
         String csvString = "";
         csvString.reserve(24);
-        dataLogger.dtFromEpochTz(dataLogger.getNowEpochTz()).addToString(csvString);
+        dataLogger.dtFromEpochTz(dataLogger.getNowLocalEpoch()).addToString(csvString);
         csvString += ", ";
         Serial.print(csvString);
         //Serial.print(dataLogger.formatDateTime_ISO8601(dataLogger.getNowEpochTz()));
@@ -1511,9 +1511,9 @@ void setup() {
 #endif  // UseModem_Module
     // List start time, if RTC invalid will also be initialized
     PRINTOUT(F("Local Time "),
-             dataLogger.formatDateTime_ISO8601(dataLogger.getNowEpochTz()));
-    PRINTOUT(F("Time epoch Tz "),dataLogger.getNowEpochTz());
-    PRINTOUT(F("Time epoch UTC "),dataLogger.getNowEpochUTC());
+             dataLogger.formatDateTime_ISO8601(dataLogger.getNowLocalEpoch()));
+    PRINTOUT(F("Time local epoch "),dataLogger.getNowLocalEpoch());
+    PRINTOUT(F("Time  UTC  epoch "),dataLogger.getNowUTCEpoch());
 
     //Setup sensors, including reading sensor data sheet that can be recorded on SD card
     PRINTOUT(F("Setting up sensors..."));
