@@ -463,6 +463,7 @@ KellerNanolevel nanolevel_snsr(nanolevelModbusAddress, modbusSerial,
 //    AOSong AM2315 Digital Humidity and Temperature Sensor
 // ==========================================================================
 //use updated solving  https://github.com/neilh10/ModularSensors/issues/102
+/** Start [ao_song_am2315] */
 #include <sensors/AOSongAM2315a.h>
 
 // const int8_t I2CPower = 1;//sensorPowerPin;  // Pin to switch power on and
@@ -477,8 +478,30 @@ AOSongAM2315a am23xx(I2CPower);
 // Variable *am2315Humid = new AOSongAM2315a_Humidity(&am23xx,
 // "12345678-abcd-1234-ef00-1234567890ab"); Variable *am2315Temp = new
 // AOSongAM2315a_Temp(&am23xx, "12345678-abcd-1234-ef00-1234567890ab");
+/** End [ao_song_am2315] */
 #endif  // ASONG_AM23XX_UUID
 
+#if defined SENSIRION_SHT4X_UUID
+// ==========================================================================
+//  Sensirion SHT4X Digital Humidity and Temperature Sensor
+// ==========================================================================
+/** Start [sensirion_sht4x] */
+#include <sensors/SensirionSHT4x.h>
+
+// NOTE: Use -1 for any pins that don't apply or aren't being used.
+const int8_t SHT4xPower     = sensorPowerPin;  // Power pin
+const bool   SHT4xUseHeater = true;
+
+// Create an Sensirion SHT4X sensor object
+SensirionSHT4x sht4x(SHT4xPower, SHT4xUseHeater);
+
+// Create humidity and temperature variable pointers for the SHT4X
+/*Variable* sht4xHumid =
+    new SensirionSHT4x_Humidity(&sht4x, "12345678-abcd-1234-ef00-1234567890ab");
+Variable* sht4xTemp =
+    new SensirionSHT4x_Temp(&sht4x, "12345678-abcd-1234-ef00-1234567890ab");*/
+/** End [sensirion_sht4x] */
+#endif //SENSIRION_SHT4X_UUID
 
 // ==========================================================================
 //    Maxim DS3231 RTC (Real Time Clock)
@@ -845,7 +868,12 @@ Variable* variableList[] = {
 // new BoschBME280_Pressure(&bme280, "12345678-abcd-1234-ef00-1234567890ab"),
 // new BoschBME280_Altitude(&bme280, "12345678-abcd-1234-ef00-1234567890ab"),
 // new MaximDS18_Temp(&ds18, "12345678-abcd-1234-ef00-1234567890ab"),
-#if defined ASONG_AM23XX_UUID
+#if defined SENSIRION_SHT4X_UUID
+    new SensirionSHT4x_Humidity(&sht4x, SENSIRION_SHT4X_Air_Humidity_UUID),
+    new SensirionSHT4x_Temp(&sht4x, SENSIRION_SHT4X_Air_Temperature_UUID),
+// ASONG_AM23_Air_TemperatureF_UUID
+
+#elif defined ASONG_AM23XX_UUID
     new AOSongAM2315a_Humidity(&am23xx, ASONG_AM23_Air_Humidity_UUID),
     new AOSongAM2315a_Temp(&am23xx, ASONG_AM23_Air_Temperature_UUID),
 // ASONG_AM23_Air_TemperatureF_UUID
