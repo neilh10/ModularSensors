@@ -290,6 +290,13 @@ class ProcessorStats : public Sensor {
      */
     bool addSingleMeasurementResult(void) override;
 
+    /**
+     * @copydoc ProcessorStats::readSensorVbat()
+     * 
+     * @return battery Voltage (volts)
+     */
+    float readSensorVbat(void);
+
  private:
     const char* _version;
     int8_t      _batteryPin;

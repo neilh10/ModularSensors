@@ -582,7 +582,7 @@ float wLionBatStc3100_worker(void) {  // get the Battery Reading
         flLionBatStc3100_V = MS_LION_ERR_VOLT;
     }
     // MS_DBG(F("wLionBatStc3100_worker"), flLionBatStc3100_V);
-#if defined MS_TU_XX_DEBUG
+#if defined MS_TU_XX_DEBUG_DEEP
     DEBUGGING_SERIAL_OUTPUT.print(F("  wLionBatStc3100_worker "));
     DEBUGGING_SERIAL_OUTPUT.print(flLionBatStc3100_V, 4);
     DEBUGGING_SERIAL_OUTPUT.println();
@@ -696,9 +696,18 @@ Variable* pLionBatExt_var =
 // Read's the battery voltage
 // NOTE: This will actually return the battery level from the previous update!
 float getBatteryVoltageProc() {
+    float bat_lowest_v,
+        bat_latest_v;
     #define BATTERY_VOLTAGE_OPT PROCESSOR_VBATLOW_VAR_NUM
-    if (mcuBoardPhy.sensorValues[BATTERY_VOLTAGE_OPT] == PS_SENSOR_INVALID) mcuBoardPhy.update();
-    return mcuBoardPhy.sensorValues[BATTERY_VOLTAGE_OPT];
+    if (mcuBoardPhy.sensorValues[BATTERY_VOLTAGE_OPT] == PS_SENSOR_INVALID) {mcuBoardPhy.update();}
+    //Loook for lowest battery voltage
+    bat_lowest_v = mcuBoardPhy.sensorValues[BATTERY_VOLTAGE_OPT];
+    bat_latest_v = mcuBoardPhy.readSensorVbat();
+    if (bat_lowest_v > bat_latest_v) {
+        bat_lowest_v = bat_latest_v;
+    }
+    MS_DBG("Vbat_low",bat_lowest_v);
+    return bat_lowest_v;
 }
 #define bms_SetBattery() bms.setBatteryV(getBatteryVoltageProc());
 #endif  //MAYFLY_BAT_A6
