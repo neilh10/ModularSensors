@@ -48,7 +48,8 @@
 // Bring in the library to communicate with an external high-precision real time
 // clock This also implements a needed date/time class
 #if defined(ARDUINO_ARCH_SAMD)
-#include <RTClib.h>  //was <Sodaq_DS3231.h>
+// intRtcPhy ?? and fut extRtcPhy RTClib?
+//#include <RTClib.h>  //conflict DateTime was <Sodaq_DS3231.h>
 #elif defined(ARDUINO_ARCH_AVR) || defined(__AVR__)
 #include <Sodaq_DS3231.h>
 #endif
