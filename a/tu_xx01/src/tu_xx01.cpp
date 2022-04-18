@@ -696,17 +696,19 @@ Variable* pLionBatExt_var =
 // Read's the battery voltage
 // NOTE: This will actually return the battery level from the previous update!
 float getBatteryVoltageProc() {
-    float bat_lowest_v,
-        bat_latest_v;
+    float bat_lowest_v, bat_now_v;
+    bat_now_v = mcuBoardPhy.readSensorVbat();
     #define BATTERY_VOLTAGE_OPT PROCESSOR_VBATLOW_VAR_NUM
     if (mcuBoardPhy.sensorValues[BATTERY_VOLTAGE_OPT] == PS_SENSOR_INVALID) {mcuBoardPhy.update();}
     //Loook for lowest battery voltage
     bat_lowest_v = mcuBoardPhy.sensorValues[BATTERY_VOLTAGE_OPT];
-    bat_latest_v = mcuBoardPhy.readSensorVbat();
-    if (bat_lowest_v > bat_latest_v) {
-        bat_lowest_v = bat_latest_v;
+    
+    if (bat_lowest_v > bat_now_v) {
+        MS_DBG("Vbat_low now/prev",bat_now_v,bat_lowest_v);
+        bat_lowest_v = bat_now_v;
+    } else {
+        MS_DBG("Vbat_low prev/new",bat_lowest_v,bat_now_v);
     }
-    MS_DBG("Vbat_low",bat_lowest_v);
     return bat_lowest_v;
 }
 #define bms_SetBattery() bms.setBatteryV(getBatteryVoltageProc());
