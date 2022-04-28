@@ -1341,7 +1341,7 @@ void setup() {
         Serial.println(F(" Board: Found Mayfly 0.5b"));
         mcuBoardPhy.setVersion(mcuBoardVersion_0_5); 
     } else {
-        PRINTOUT( F(" Board: Assume Mayfly 1.0A3 ") );   
+        PRINTOUT( F(" Board: Assume Mayfly 1.1A ") );   
     }
 
     // set up for escape out of battery check if too low.
