@@ -464,7 +464,7 @@ KellerNanolevel nanolevel_snsr(nanolevelModbusAddress, modbusSerial,
 // ==========================================================================
 //use updated solving  https://github.com/neilh10/ModularSensors/issues/102
 /** Start [ao_song_am2315] */
-#include <sensors/AOSongAM2315a.h>
+#include <sensors/AOSongAM2315.h>
 
 // const int8_t I2CPower = 1;//sensorPowerPin;  // Pin to switch power on and
 // off (-1 if unconnected)
@@ -472,12 +472,12 @@ KellerNanolevel nanolevel_snsr(nanolevelModbusAddress, modbusSerial,
 // Create an AOSong AM2315 sensor object
 // Data sheets says AM2315 and AM2320 have same address 0xB8 (8bit addr) of 1011
 // 1000 or 7bit 0x5c=0101 1100 AM2320 AM2315 address 0x5C
-AOSongAM2315a am23xx(I2CPower);
+AOSongAM2315 am23xx(I2CPower);
 
 // Create humidity and temperature variable pointers for the AM2315
-// Variable *am2315Humid = new AOSongAM2315a_Humidity(&am23xx,
+// Variable *am2315Humid = new AOSongAM2315_Humidity(&am23xx,
 // "12345678-abcd-1234-ef00-1234567890ab"); Variable *am2315Temp = new
-// AOSongAM2315a_Temp(&am23xx, "12345678-abcd-1234-ef00-1234567890ab");
+// AOSongAM2315_Temp(&am23xx, "12345678-abcd-1234-ef00-1234567890ab");
 /** End [ao_song_am2315] */
 #endif  // ASONG_AM23XX_UUID
 
@@ -885,8 +885,8 @@ Variable* variableList[] = {
 // ASONG_AM23_Air_TemperatureF_UUID
 
 #elif defined ASONG_AM23XX_UUID
-    new AOSongAM2315a_Humidity(&am23xx, ASONG_AM23_Air_Humidity_UUID),
-    new AOSongAM2315a_Temp(&am23xx, ASONG_AM23_Air_Temperature_UUID),
+    new AOSongAM2315_Humidity(&am23xx, ASONG_AM23_Air_Humidity_UUID),
+    new AOSongAM2315_Temp(&am23xx, ASONG_AM23_Air_Temperature_UUID),
 // ASONG_AM23_Air_TemperatureF_UUID
 // calcAM2315_TempF
 #endif  // ASONG_AM23XX_UUID
