@@ -685,6 +685,21 @@ Variable* pLionBatExt_var =
                  ExternalVoltage_Volt0_UUID);
 #endif  // ExternalVoltage_Volt0_UUID
 
+// Measuring the battery voltage can be from a number of sources
+// Battery Filtering measurement in V
+// Vbat from A6 noise filtering ~ bfv
+// Mayfly 0.5-1.1 has a noisy battery measurement that uses
+// a sliding window filtering technique to measure the lowest 
+// battery voltage over a number of samples. 
+
+float bat_filtered_v;
+/// @brief Variable for software noise filtering window size
+#define BFV_VBATLOW_WINDOW_SZ 6
+float bfv_sliding[BFV_VBATLOW_WINDOW_SZ ];
+
+bool bfv_Init=false; //Has it been initialized
+uint8_t bfv_idx=0;
+
 #if defined MAYFLY_BAT_CHOICE
 #if MAYFLY_BAT_CHOICE == MAYFLY_BAT_STC3100
 #define bms_SetBattery() bms.setBatteryV(wLionBatStc3100_worker());
@@ -696,20 +711,43 @@ Variable* pLionBatExt_var =
 // Read's the battery voltage
 // NOTE: This will actually return the battery level from the previous update!
 float getBatteryVoltageProc() {
-    float bat_lowest_v, bat_now_v;
+    float  bat_now_v, bfv_lowest;
+    uint8_t bfv_lp;
     bat_now_v = mcuBoardPhy.readSensorVbat();
-    #define BATTERY_VOLTAGE_OPT PROCESSOR_VBATLOW_VAR_NUM
-    if (mcuBoardPhy.sensorValues[BATTERY_VOLTAGE_OPT] == PS_SENSOR_INVALID) {mcuBoardPhy.update();}
-    //Loook for lowest battery voltage
-    bat_lowest_v = mcuBoardPhy.sensorValues[BATTERY_VOLTAGE_OPT];
-    
-    if (bat_lowest_v > bat_now_v) {
-        MS_DBG("Vbat_low now/prev",bat_now_v,bat_lowest_v);
-        bat_lowest_v = bat_now_v;
+    bfv_lowest= bat_now_v;
+
+    if (bfv_Init) {
+        //Insert the latest reading into the next slot
+        bfv_sliding[bfv_idx]=bat_now_v;
+        MS_DBG(F("Vbatlow update:"),bfv_idx, bfv_lowest);
+        if (++bfv_idx >= BFV_VBATLOW_WINDOW_SZ) {
+            //MS_DEEP_DBG(F("Vbatlow idx rst"),bfv_idx);
+            bfv_idx=0;
+        } 
+        //Check all slots and find the lowest reading
+        for (bfv_lp=0;bfv_lp<BFV_VBATLOW_WINDOW_SZ ;bfv_lp++){
+            if (bfv_lowest>bfv_sliding[bfv_lp]) {
+                bfv_lowest=bfv_sliding[bfv_lp];
+                MS_DBG(F("Vbatlow i:"),bfv_lp, bfv_lowest);
+            } else {
+                //MS_DBG(F("Vbatlow i="),bfv_lp);
+            }
+        }
     } else {
-        MS_DBG("Vbat_low prev/new",bat_lowest_v,bat_now_v);
+        for (bfv_lp=0;bfv_lp<BFV_VBATLOW_WINDOW_SZ ;bfv_lp++){
+            bfv_sliding[bfv_lp]=bfv_lowest;
+        }
+        bfv_Init=true;
+        MS_DBG("Vbat_low init",BFV_VBATLOW_WINDOW_SZ, bat_now_v);
     }
-    return bat_lowest_v;
+    bat_filtered_v = bfv_lowest;
+    if (bat_filtered_v > bat_now_v) {
+        MS_DBG("Vbat_low now/prev",bat_now_v,bat_filtered_v);
+        bat_filtered_v = bat_now_v;
+    } else {
+        MS_DBG("Vbat_low prev/new",bat_filtered_v,bat_now_v);
+    }
+    return bat_filtered_v;
 }
 #define bms_SetBattery() bms.setBatteryV(getBatteryVoltageProc());
 #endif  //MAYFLY_BAT_A6
@@ -1219,7 +1257,7 @@ bool batteryCheck(bm_pwr_req_t useable_req, bool waitForGoodBattery,uint8_t dbg_
         #elif MAYFLY_BAT_CHOICE == MAYFLY_BAT_AA0 
         PRINTOUT(F("Bat_V(Ext) tbd"));
         #elif  MAYFLY_BAT_CHOICE == MAYFLY_BAT_A6
-        PRINTOUT(F("Bat_V(low)"),mcuBoardPhy.sensorValues[BATTERY_VOLTAGE_OPT]);
+        PRINTOUT(F("Bat_V(low)"),bat_filtered_v);
         #else //alt Read the V - FUT make compatible adcRead()
         PRINTOUT(F("Bat_V(undef)"));
         #endif //
