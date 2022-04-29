@@ -106,7 +106,6 @@ ProcessorStats::ProcessorStats(const char* version)
     _version = version;
     sampNum  = 0;
 
- 
 #if defined(ARDUINO_AVR_ENVIRODIY_MAYFLY) || defined(ARDUINO_AVR_SODAQ_MBILI)
     _batteryPin = A6;
 #elif defined(ARDUINO_AVR_FEATHER32U4) || defined(ARDUINO_SAMD_FEATHER_M0) || \
@@ -192,34 +191,6 @@ bool ProcessorStats::addSingleMeasurementResult(void) {
     MS_DBG(F("SampNum="), (unsigned int)sampNum);
 
     verifyAndAddMeasurementResult(PROCESSOR_SAMPNUM_VAR_NUM, sampNum);
-
-    // Create a sliding window of sensorValue_battery samples
-    //and use the lowest value.
-    uint8_t svb_lp=0;
-    float svb_lowest=sensorValue_battery;
-    if (svbInit) {
-        //Insert the latest reading into the next slot
-        svb_sliding[svb_idx]=sensorValue_battery;
-        if (++svb_idx >= PROCESSOR_VBATLOW_WINDOW_SZ) {
-            //MS_DEEP_DBG(F("Vbatlow idx rst"),svb_idx);
-            svb_idx=0;
-        } 
-        //Check all slots and find the lowest reading
-        for (svb_lp=0;svb_lp<PROCESSOR_VBATLOW_WINDOW_SZ ;svb_lp++){
-            if (svb_lowest>svb_sliding[svb_lp]) {
-                svb_lowest=svb_sliding[svb_lp];
-                MS_DEEP_DBG(F("Vbatlow i:"),svb_lp, svb_lowest);
-            }
-        }
-    } else {
-        for (svb_lp=0;svb_lp<PROCESSOR_VBATLOW_WINDOW_SZ ;svb_lp++){
-            svb_sliding[svb_lp]=svb_lowest;
-        }
-        svbInit=true;
-    }
-    MS_DBG(F("Vbatlow"), svb_lowest);
-    verifyAndAddMeasurementResult(PROCESSOR_VBATLOW_VAR_NUM,
-                                  svb_lowest);
 
     // Unset the time stamp for the beginning of this measurement
     _millisMeasurementRequested = 0;

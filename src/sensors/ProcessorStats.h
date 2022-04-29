@@ -73,7 +73,7 @@
 
 // Sensor Specific Defines
 /// @brief Sensor::_numReturnedValues; the processor can report 3 values.
-#define PROCESSOR_NUM_VARIABLES 4
+#define PROCESSOR_NUM_VARIABLES 3
 /// @brief Sensor::_incCalcValues; sample number is (sort-of) calculated.
 #define PROCESSOR_INC_CALC_VARIABLES 1
 
@@ -195,42 +195,6 @@
 #define PROCESSOR_SAMPNUM_DEFAULT_CODE "SampNum"
 /**@}*/
 
-/**
- * @anchor sensor_processor_vbatlow
- * @name Battery Voltage Low
- * The lowest battery voltage variable from the processor/mcu over sliding windows
- * This is the voltage as measured on the battery attached to the MCU using the
- * inbuilt ADC, if applicable.
- * - Range is valid from 3.5 to 5.0V Mayfly 1.1, 1.0 
- * - Range from ?? to 5.0V Earlier Mayfly's
- *   The lower range is undefined, Vref is tied to 3.3V, and there is a variable LDO between 3.3V and Vbat
- * - Accuracy: ADC accuracy is 10BIt across 
- */
-/**@{*/
-/**
- * @brief Decimals places in string representation; battery voltage should
- * have 3.
- *
- * The resolution is of the EnviroDIY Mayfly is 0.005V, we will use that
- * resolution for all processors.
- *
- * {{ @ref ProcessorStats_Vbatlow::ProcessorStats_Vbatlow }}
- */
-#define PROCESSOR_VBATLOW_RESOLUTION 3
-/// @brief Battery voltage is stored in sensorValues[3]
-#define PROCESSOR_VBATLOW_VAR_NUM 3
-/// @brief Variable name in
-/// [ODM2 controlled vocabulary](http://vocabulary.odm2.org/variablename/);
-/// batteryVoltage
-#define PROCESSOR_VBATLOW_VAR_NAME "batteryVoltage"
-/// @brief Variable unit name in
-/// [ODM2 controlled vocabulary](http://vocabulary.odm2.org/units/); "volt"
-#define PROCESSOR_VBATLOW_UNIT_NAME "volt"
-/// @brief Default variable short code; "BatteryLow"
-#define PROCESSOR_VBATLOW_DEFAULT_CODE "BatteryLow"
-/// @brief Variable for software noise filtering window size
-    #define PROCESSOR_VBATLOW_WINDOW_SZ 4
-/**@}*/
 
 // The main class for the Processor
 // Only need a sleep and wake since these DON'T use the default of powering
@@ -302,9 +266,6 @@ class ProcessorStats : public Sensor {
     int8_t      _batteryPin;
     int16_t     sampNum;
 
-    bool svbInit=false;
-    uint8_t svb_idx=0;
-    float svb_sliding[PROCESSOR_VBATLOW_WINDOW_SZ ];
 
 
 };
@@ -451,49 +412,5 @@ class ProcessorStats_SampleNumber : public Variable {
      */
     ~ProcessorStats_SampleNumber() {}
 };
-
-/**
- * @brief The Variable sub-class used for the
- * [battery voltage low output](@ref sensor_processor_vbatlow) taken from the
- * processor's on-board ADC. This doesn't orginate new ADC, just uses the last one.
- *
- * @ingroup sensor_processor
- */
-class ProcessorStats_Vbatlow : public Variable {
- public:
-    /**
-     * @brief Construct a new ProcessorStats_Vbatlow object.
-     *
-     * @param parentSense The parent ProcessorStats providing the result
-     * values.
-     * @param uuid A universally unique identifier (UUID or GUID) for the
-     * variable; optional with the default value of an empty string.
-     * @param varCode A short code to help identify the variable in files;
-     * optional with a default value of "batteryVoltage".
-     */
-    explicit ProcessorStats_Vbatlow(
-        ProcessorStats* parentSense, const char* uuid = "",
-        const char* varCode = PROCESSOR_VBATLOW_DEFAULT_CODE)
-        : Variable(parentSense, (const uint8_t)PROCESSOR_VBATLOW_VAR_NUM,
-                   (uint8_t)PROCESSOR_VBATLOW_RESOLUTION,
-                   PROCESSOR_VBATLOW_VAR_NAME, PROCESSOR_VBATLOW_UNIT_NAME,
-                   varCode, uuid) {}
-    /**
-     * @brief Construct a new ProcessorStats_Vbatlow object.
-     *
-     * @note This must be tied with a parent ProcessorStats before it can be
-     * used.
-     */
-    ProcessorStats_Vbatlow()
-        : Variable((const uint8_t)PROCESSOR_VBATLOW_VAR_NUM,
-                   (uint8_t)PROCESSOR_VBATLOW_RESOLUTION,
-                   PROCESSOR_VBATLOW_VAR_NAME, PROCESSOR_VBATLOW_UNIT_NAME,
-                   PROCESSOR_VBATLOW_DEFAULT_CODE) {}
-    /**
-     * @brief Destroy the ProcessorStats_Vbatlow object - no action needed.
-     */
-    ~ProcessorStats_Vbatlow() {}
-};
-
 /**@}*/
 #endif  // SRC_SENSORS_PROCESSORSTATS_H_
