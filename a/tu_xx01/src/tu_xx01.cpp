@@ -196,7 +196,9 @@ StreamDebugger modemDebugger(modemSerial, STANDARD_SERIAL_OUTPUT);
 #endif  // STREAMDEBUGGER_DBG
 
 // Modem Pins - Describe the physical pin connection of your modem to your board
-const int8_t modemVccPin_mayfly_1_x = 18;  //Pin18 on Xbee  Mayfly v1.0,
+#define MODEM_VCC_CE_PIN 18
+// Set the default for startup
+const int8_t modemVccPin_mayfly_1_x = -2;  //Pin18 on Xbee  Mayfly v1.x,
 const int8_t modemVccPin_mayfly_0_5 = -2; //No power control rev 0.5b
 #define modemVccPin modemVccPin_mayfly_1_x 
 
@@ -738,14 +740,20 @@ float getBatteryVoltageProc() {
             bfv_sliding[bfv_lp]=bfv_lowest;
         }
         bfv_Init=true;
-        MS_DBG("Vbat_low init",BFV_VBATLOW_WINDOW_SZ, bat_now_v);
+        MS_DBG(F("Vbat_low init"),BFV_VBATLOW_WINDOW_SZ, bat_now_v);
     }
     bat_filtered_v = bfv_lowest;
     if (bat_filtered_v > bat_now_v) {
-        MS_DBG("Vbat_low now/prev",bat_now_v,bat_filtered_v);
+        Serial.print(F("Vbat_low now/prev "));
+        Serial.print(bat_now_v,3);
+        Serial.print("/");
+        Serial.println(bat_filtered_v,3);
         bat_filtered_v = bat_now_v;
     } else {
-        MS_DBG("Vbat_low prev/new",bat_filtered_v,bat_now_v);
+        Serial.print(F("Vbat_low prev/new "));
+        Serial.print(bat_filtered_v,3);
+        Serial.print("/");
+        Serial.println(bat_now_v,3);
     }
     return bat_filtered_v;
 }
@@ -871,8 +879,7 @@ Variable* variableList[] = {
     pLionBatExt_var,
 #endif
 #if defined MAYFLY_BAT_A6
-    //new ProcessorStats_Battery(&mcuBoardPhy, ProcessorStats_Batt_UUID),
-    new ProcessorStats_Vbatlow(&mcuBoardPhy, ProcessorStats_Batt_UUID),
+    new ProcessorStats_Battery(&mcuBoardPhy, ProcessorStats_Batt_UUID),
 #endif  // MAYFLY_BAT_A6
 #if defined AnalogProcEC_ACT
     // Do Analog processing measurements.
@@ -1105,6 +1112,10 @@ void        modbusPinPowerMng(bool status) {
     pinMode(pinNum, INPUT); \
     digitalWrite(pinNum, HIGH);
 
+#define PORT_LOW(pinNum)   \
+    pinMode(pinNum, OUTPUT); \
+    digitalWrite(pinNum, LOW);
+
 void unusedBitsMakeSafe() {
     // Set all unused Pins to a safe no current mode for sleeping
     // Mayfly variant.h: D0->23  (Analog0-7) or D24-31
@@ -1134,7 +1145,7 @@ void unusedBitsMakeSafe() {
     PORT_SAFE(21);
     // PORT_SAFE(22);  //Pwr Sw
 #if defined  UseModem_Module
-    PORT_HIGH(23);  // Xbee DTR modemSleepRqPin HIGH for LTE SLEEP_REQ
+    PORT_LOW(23);  // Xbee DTR modemSleepRqPin LOW until Modem takes over
  #else 
     PORT_SAFE(23);
  #endif //UseModem_Module
@@ -1379,7 +1390,18 @@ void setup() {
         Serial.println(F(" Board: Found Mayfly 0.5b"));
         mcuBoardPhy.setVersion(mcuBoardVersion_0_5); 
     } else {
-        PRINTOUT( F(" Board: Assume Mayfly 1.1A ") );   
+        PRINTOUT( F(" Board: Assume Mayfly 1.1A ") );  
+
+        #ifdef UseModem_Module 
+        // For Mayfly1.x needs the Modem Turned on
+        // as of 0.33.1 LTE power up not handled well so do manual 
+        if (0 > modemVccPin_mayfly_1_x) {
+            // Set up pins for the BEE_VCC_EN pwr ON HIGH- default LOW, R pulled LOW
+            // Must be turned on before any other pins connected to modem are taken high
+            pinMode(MODEM_VCC_CE_PIN , OUTPUT);
+            digitalWrite(MODEM_VCC_CE_PIN, HIGH);         
+        } 
+        #endif //seModem_Module 
     }
 
     // set up for escape out of battery check if too low.

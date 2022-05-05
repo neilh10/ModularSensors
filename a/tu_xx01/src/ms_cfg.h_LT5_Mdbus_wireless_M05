@@ -71,7 +71,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 // Carrier board for Digi XBEE LTE CAT-M1 and jumper from battery
 // Digi WiFi S6 plugged in directly
 // For debug: C4 removed, strap for AA2/Vbat AA3/SolarV,
-//#define MFVersion_DEF "v0.5b"
+#define MFVersion_DEF "v0.5b"
 #define MFName_DEF "Mayfly"
 #define HwVersion_DEF MFVersion_DEF
 #define HwName_DEF MFName_DEF
@@ -238,7 +238,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 
 #if defined SENSIRION_SHT4X_UUID
 #define SENSIRION_SHT4X_Air_Temperature_UUID "Air_Temperature_UUID"
-//#define SENSIRION_SHT4X_Air_TemperatureF_UUID "Air_TemperatureF_UUID"
+#define SENSIRION_SHT4X_Air_TemperatureF_UUID "Air_TemperatureF_UUID"
 #define SENSIRION_SHT4X_Air_Humidity_UUID "Air_Humidity_UUID"
 #elif defined ASONG_AM23XX_UUID 
 #define ASONG_AM23_Air_Temperature_UUID "Air_Temperature_UUID"
@@ -254,7 +254,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 
 #if defined UseModem_Module
 // This seems to be de-stabilizing Digi S6B
-//#define DIGI_RSSI_UUID "DIGI_RSSI_UUID"
+#define DIGI_RSSI_UUID "DIGI_RSSI_UUID"
 //#define Modem_SignalPercent_UUID    "SignalPercent_UUID"
 #endif  // UseModem_Module
 
@@ -268,8 +268,8 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 
 #if defined MAYFLY_BAT_STC3100
 #define STC3100_Volt_UUID "STC3100Volt_UUID"
-//#define STC3100_USED1_mAhr_UUID "STC3100used1_mAhr_UUID"
-//#define STC3100_AVLBL_mAhr_UUID "STC3100avlbl_mAhr_UUID"
+#define STC3100_USED1_mAhr_UUID "STC3100used1_mAhr_UUID"
+#define STC3100_AVLBL_mAhr_UUID "STC3100avlbl_mAhr_UUID"
 #endif // MAYFLY_BAT_STC3100
 
 #ifdef MAYFLY_BAT_AA0
