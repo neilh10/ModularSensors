@@ -711,7 +711,7 @@ uint8_t bfv_idx=0;
 #elif  MAYFLY_BAT_CHOICE == MAYFLY_BAT_A6
 #warning need to test mcuBoardPhy, interface 
 // Read's the battery voltage
-// NOTE: This will actually return the battery level from the previous update!
+// NOTE: This returns the lowest battery level from previous running updates!
 float getBatteryVoltageProc() {
     float  bat_now_v, bfv_lowest;
     uint8_t bfv_lp;
@@ -879,6 +879,7 @@ Variable* variableList[] = {
     pLionBatExt_var,
 #endif
 #if defined MAYFLY_BAT_A6
+    //FUT return the filtered vbat_low
     new ProcessorStats_Battery(&mcuBoardPhy, ProcessorStats_Batt_UUID),
 #endif  // MAYFLY_BAT_A6
 #if defined AnalogProcEC_ACT
