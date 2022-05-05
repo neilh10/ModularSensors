@@ -1607,7 +1607,7 @@ void setup() {
 #endif  // UseModem_Module
     // List start time, if RTC invalid will also be initialized
     PRINTOUT(F("Local Time "),
-             dataLogger.formatDateTime_ISO8601(dataLogger.getNowEpochTz()));
+             dataLogger.formatDateTime_ISO8601(dataLogger.getNowLocalEpoch()));
 
     //Setup sensors, including reading sensor data sheet that can be recorded on SD card
     PRINTOUT(F("Setting up sensors..."));
