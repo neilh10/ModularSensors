@@ -1,6 +1,6 @@
 /*****************************************************************************
-ms_cfg.h_LT5_wireless - ModularSensors Config - MMW _LT5/Modbus +LTE/WiFi
-Status 220320: 0.32.2rs485 
+ms_cfg.h_LT5_Mdbus_wireless - ModularSensors Config - MMW _LT5/Modbus +LTE/WiFi
+Status 220517: 0.33.1.aaa 
 Written By:  Neil Hancock www.envirodiy.org/members/neilh20/
 Development Environment: PlatformIO
 Hardware Platform(s): EnviroDIY Mayfly Arduino Datalogger+RS485 Wingboard
@@ -31,6 +31,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 // MAYFLY_BAT_DIGI Digi Modem LTE with onboard battery measurement
 // Choices applied to define MAYFLY_BAT_xx 1) Stc3100 2) ExternVolage_ACT 3) Digi Mode 4) MAYFLY_BAT_A6
 #define MAYFLY_BAT_A6 4
+#define REPORT_FILTERED_BAT_A6_V
 //#define MAYFLY_BAT_AA0 2
 //FUT #define MAYFLY_BAT_DIGI 3
 
@@ -60,6 +61,8 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 //#define MAYFLY_BAT_CHOICE MAYFLY_BAT_STC3100
 // FUT #define MAYFLY_BAT_CHOICE  MAYFLY_BAT_DIGI
 
+//Only define 1 below . SENSIRION_SHT4X is on Mayfly 1.x
+#define SENSIRION_SHT4X_UUID
 //#define ASONG_AM23XX_UUID 1
 
 //Two heavy sensors with power useage
@@ -69,7 +72,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 // Carrier board for Digi XBEE LTE CAT-M1 and jumper from battery
 // Digi WiFi S6 plugged in directly
 // For debug: C4 removed, strap for AA2/Vbat AA3/SolarV,
-#define MFVersion_DEF "v0.5b"
+//#define MFVersion_DEF "v0.5b"
 #define MFName_DEF "Mayfly"
 #define HwVersion_DEF MFVersion_DEF
 #define HwName_DEF MFName_DEF
@@ -234,7 +237,11 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define INA219M_VOLT_UUID "INA219_VOLT_UUID"
 #endif  // INA219_PHY_ACT
 
-#if defined ASONG_AM23XX_UUID
+#if defined SENSIRION_SHT4X_UUID
+#define SENSIRION_SHT4X_Air_Temperature_UUID "Air_Temperature_UUID"
+//#define SENSIRION_SHT4X_Air_TemperatureF_UUID "Air_TemperatureF_UUID"
+#define SENSIRION_SHT4X_Air_Humidity_UUID "Air_Humidity_UUID"
+#elif defined ASONG_AM23XX_UUID 
 #define ASONG_AM23_Air_Temperature_UUID "Air_Temperature_UUID"
 #define ASONG_AM23_Air_TemperatureF_UUID "Air_TemperatureF_UUID"
 #define ASONG_AM23_Air_Humidity_UUID "Air_Humidity_UUID"
@@ -247,7 +254,8 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #endif  // ENVIRODIY_MAYFLY_TEMPERATURE
 
 #if defined UseModem_Module
-// This seems to be de-stabilizing Digi S6B
+// not tested Digi LTE
+// tested Digi S6B 
 #define DIGI_RSSI_UUID "DIGI_RSSI_UUID"
 //#define Modem_SignalPercent_UUID    "SignalPercent_UUID"
 #endif  // UseModem_Module
@@ -262,8 +270,8 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 
 #if defined MAYFLY_BAT_STC3100
 #define STC3100_Volt_UUID "STC3100Volt_UUID"
-#define STC3100_USED1_mAhr_UUID "STC3100used1_mAhr_UUID"
-#define STC3100_AVLBL_mAhr_UUID "STC3100avlbl_mAhr_UUID"
+//#define STC3100_USED1_mAhr_UUID "STC3100used1_mAhr_UUID"
+//#define STC3100_AVLBL_mAhr_UUID "STC3100avlbl_mAhr_UUID"
 #endif // MAYFLY_BAT_STC3100
 
 #ifdef MAYFLY_BAT_AA0

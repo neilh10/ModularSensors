@@ -196,7 +196,9 @@ StreamDebugger modemDebugger(modemSerial, STANDARD_SERIAL_OUTPUT);
 #endif  // STREAMDEBUGGER_DBG
 
 // Modem Pins - Describe the physical pin connection of your modem to your board
-const int8_t modemVccPin_mayfly_1_x = 18;  //Pin18 on Xbee  Mayfly v1.0,
+#define MODEM_VCC_CE_PIN 18
+// Set the default for startup
+const int8_t modemVccPin_mayfly_1_x = -2;  //Pin18 on Xbee  Mayfly v1.x,
 const int8_t modemVccPin_mayfly_0_5 = -2; //No power control rev 0.5b
 #define modemVccPin modemVccPin_mayfly_1_x 
 
@@ -226,7 +228,28 @@ const bool useCTSforStatus =
   loggerModem*     loggerModemPhyInst=NULL ;//was modemPhy 
 #define loggerModemPhyDigiWifi ((DigiXBeeWifi *) loggerModemPhyInst)
 #define loggerModemPhyDigiCell ((DigiXBeeCellularTransparent *) loggerModemPhyInst)
-#endif             // UseModem_Module
+
+#if defined DIGI_RSSI_UUID
+//The loggerModemPhyInst is created at run time 
+Variable*  modemPhyRssi_var = new Modem_RSSI(loggerModemPhyInst);
+float  modemPhyRssiGetValue(void) {  // Can't get value till instatiated
+    if (NULL==loggerModemPhyInst) return 0;
+
+    return modemPhyRssi_var->getValue(true);
+}
+// Create the calculated RSSI Variable object 
+Variable* modemPhyRssi_calc =
+    new Variable(modemPhyRssiGetValue,  // function that does the calculation
+                 MODEM_RSSI_RESOLUTION, // resolution
+                 MODEM_RSSI_UNIT_NAME, // var name.
+                              //from http://vocabulary.odm2.org/variablename/
+                 "dBm",  // var unit. 
+                          //from http://vocabulary.odm2.org/units/
+                 MODEM_RSSI_DEFAULT_CODE,  // var code MODEM_RSSI_DEFAULT_CODE
+                 DIGI_RSSI_UUID);
+#endif //DIGI_RSSI_UUID
+
+#endif // UseModem_Module
 
 // ==========================================================================
 // Create a reference to the serial port for modbus
@@ -463,7 +486,8 @@ KellerNanolevel nanolevel_snsr(nanolevelModbusAddress, modbusSerial,
 //    AOSong AM2315 Digital Humidity and Temperature Sensor
 // ==========================================================================
 //use updated solving  https://github.com/neilh10/ModularSensors/issues/102
-#include <sensors/AOSongAM2315a.h>
+/** Start [ao_song_am2315] */
+#include <sensors/AOSongAM2315.h>
 
 // const int8_t I2CPower = 1;//sensorPowerPin;  // Pin to switch power on and
 // off (-1 if unconnected)
@@ -471,14 +495,36 @@ KellerNanolevel nanolevel_snsr(nanolevelModbusAddress, modbusSerial,
 // Create an AOSong AM2315 sensor object
 // Data sheets says AM2315 and AM2320 have same address 0xB8 (8bit addr) of 1011
 // 1000 or 7bit 0x5c=0101 1100 AM2320 AM2315 address 0x5C
-AOSongAM2315a am23xx(I2CPower);
+AOSongAM2315 am23xx(I2CPower);
 
 // Create humidity and temperature variable pointers for the AM2315
-// Variable *am2315Humid = new AOSongAM2315a_Humidity(&am23xx,
+// Variable *am2315Humid = new AOSongAM2315_Humidity(&am23xx,
 // "12345678-abcd-1234-ef00-1234567890ab"); Variable *am2315Temp = new
-// AOSongAM2315a_Temp(&am23xx, "12345678-abcd-1234-ef00-1234567890ab");
+// AOSongAM2315_Temp(&am23xx, "12345678-abcd-1234-ef00-1234567890ab");
+/** End [ao_song_am2315] */
 #endif  // ASONG_AM23XX_UUID
 
+#if defined SENSIRION_SHT4X_UUID
+// ==========================================================================
+//  Sensirion SHT4X Digital Humidity and Temperature Sensor
+// ==========================================================================
+/** Start [sensirion_sht4x] */
+#include <sensors/SensirionSHT4x.h>
+
+// NOTE: Use -1 for any pins that don't apply or aren't being used.
+const int8_t SHT4xPower     = sensorPowerPin;  // Power pin
+const bool   SHT4xUseHeater = true;
+
+// Create an Sensirion SHT4X sensor object
+SensirionSHT4x sht4x(SHT4xPower, SHT4xUseHeater);
+
+// Create humidity and temperature variable pointers for the SHT4X
+/*Variable* sht4xHumid =
+    new SensirionSHT4x_Humidity(&sht4x, "12345678-abcd-1234-ef00-1234567890ab");
+Variable* sht4xTemp =
+    new SensirionSHT4x_Temp(&sht4x, "12345678-abcd-1234-ef00-1234567890ab");*/
+/** End [sensirion_sht4x] */
+#endif //SENSIRION_SHT4X_UUID
 
 // ==========================================================================
 //    Maxim DS3231 RTC (Real Time Clock)
@@ -559,7 +605,7 @@ float wLionBatStc3100_worker(void) {  // get the Battery Reading
         flLionBatStc3100_V = MS_LION_ERR_VOLT;
     }
     // MS_DBG(F("wLionBatStc3100_worker"), flLionBatStc3100_V);
-#if defined MS_TU_XX_DEBUG
+#if defined MS_TU_XX_DEBUG_DEEP
     DEBUGGING_SERIAL_OUTPUT.print(F("  wLionBatStc3100_worker "));
     DEBUGGING_SERIAL_OUTPUT.print(flLionBatStc3100_V, 4);
     DEBUGGING_SERIAL_OUTPUT.println();
@@ -662,6 +708,21 @@ Variable* pLionBatExt_var =
                  ExternalVoltage_Volt0_UUID);
 #endif  // ExternalVoltage_Volt0_UUID
 
+// Measuring the battery voltage can be from a number of sources
+// Battery Filtering measurement in V
+// Vbat from A6 noise filtering ~ bfv
+// Mayfly 0.5-1.1 has a noisy battery measurement that uses
+// a sliding window filtering technique to measure the lowest 
+// battery voltage over a number of samples. 
+
+float bat_filtered_v;
+/// @brief Variable for software noise filtering window size
+#define BFV_VBATLOW_WINDOW_SZ 6
+float bfv_sliding[BFV_VBATLOW_WINDOW_SZ ];
+
+bool bfv_Init=false; //Has it been initialized
+uint8_t bfv_idx=0;
+
 #if defined MAYFLY_BAT_CHOICE
 #if MAYFLY_BAT_CHOICE == MAYFLY_BAT_STC3100
 #define bms_SetBattery() bms.setBatteryV(wLionBatStc3100_worker());
@@ -671,13 +732,71 @@ Variable* pLionBatExt_var =
 #elif  MAYFLY_BAT_CHOICE == MAYFLY_BAT_A6
 #warning need to test mcuBoardPhy, interface 
 // Read's the battery voltage
-// NOTE: This will actually return the battery level from the previous update!
+// NOTE: This returns the lowest battery level from previous running updates!
 float getBatteryVoltageProc() {
-    #define BATTERY_VOLTAGE_OPT PROCESSOR_VBATLOW_VAR_NUM
-    if (mcuBoardPhy.sensorValues[BATTERY_VOLTAGE_OPT] == PS_SENSOR_INVALID) mcuBoardPhy.update();
-    return mcuBoardPhy.sensorValues[BATTERY_VOLTAGE_OPT];
+    float  bat_now_v, bfv_lowest;
+    uint8_t bfv_lp;
+    bat_now_v = mcuBoardPhy.readSensorVbat();
+    bfv_lowest= bat_now_v;
+
+    if (bfv_Init) {
+        //Insert the latest reading into the next slot
+        bfv_sliding[bfv_idx]=bat_now_v;
+        MS_DBG(F("Vbatlow update:"),bfv_idx, bfv_lowest);
+        if (++bfv_idx >= BFV_VBATLOW_WINDOW_SZ) {
+            //MS_DEEP_DBG(F("Vbatlow idx rst"),bfv_idx);
+            bfv_idx=0;
+        } 
+        //Check all slots and find the lowest reading
+        for (bfv_lp=0;bfv_lp<BFV_VBATLOW_WINDOW_SZ ;bfv_lp++){
+            if (bfv_lowest>bfv_sliding[bfv_lp]) {
+                bfv_lowest=bfv_sliding[bfv_lp];
+                MS_DBG(F("Vbatlow i:"),bfv_lp, bfv_lowest);
+            } else {
+                //MS_DBG(F("Vbatlow i="),bfv_lp);
+            }
+        }
+    } else {
+        for (bfv_lp=0;bfv_lp<BFV_VBATLOW_WINDOW_SZ ;bfv_lp++){
+            bfv_sliding[bfv_lp]=bfv_lowest;
+        }
+        bfv_Init=true;
+        MS_DBG(F("Vbat_low init"),BFV_VBATLOW_WINDOW_SZ, bat_now_v);
+    }
+    bat_filtered_v = bfv_lowest;
+    if (bat_filtered_v > bat_now_v) {
+        Serial.print(F("Vbat_low now/prev "));
+        Serial.print(bat_now_v,3);
+        Serial.print("/");
+        Serial.println(bat_filtered_v,3);
+        bat_filtered_v = bat_now_v;
+    } else {
+        Serial.print(F("Vbat_low prev/new "));
+        Serial.print(bat_filtered_v,3);
+        Serial.print("/");
+        Serial.println(bat_now_v,3);
+    }
+    return bat_filtered_v;
 }
 #define bms_SetBattery() bms.setBatteryV(getBatteryVoltageProc());
+
+#if defined REPORT_FILTERED_BAT_A6_V
+float BatFilteredGetValue_V(void) {
+    return bat_filtered_v;
+}
+// Create the calculated Battery Filtered V object 
+Variable* BatFiltered_calc =
+    new Variable(BatFilteredGetValue_V,  // function that does the calculation
+                 PROCESSOR_BATTERY_RESOLUTION, // resolution
+                 PROCESSOR_BATTERY_VAR_NAME, // var name.
+                        //from  http://vocabulary.odm2.org/variablename/
+                 PROCESSOR_BATTERY_UNIT_NAME, // var unit.
+                        // from http://vocabulary.odm2.org/units/
+                 PROCESSOR_BATTERY_DEFAULT_CODE, // var code
+                 ProcessorStats_Batt_UUID);
+
+#endif //REPORT_FILTERED_BAT_A6_V
+
 #endif  //MAYFLY_BAT_A6
 #else 
 #warning MAYFLY_BAT_CHOICE not defined
@@ -799,9 +918,12 @@ Variable* variableList[] = {
     pLionBatExt_var,
 #endif
 #if defined MAYFLY_BAT_A6
-    //new ProcessorStats_Battery(&mcuBoardPhy, ProcessorStats_Batt_UUID),
-    new ProcessorStats_Vbatlow(&mcuBoardPhy, ProcessorStats_Batt_UUID),
-#endif  // MAYFLY_BAT_A6
+    #if defined REPORT_FILTERED_BAT_A6_V
+    BatFiltered_calc,
+    #else 
+    new ProcessorStats_Battery(&mcuBoardPhy, ProcessorStats_Batt_UUID),
+    #endif // REPORT_FILTERED_BAT_A6_V
+#endif  // MAYFLY_BAT_A6 
 #if defined AnalogProcEC_ACT
     // Do Analog processing measurements.
     new AnalogElecConductivityM_EC(&analogEC_phy, EC1_UUID),
@@ -845,9 +967,14 @@ Variable* variableList[] = {
 // new BoschBME280_Pressure(&bme280, "12345678-abcd-1234-ef00-1234567890ab"),
 // new BoschBME280_Altitude(&bme280, "12345678-abcd-1234-ef00-1234567890ab"),
 // new MaximDS18_Temp(&ds18, "12345678-abcd-1234-ef00-1234567890ab"),
-#if defined ASONG_AM23XX_UUID
-    new AOSongAM2315a_Humidity(&am23xx, ASONG_AM23_Air_Humidity_UUID),
-    new AOSongAM2315a_Temp(&am23xx, ASONG_AM23_Air_Temperature_UUID),
+#if defined SENSIRION_SHT4X_UUID
+    new SensirionSHT4x_Humidity(&sht4x, SENSIRION_SHT4X_Air_Humidity_UUID),
+    new SensirionSHT4x_Temp(&sht4x, SENSIRION_SHT4X_Air_Temperature_UUID),
+// ASONG_AM23_Air_TemperatureF_UUID
+
+#elif defined ASONG_AM23XX_UUID
+    new AOSongAM2315_Humidity(&am23xx, ASONG_AM23_Air_Humidity_UUID),
+    new AOSongAM2315_Temp(&am23xx, ASONG_AM23_Air_Temperature_UUID),
 // ASONG_AM23_Air_TemperatureF_UUID
 // calcAM2315_TempF
 #endif  // ASONG_AM23XX_UUID
@@ -858,9 +985,10 @@ Variable* variableList[] = {
 #if defined MaximDS3231_TEMPF_UUID
     ds3231TempFcalc,
 #endif  // MaximDS3231_TempF_UUID
-#if 0 //modemPhy not setup, belay defined DIGI_RSSI_UUID
-    new Modem_RSSI(&modemPhy, DIGI_RSSI_UUID),
-// new Modem_RSSI(&modemPhy, "12345678-abcd-1234-ef00-1234567890ab"),
+#if defined DIGI_RSSI_UUID
+    //loggerModemPhyInst not setup
+    //new Modem_RSSI(&loggerModemPhyInst, DIGI_RSSI_UUID),
+    modemPhyRssi_calc,
 #endif  // DIGI_RSSI_UUID
 
 
@@ -1028,6 +1156,10 @@ void        modbusPinPowerMng(bool status) {
     pinMode(pinNum, INPUT); \
     digitalWrite(pinNum, HIGH);
 
+#define PORT_LOW(pinNum)   \
+    pinMode(pinNum, OUTPUT); \
+    digitalWrite(pinNum, LOW);
+
 void unusedBitsMakeSafe() {
     // Set all unused Pins to a safe no current mode for sleeping
     // Mayfly variant.h: D0->23  (Analog0-7) or D24-31
@@ -1057,7 +1189,7 @@ void unusedBitsMakeSafe() {
     PORT_SAFE(21);
     // PORT_SAFE(22);  //Pwr Sw
 #if defined  UseModem_Module
-    PORT_HIGH(23);  // Xbee DTR modemSleepRqPin HIGH for LTE SLEEP_REQ
+    PORT_LOW(23);  // Xbee DTR modemSleepRqPin LOW until Modem takes over
  #else 
     PORT_SAFE(23);
  #endif //UseModem_Module
@@ -1129,7 +1261,7 @@ void  managementSensorsPoll() {
         //Create a time traceability header 
         String csvString = "";
         csvString.reserve(24);
-        dataLogger.dtFromEpochTz(dataLogger.getNowEpochTz()).addToString(csvString);
+        dataLogger.dtFromEpochTz(dataLogger.getNowLocalEpoch()).addToString(csvString);
         csvString += ", ";
         Serial.print(csvString);
         //Serial.print(dataLogger.formatDateTime_ISO8601(dataLogger.getNowEpochTz()));
@@ -1180,7 +1312,7 @@ bool batteryCheck(bm_pwr_req_t useable_req, bool waitForGoodBattery,uint8_t dbg_
         #elif MAYFLY_BAT_CHOICE == MAYFLY_BAT_AA0 
         PRINTOUT(F("Bat_V(Ext) tbd"));
         #elif  MAYFLY_BAT_CHOICE == MAYFLY_BAT_A6
-        PRINTOUT(F("Bat_V(low)"),mcuBoardPhy.sensorValues[BATTERY_VOLTAGE_OPT]);
+        PRINTOUT(F("Bat_V(low)"),bat_filtered_v);
         #else //alt Read the V - FUT make compatible adcRead()
         PRINTOUT(F("Bat_V(undef)"));
         #endif //
@@ -1302,7 +1434,18 @@ void setup() {
         Serial.println(F(" Board: Found Mayfly 0.5b"));
         mcuBoardPhy.setVersion(mcuBoardVersion_0_5); 
     } else {
-        PRINTOUT( F(" Board: Assume Mayfly 1.0A3 ") );   
+        PRINTOUT( F(" Board: Assume Mayfly 1.1A ") );  
+
+        #ifdef UseModem_Module 
+        // For Mayfly1.x needs the Modem Turned on
+        // as of 0.33.1 LTE power up not handled well so do manual 
+        if (0 > modemVccPin_mayfly_1_x) {
+            // Set up pins for the BEE_VCC_EN pwr ON HIGH- default LOW, R pulled LOW
+            // Must be turned on before any other pins connected to modem are taken high
+            pinMode(MODEM_VCC_CE_PIN , OUTPUT);
+            digitalWrite(MODEM_VCC_CE_PIN, HIGH);         
+        } 
+        #endif //seModem_Module 
     }
 
     // set up for escape out of battery check if too low.
@@ -1511,9 +1654,9 @@ void setup() {
 #endif  // UseModem_Module
     // List start time, if RTC invalid will also be initialized
     PRINTOUT(F("Local Time "),
-             dataLogger.formatDateTime_ISO8601(dataLogger.getNowEpochTz()));
-    PRINTOUT(F("Time epoch Tz "),dataLogger.getNowEpochTz());
-    PRINTOUT(F("Time epoch UTC "),dataLogger.getNowEpochUTC());
+             dataLogger.formatDateTime_ISO8601(dataLogger.getNowLocalEpoch()));
+    PRINTOUT(F("Time local epoch "),dataLogger.getNowLocalEpoch());
+    PRINTOUT(F("Time  UTC  epoch "),dataLogger.getNowUTCEpoch());
 
     //Setup sensors, including reading sensor data sheet that can be recorded on SD card
     PRINTOUT(F("Setting up sensors..."));

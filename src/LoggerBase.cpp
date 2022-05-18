@@ -48,9 +48,8 @@ int8_t Logger::_loggerTimeZone = 0;
 // Initialize the static time adjustment
 int8_t Logger::_loggerRTCOffset = 0;
 // Initialize the static timestamps
-#define markedEpochTimeTz markedEpochTime
-uint32_t Logger::markedEpochTimeTz  = 0;
-uint32_t Logger::markedEpochTimeUTC = 0;
+uint32_t Logger::markedLocalEpochTime = 0;
+uint32_t Logger::markedUTCEpochTime   = 0;
 // Initialize the testing/logging flags
 volatile bool Logger::isLoggingNow = false;
 volatile bool Logger::isTestingNow = false;
@@ -88,11 +87,13 @@ Logger::Logger(const char* loggerID, uint16_t loggingIntervalMinutes,
     startTesting = false;
 
     // Set the initial pin values
+    // NOTE: Only setting values here, not the pin mode.
+    // The pin mode can only be set at run time, not here at compile time.
     _SDCardPowerPin = -1;
-    setSDCardSS(SDCardSSPin);
-    setRTCWakePin(mcuWakePin);
-    _ledPin    = -1;
-    _buttonPin = -1;
+    _SDCardSSPin    = SDCardSSPin;
+    _mcuWakePin     = mcuWakePin;
+    _ledPin         = -1;
+    _buttonPin      = -1;
 
     // Initialize with no file name
     _fileName = "";
@@ -204,6 +205,7 @@ void Logger::setSDCardPwr(int8_t SDCardPowerPin) {
     if (_SDCardPowerPin >= 0) {
         pinMode(_SDCardPowerPin, OUTPUT);
         digitalWrite(_SDCardPowerPin, LOW);
+        MS_DBG(F("Pin"), _SDCardPowerPin, F("set as SD Card Power Pin"));
     }
 }
 // NOTE:  Structure of power switching on SD card taken from:
@@ -218,7 +220,7 @@ void Logger::turnOnSDcard(bool waitToSettle) {
 void Logger::turnOffSDcard(bool waitForHousekeeping) {
     if (_SDCardPowerPin >= 0) {
         // TODO(SRGDamia1): set All SPI pins to INPUT?
-        // TODO(SRGDamia1): set ALL SPI pins HIGH (~30k pullup)
+        // TODO(SRGDamia1): set ALL SPI pins HIGH (~30k pull-up)
         pinMode(_SDCardPowerPin, OUTPUT);
         digitalWrite(_SDCardPowerPin, LOW);
         // TODO(SRGDamia1):  wait in lower power mode
@@ -233,7 +235,10 @@ void Logger::turnOffSDcard(bool waitForHousekeeping) {
 // Sets up a pin for the slave select (chip select) of the SD card
 void Logger::setSDCardSS(int8_t SDCardSSPin) {
     _SDCardSSPin = SDCardSSPin;
-    if (_SDCardSSPin >= 0) { pinMode(_SDCardSSPin, OUTPUT); }
+    if (_SDCardSSPin >= 0) {
+        pinMode(_SDCardSSPin, OUTPUT);
+        MS_DBG(F("Pin"), _SDCardSSPin, F("set as SD Card Slave/Chip Select"));
+    }
 }
 
 
@@ -245,17 +250,25 @@ void Logger::setSDCardPins(int8_t SDCardSSPin, int8_t SDCardPowerPin) {
 
 
 // Sets up the wake up pin for an RTC interrupt
-void Logger::setRTCWakePin(int8_t mcuWakePin) {
+// NOTE:  This sets the pin mode but does NOT enable the interrupt!
+void Logger::setRTCWakePin(int8_t mcuWakePin, uint8_t wakePinMode) {
     _mcuWakePin = mcuWakePin;
-    MS_DBG(F("RTC Wake Pin= "),_mcuWakePin);
-    if (_mcuWakePin >= 0) { pinMode(_mcuWakePin, INPUT_PULLUP); }
+    if (_mcuWakePin >= 0) {
+        pinMode(_mcuWakePin, wakePinMode);
+        MS_DBG(F("Pin"), _mcuWakePin, F("set as RTC wake up pin"));
+    } else {
+        MS_DBG(F("Logger mcu will not sleep between readings!"));
+    }
 }
 
 
 // Sets up a pin for an LED or other way of alerting that data is being logged
 void Logger::setAlertPin(int8_t ledPin) {
     _ledPin = ledPin;
-    if (_ledPin >= 0) { pinMode(_ledPin, OUTPUT); }
+    if (_ledPin >= 0) {
+        pinMode(_ledPin, OUTPUT);
+        MS_DBG(F("Pin"), _ledPin, F("set as LED alert pin"));
+    }
 }
 void Logger::alertOn() {
     if (_ledPin >= 0) { digitalWrite(_ledPin, HIGH); }
@@ -266,15 +279,17 @@ void Logger::alertOff() {
 
 
 // Sets up a pin for an interrupt to enter testing mode
-void Logger::setTestingModePin(int8_t buttonPin) {
+void Logger::setTestingModePin(int8_t buttonPin, uint8_t buttonPinMode) {
     _buttonPin = buttonPin;
 
     // Set up the interrupt to be able to enter sensor testing mode
     // NOTE:  Entering testing mode before the sensors have been set-up may
     // give unexpected results.
     if (_buttonPin >= 0) {
-        pinMode(_buttonPin, INPUT_PULLUP);
+        pinMode(_buttonPin, buttonPinMode);
         enableInterrupt(_buttonPin, Logger::testingISR, CHANGE);
+        MS_DBG(F("Button on pin"), _buttonPin,
+               F("can be used to enter sensor testing mode."));
     }
 }
 
@@ -282,11 +297,12 @@ void Logger::setTestingModePin(int8_t buttonPin) {
 // Sets up the five pins of interest for the logger
 void Logger::setLoggerPins(int8_t mcuWakePin, int8_t SDCardSSPin,
                            int8_t SDCardPowerPin, int8_t buttonPin,
-                           int8_t ledPin) {
-    setRTCWakePin(mcuWakePin);
+                           int8_t ledPin, uint8_t wakePinMode,
+                           uint8_t buttonPinMode) {
+    setRTCWakePin(mcuWakePin, wakePinMode);
     setSDCardSS(SDCardSSPin);
     setSDCardPwr(SDCardPowerPin);
-    setTestingModePin(buttonPin);
+    setTestingModePin(buttonPin, buttonPinMode);
     setAlertPin(ledPin);
 }
 
@@ -390,7 +406,16 @@ bool Logger::syncRTC() {
         // Power down the modem - but only if there will be more than 15 seconds
         // before the NEXT logging interval - it can take the modem that long to
         // shut down
-        if (Logger::getNowEpochUTC() % (_loggingIntervalMinutes * 60) > 15) {
+        if (Logger::getNowLocalEpoch() % (_loggingIntervalMinutes * 60) > 15) {
+            Serial.println(F("Putting modem to sleep"));
+            _logModem->disconnectInternet();
+            _logModem->modemSleepPowerDown();
+        }
+        watchDogTimer.resetWatchDog();
+        // Power down the modem - but only if there will be more than 15 seconds
+        // before the NEXT logging interval - it can take the modem that long to
+        // shut down
+        if (Logger::getNowLocalEpoch() % (_loggingIntervalMinutes * 60) > 15) {
             Serial.println(F("Putting modem to sleep"));
             _logModem->disconnectInternet();
             _logModem->modemSleepPowerDown();
@@ -517,13 +542,20 @@ int8_t Logger::getTZOffset(void) {
 // from January 1, 1970 00:00:00 UTC) and corrects it to the specified time zone
 #if defined MS_SAMD_DS3231 || not defined ARDUINO_ARCH_SAMD
 
-#ifdef GETNOWEPOCH_FN
 uint32_t Logger::getNowEpoch(void) {
-    return getNowEpochUTC();
+    // Depreciated in 0.33.0, left in for compatiblity
+    return getNowLocalEpoch();
 }
-#endif // GETNOWEPOCH_FN
+uint32_t Logger::getNowLocalEpoch(void) {
+    uint32_t currentEpochTime = getNowUTCEpoch();
+    // Do NOT apply an offset if the timestamp is obviously bad
+    if (isRTCSane(currentEpochTime))
+        currentEpochTime += ((uint32_t)_loggerRTCOffset) * 3600;
+    return currentEpochTime;
+}
 
-uint32_t Logger::getNowEpochUTC(void) {
+
+uint32_t Logger::getNowUTCEpoch(void) {
     uint32_t currentEpochTime = rtc.now().getEpoch();
     if (!isRTCSane(currentEpochTime)) {
         PRINTOUT(F("Bad time "), currentEpochTime, " ",
@@ -531,57 +563,33 @@ uint32_t Logger::getNowEpochUTC(void) {
                  " Setting to ",
                  formatDateTime_ISO8601(EPOCH_TIME_LOWER_SANITY_SECS));
         currentEpochTime = EPOCH_TIME_LOWER_SANITY_SECS;
-        setNowEpochUTC(currentEpochTime);
+        setNowUTCEpoch(currentEpochTime);
     }
 
     return currentEpochTime;
 }
-
-uint32_t Logger::getNowEpochTz(void) {
-    int64_t currentEpochTime = (int64_t)((uint64_t)rtc.now().getEpoch());
-    currentEpochTime += (_loggerRTCOffset * HOURS_TO_SECS);
-    return (uint32_t)currentEpochTime;
-}
-
-#if defined SETNOWEPOCH_FN
-void Logger::setNowEpoch(uint32_t ts) {
-    rtc.setEpoch(ts);
-}
-#endif // SETNOWEPOCH_FN
-void Logger::setNowEpochUTC(uint32_t ts) {
+void Logger::setNowUTCEpoch(uint32_t ts) {
     rtc.setEpoch(ts);
 }
 
 #elif defined ARDUINO_ARCH_SAMD
-  #if defined GETNOWEPOCH_FN
-uint32_t Logger::getNowEpoch(void) {
-    // Depreciated in 0.27.4, left in for compatiblity
-    return getNowEpochUTC();
-}
-#endif //  GETNOWEPOCH_FN
 
-uint32_t Logger::getNowEpochUTC(void) {
+uint32_t Logger::getNowUTCEpoch(void) {
     uint32_t currentEpochTime = zero_sleep_rtc.getEpoch();
     if (!isRTCSane(currentEpochTime)) {
         PRINTOUT(F("Bad time, resetting clock."), currentEpochTime, " ",
                  formatDateTime_ISO8601(currentEpochTime), " Setting to ",
                  formatDateTime_ISO8601(EPOCH_TIME_LOWER_SANITY_SECS));
         currentEpochTime = EPOCH_TIME_LOWER_SANITY_SECS;
-        setNowEpochUTC(currentEpochTime);
+        setNowUTCEpoch(currentEpochTime);
     }
     return currentEpochTime;
 }
-
-uint32_t Logger::getNowEpochTz(void) {
-    return (uint32_t)(getNowEpochUTC() + (_loggerRTCOffset * HOURS_TO_SECS));
-}
-#if defined SETNOWEPOCH_FN
-void Logger::setNowEpoch(uint32_t ts) {
+void Logger::setNowUTCEpoch(uint32_t ts) {
     zero_sleep_rtc.setEpoch(ts);
 }
-#endif // SETNOWEPOCH_FN
-void Logger::setNowEpochUTC(uint32_t ts) {
-    zero_sleep_rtc.setEpoch(ts);
+uint32_t Logger::getNowLocalEpoch(void) {
+    return (uint32_t)(getNowUTCEpoch() + (_loggerRTCOffset * HOURS_TO_SECS));
 }
 
 #endif
@@ -591,8 +599,10 @@ void Logger::setNowEpochUTC(uint32_t ts) {
 // The DateTime object constructor requires the number of seconds from
 // January 1, 2000 (NOT 1970) as input, so we need to subtract.
 DateTime Logger::dtFromEpoch(uint32_t epochTime) {
-    return dtFromEpochTz(epochTime);
+    DateTime dt(epochTime - EPOCH_TIME_OFF);
+    return dt;
 }
+
 DateTime Logger::dtFromEpochUTC(uint32_t epochTimeUTC) {
     // DateTime dt(epochTimeUTC-EPOCH_TIME_OFF);
     DateTimeClass(dt, epochTimeUTC) return dt;
@@ -651,30 +661,35 @@ bool Logger::setRTClock(uint32_t UTCEpochSeconds) {
         return false;
     }
 
-    // The "UTCEpochSeconds" is the number of seconds since Jan 1, 1970 in
-    // UTC We're interested in the UTCEpochSeconds in the logger's and RTC's
-    // timezone The RTC's timezone is a label and isn't used in
-    // calculations, only the offset is used to make it more readable
-    // between the logger and the RTC. Only works for ARM CC if long, AVR
-    // was uint32_t
-    uint32_t nistTz_sec = UTCEpochSeconds +
-        ((int32_t)getTZOffset()) * HOURS_TO_SECS;
-    MS_DBG(F("    NIST UTC:"), UTCEpochSeconds, F("(local time)->"),
-           formatDateTime_ISO8601(nistTz_sec));
+    // The "setTime" is the number of seconds since Jan 1, 1970 in UTC
+    // We're interested in the setTime in the logger's and RTC's timezone
+    // The RTC's timezone is equal to the logger's timezone minus the offset
+    // between the logger and the RTC.
+    // Only works for ARM CC if long, AVR was uint32_t
+    long set_rtcTZ = UTCEpochSeconds;
+    // NOTE:  We're only looking at local time here in order to print it out for
+    // the user
+    uint32_t set_logTZ = UTCEpochSeconds +
+        ((uint32_t)getLoggerTimeZone()) * 3600;
+    MS_DBG(F("    Time for Logger supplied by NIST:"), set_logTZ, F("->"),
+           formatDateTime_ISO8601(set_logTZ));
 
     // Check the current RTC time
-    uint32_t cur_logUTC_sec = getNowEpochUTC();
-    MS_DBG(F("    Current Epoch UTC Time on RTC :"), cur_logUTC_sec, F("->"),
-           formatDateTime_ISO8601(cur_logUTC_sec));
-    uint32_t time_diff_sec = abs((long)((uint64_t)cur_logUTC_sec) -
-                                 (long)((uint64_t)UTCEpochSeconds));
-    MS_DBG(F("    Offset between epoch NIST and RTC:"), time_diff_sec);
+    uint32_t cur_logTZ = getNowLocalEpoch();
+    MS_DBG(F("    Current Time on RTC:"), cur_logTZ, F("->"),
+           formatDateTime_ISO8601(cur_logTZ));
+    MS_DBG(F("    Offset between NIST and RTC:"), abs(set_logTZ - cur_logTZ));
+
+    // NOTE:  Because we take the time to do some UTC/Local conversions and
+    // print stuff out, the clock might end up being set up to a few
+    // milliseconds behind the input time.  Given the clock is only accurate to
+    // seconds (not milliseconds or less), I don't think this is a problem.
 
     // If the RTC and NIST disagree by more than 5 seconds, set the clock
     #define NIST_TIME_DIFF_SEC 5
-    if (time_diff_sec > NIST_TIME_DIFF_SEC) {
-        setNowEpochUTC(UTCEpochSeconds);
-        PRINTOUT(F("Internal Clock set "), formatDateTime_ISO8601(nistTz_sec));
+    if (abs(set_logTZ - cur_logTZ) > 5) {
+        setNowUTCEpoch(set_rtcTZ);
+        PRINTOUT(F("Internal Clock set "), formatDateTime_ISO8601(set_rtcTZ));
         retVal = true;
     } else {
         PRINTOUT(F("Internal Clock within "), NIST_TIME_DIFF_SEC,
@@ -689,7 +704,7 @@ bool Logger::setRTClock(uint32_t UTCEpochSeconds) {
     MS_DBG("         Time Returned by rtcExt:", nowExtUTCEpoch_sec,
            "->(T=", getTimeZone(), ")",
            formatDateTime_ISO8601(nowExtUTCEpoch_sec));
-    time_diff_sec = abs((long)((uint64_t)nowExtUTCEpoch_sec) -
+    uint32_t time_diff_sec = abs((long)((uint64_t)nowExtUTCEpoch_sec) -
                         (long)((uint64_t)UTCEpochSeconds));
     if (time_diff_sec > NIST_TIME_DIFF_SEC) {
         rtcExtPhy.adjust(UTCEpochSeconds);  // const DateTime& dt);
@@ -705,7 +720,7 @@ bool Logger::setRTClock(uint32_t UTCEpochSeconds) {
 
 // This checks that the logger time is within a "sane" range
 bool Logger::isRTCSane(void) {
-    uint32_t curRTC = getNowEpochUTC();
+    uint32_t curRTC = getNowLocalEpoch();
     return isRTCSane(curRTC);
 }
 bool Logger::isRTCSane(uint32_t epochTime) {
@@ -727,10 +742,11 @@ bool Logger::isRTCSane(uint32_t epochTime) {
 // sensor was updated, just a single marked time.  By custom, this should be
 // called before updating the sensors, not after.
 void Logger::markTime(void) {
-    Logger::markedEpochTimeTz  = getNowEpochTz();
-    Logger::markedEpochTimeUTC = getNowEpochUTC();
+    Logger::markedUTCEpochTime   = getNowUTCEpoch();
+    Logger::markedLocalEpochTime = markedUTCEpochTime +
+        ((uint32_t)_loggerRTCOffset) * 3600;
     
-    MS_DEEP_DBG(F("markTime"),getNowEpochUTC(), markedEpochTimeUTC,markedEpochTimeTz  );
+    MS_DEEP_DBG(F("markTime UTC"), markedUTCEpochTime,F("local"),formatDateTime_ISO8601(markedLocalEpochTime),markedLocalEpochTime  );
 }
 
 
@@ -739,8 +755,8 @@ void Logger::markTime(void) {
 uint8_t Logger::checkInterval(void) {
     uint8_t retval = CIA_NOACTION;
 #if defined(ARDUINO_AVR_ENVIRODIY_MAYFLY)
-    uint32_t checkTime = getNowEpochUTC();
-    MS_DBG(F("Current Unix Timestamp:"), checkTime, F("->"),
+    uint32_t checkTime = getNowLocalEpoch();
+    MS_DBG(F("Current Epoch local Timestamp:"), checkTime, F("->"),
            formatDateTime_ISO8601(checkTime));
     MS_DBG(F("Logging interval in seconds:"), (_loggingIntervalMinutes * 60));
     MS_DBG(F("Mod of Logging Interval:"),
@@ -761,7 +777,7 @@ uint8_t Logger::checkInterval(void) {
     if (checkTime % (_loggingIntervalMinutes * 60) == 0) {
         // Update the time variables with the current time
         markTime();
-        MS_DBG(F("Take Sensor readings. Epoch:"), Logger::markedEpochTimeTz);
+        MS_DBG(F("Take Sensor readings. Epoch:"), Logger::markedLocalEpochTime);
 
         // Check what actions for this time period
         retval |= CIA_NEW_READING;
@@ -815,7 +831,7 @@ uint8_t Logger::checkInterval(void) {
         alertOff();
         delay(25);
         PRINTOUT(F("The current clock timestamp is not valid!"),
-                 formatDateTime_ISO8601(getNowEpochUTC()).substring(0, 10));
+                 formatDateTime_ISO8601(getNowUTCEpoch()).substring(0, 10));
         alertOn();
         delay(25);
         alertOff();
@@ -849,8 +865,8 @@ uint8_t Logger::checkInterval(void) {
     // rtcExtNowDt.toString((char *)DateFmt) const char *DateFmt =
     // "YY-MM-DD:hhmmss"; uint32_t rtcExtNowTzSec = rtcExtNowDt.unixtime()+
     // ((int32_t)getTZOffset()*HOURS_TO_SECS);
-    MS_DBG(F("Logging epoch time marked:"), Logger::markedEpochTimeTz, " ",
-           Logger::formatDateTime_ISO8601(Logger::markedEpochTimeTz), "extRtc",
+    MS_DBG(F("Logging epoch time marked:"), Logger::markedLocalEpochTime, " ",
+           Logger::formatDateTime_ISO8601(Logger::markedLocalEpochTime), "extRtc",
            rtcExtNowDt.timestamp(DateTime::TIMESTAMP_FULL));
     //  - caused reboot
     retval = true;
@@ -862,13 +878,13 @@ uint8_t Logger::checkInterval(void) {
 // This checks to see if the MARKED time is an even interval of the logging rate
 bool Logger::checkMarkedInterval(void) {
     bool retval;
-    MS_DBG(F("Marked Time:"), Logger::markedEpochTimeTz,
+    MS_DBG(F("Marked Time:"), Logger::markedLocalEpochTime,
            F("Logging interval in seconds:"), (_loggingIntervalMinutes * 60),
            F("Mod of Logging Interval:"),
-           Logger::markedEpochTimeTz % (_loggingIntervalMinutes * 60));
+           Logger::markedLocalEpochTime % (_loggingIntervalMinutes * 60));
 
-    if (Logger::markedEpochTimeTz != 0 &&
-        (Logger::markedEpochTimeTz % (_loggingIntervalMinutes * 60) == 0)) {
+    if (Logger::markedLocalEpochTime != 0 &&
+        (Logger::markedLocalEpochTime % (_loggingIntervalMinutes * 60) == 0)) {
         MS_DBG(F("Time to log!"));
         retval = true;
     } else {
@@ -888,7 +904,7 @@ bool Logger::checkMarkedInterval(void) {
 // This must be a static function (which means it can only call other static
 // funcions.)
 void Logger::wakeISR(void) {
-    // MS_DBG(F("\nClock interrupt!"));
+    MS_DEEP_DBG(F("\nClock interrupt!"));
 }
 
 #if defined(__AVR__)
@@ -1066,7 +1082,7 @@ void        Logger::systemSleep(uint8_t sleep_min) {
         local_secs = (sleep_min * 60);
     }
     // zero_sleep_rtc.setAlarmSeconds(local_secs);
-    timeNow_secs      = getNowEpochUTC();
+    timeNow_secs      = getNowUTCEpoch();
     targetWakeup_secs = timeNow_secs + local_secs;
     adjust_secs       = targetWakeup_secs % 60;
     targetWakeup_secs -= adjust_secs;
@@ -1228,7 +1244,7 @@ void        Logger::systemSleep(uint8_t sleep_min) {
 #endif
         uint32_t startTimer = millis();
         while (!SERIAL_PORT_USBVIRTUAL && ((millis() - startTimer) < 1000L)) {}
-    } 
+    }
 #endif
 
 #if defined ARDUINO_ARCH_AVR
@@ -1291,7 +1307,7 @@ void        Logger::systemSleep(uint8_t sleep_min) {
 #endif
 
     // Wake-up message
-    wakeUpTime_secs = getNowEpochTz();
+    wakeUpTime_secs = getNowLocalEpoch();
     PRINTOUT(F("\n... zzzZZ Awake @"), formatDateTime_ISO8601(wakeUpTime_secs));
 
     // The logger will now start the next function after the systemSleep
@@ -1321,7 +1337,7 @@ void Logger::generateAutoFileName(void) {
     // Generate the file name from logger ID and date
     String fileName = String(_loggerID);
     fileName += "_";
-    fileName += formatDateTime_ISO8601(getNowEpochTz()).substring(0, 10);
+    fileName += formatDateTime_ISO8601(getNowLocalEpoch()).substring(0, 10);
     fileName += ".csv";
     setFileName(fileName);
     _fileName = fileName;
@@ -1392,7 +1408,7 @@ void Logger::printFileHeader(Stream* stream) {
 // time -  out over an Arduino stream
 void Logger::printSensorDataCSV(Stream* stream) {
     String csvString = "";
-    dtFromEpochTz(Logger::markedEpochTimeTz).addToString(csvString);
+    dtFromEpoch(Logger::markedLocalEpochTime).addToString(csvString);
     csvString += ',';
     stream->print(csvString);
     for (uint8_t i = 0; i < getArrayVarCount(); i++) {
@@ -1430,7 +1446,7 @@ bool Logger::initializeSDCard(void) {
 
 void Logger::setFileTimestampTz(File fileToStamp, uint8_t stampFlag) {
     //DateTime markedDt(Logger::markedEpochTime - EPOCH_TIME_OFF);
-    DateTime markedDtTz(getNowEpochTz()- EPOCH_TIME_OFF );
+    DateTime markedDtTz(getNowLocalEpoch()- EPOCH_TIME_OFF );
 
     MS_DEEP_DBG(F("setFTTz"),markedDtTz.year(),markedDtTz.month(), markedDtTz.date(),
         markedDtTz.hour(), markedDtTz.minute(), markedDtTz.second());
@@ -1446,11 +1462,12 @@ void Logger::setFileTimestampTz(File fileToStamp, uint8_t stampFlag) {
 
 // Protected helper function - This sets a timestamp on a file
 void Logger::setFileTimestamp(File fileToStamp, uint8_t stampFlag) {
-    fileToStamp.timestamp(
-        stampFlag, dtFromEpoch(getNowEpochTz()).year(),
-        dtFromEpoch(getNowEpochTz()).month(), dtFromEpoch(getNowEpochTz()).date(),
-        dtFromEpoch(getNowEpochTz()).hour(), dtFromEpoch(getNowEpochTz()).minute(),
-        dtFromEpoch(getNowEpochTz()).second());
+    fileToStamp.timestamp(stampFlag, dtFromEpoch(getNowLocalEpoch()).year(),
+                          dtFromEpoch(getNowLocalEpoch()).month(),
+                          dtFromEpoch(getNowLocalEpoch()).date(),
+                          dtFromEpoch(getNowLocalEpoch()).hour(),
+                          dtFromEpoch(getNowLocalEpoch()).minute(),
+                          dtFromEpoch(getNowLocalEpoch()).second());
 }
 
 
@@ -1648,10 +1665,10 @@ void Logger::checkForTestingMode(int8_t buttonPin)
 
 // A static function if you'd prefer to enter testing based on an interrupt
 void Logger::testingISR() {
-    // MS_DBG(F("Testing interrupt!"));
+    MS_DEEP_DBG(F("Testing interrupt!"));
     if (!Logger::isTestingNow && !Logger::isLoggingNow) {
         Logger::startTesting = true;
-        // MS_DBG(F("Testing flag has been set."));
+        MS_DEEP_DBG(F("Testing flag has been set."));
     }
 }
 
@@ -1695,7 +1712,7 @@ void Logger::testingMode() {
         // getSignalQuality() function, but for the WiFi XBee it will not
         // actually measure anything except by explicitly making a connection,
         // which getModemSignalQuality() does.  For all of the other modules,
-        // getModemSignalQuality() is just a straigh pass-through to
+        // getModemSignalQuality() is just a straight pass-through to
         // getSignalQuality().
         _logModem->updateModemMetadata();
 
@@ -1706,7 +1723,7 @@ void Logger::testingMode() {
         _internalArray->updateAllSensors();
         // Print out the current logger time
         PRINTOUT(F("Current logger time is"),
-                 formatDateTime_ISO8601(getNowEpochTz()));
+                 formatDateTime_ISO8601(getNowLocalEpoch()));
         PRINTOUT(F("-----------------------"));
 // Print out the sensor data
 #if defined(STANDARD_SERIAL_OUTPUT)
@@ -1771,29 +1788,6 @@ void Logger::begin() {
     // Enable the watchdog
     watchDogTimer.enableWatchDog();
 
-    // Set pin modes for sd card power
-    if (_SDCardPowerPin >= 0) {
-        pinMode(_SDCardPowerPin, OUTPUT);
-        digitalWrite(_SDCardPowerPin, LOW);
-        MS_DBG(F("Pin"), _SDCardPowerPin, F("set as SD Card Power Pin"));
-    }
-    // Set pin modes for sd card slave select (aka chip select)
-    if (_SDCardSSPin >= 0) {
-        pinMode(_SDCardSSPin, OUTPUT);
-        MS_DBG(F("Pin"), _SDCardSSPin, F("set as SD Card Slave/Chip Select"));
-    }
-    // Set pin mode for LED pin
-    if (_ledPin >= 0) {
-        pinMode(_ledPin, OUTPUT);
-        MS_DBG(F("Pin"), _ledPin, F("set as LED alert pin"));
-    }
-    if (_buttonPin >= 0) {
-        pinMode(_buttonPin, INPUT_PULLUP);
-        enableInterrupt(_buttonPin, Logger::testingISR, CHANGE);
-        MS_DBG(F("Button on pin"), _buttonPin,
-               F("can be used to enter sensor testing mode."));
-    }
-
 #if defined ARDUINO_ARCH_SAMD
     MS_DBG(F("Beginning internal real time clock"));
     zero_sleep_rtc.begin();
@@ -1821,13 +1815,12 @@ void Logger::begin() {
     // the timeout period is a useless delay.
     Wire.setTimeout(0);
 
+    // Set all of the pin modes
+    // NOTE:  This must be done here at run time not at compile time
+    setLoggerPins(_mcuWakePin, _SDCardSSPin, _SDCardPowerPin, _buttonPin,
+                  _ledPin);
+
 #if defined MS_SAMD_DS3231 || not defined ARDUINO_ARCH_SAMD
-    if (_mcuWakePin < 0) {
-        MS_DBG(F("Logger mcu will not sleep between readings!"));
-    } else {
-        pinMode(_mcuWakePin, INPUT_PULLUP);
-        MS_DBG(F("Pin"), _mcuWakePin, F("set as RTC wake up pin"));
-    }
     MS_DBG(F("Beginning DS3231 real time clock"));
     rtc.begin();
 #endif
@@ -1931,7 +1924,9 @@ void Logger::begin() {
 
     // Print out the current time
     PRINTOUT(F("Current RTC time is:"),
-             formatDateTime_ISO8601(getNowEpochTz()));
+             formatDateTime_ISO8601(getNowUTCEpoch()));
+    PRINTOUT(F("Current localized logger time is:"),
+             formatDateTime_ISO8601(getNowLocalEpoch()));
 
     // Reset the watchdog
     watchDogTimer.resetWatchDog();
@@ -2048,9 +2043,9 @@ void Logger::logDataAndPublish(void) {
                     publishDataToRemotes();
                     watchDogTimer.resetWatchDog();
 
-                    if ((Logger::markedEpochTime != 0 &&
-                         Logger::markedEpochTime % 86400 == 43200) ||
-                        !isRTCSane(Logger::markedEpochTime)) {
+                    if ((Logger::markedLocalEpochTime != 0 &&
+                         Logger::markedLocalEpochTime % 86400 == 43200) ||
+                        !isRTCSane(Logger::markedLocalEpochTime)) {
                         // Sync the clock at noon
                         MS_DBG(F("Running a daily clock sync..."));
                         setRTClock(_logModem->getNISTTime());

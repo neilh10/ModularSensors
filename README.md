@@ -1,9 +1,8 @@
-[//]: # ( @mainpage ModularSensors )
-# ModularSensors
+# ModularSensors <!-- {#mainpage} -->
+
 ___
 
-[//]: # ( @section mainpage_intro The EnviroDIY ModularSensors Library )
-## The EnviroDIY ModularSensors Library
+## The EnviroDIY ModularSensors Library <!-- {#mainpage_intro} -->
 
 If you're new to EnviroDIY, I suggest you check out the [Just Getting Started](https://envirodiy.github.io/ModularSensors/page_getting_started.html) section of the documentation!
 
@@ -88,6 +87,8 @@ There is extensive documentation available in the [ModularSensors github pages](
 
 [//]: # ( @tableofcontents )
 
+[//]: # ( @m_footernavigation )
+
 [//]: # ( Start GitHub Only )
 - [ModularSensors](#modularsensors)
   - [The EnviroDIY ModularSensors Library](#the-envirodiy-modularsensors-library)
@@ -100,10 +101,9 @@ There is extensive documentation available in the [ModularSensors github pages](
 
 [//]: # ( End GitHub Only )
 
-[//]: # ( @section mainpage_supported_sensors Supported Sensors )
-## Supported Sensors
+## Supported Sensors <!-- {#mainpage_supported_sensors} -->
 
-For some generalized information about attaching sensors to an Arduino style board, see the [Sensor Notes page](https://envirodiy.github.io/ModularSensors/page_sensor_notes.html)
+For some generalized information about attaching sensors to an Arduino style board, see the [Sensor Notes page](https://envirodiy.github.io/ModularSensors/page_sensor_notes.html).
 
 - [Processor Metrics: battery voltage, free RAM, sample count](https://envirodiy.github.io/ModularSensors/group__sensor__processor.html)
 - [Maxim DS3231: real time clock](https://envirodiy.github.io/ModularSensors/group__sensor__ds3231.html)
@@ -119,13 +119,16 @@ For some generalized information about attaching sensors to an Arduino style boa
     - [EZO-pH: pH](https://envirodiy.github.io/ModularSensors/group__sensor__atlas__ph.html)
     - [EZO-RTD: Temperature](https://envirodiy.github.io/ModularSensors/group__sensor__atlas__rtd.html)
 - [Bosch BME280: barometric pressure, humidity & temperature](https://envirodiy.github.io/ModularSensors/group__sensor__bme280.html)
+- [Bosch BMP388 and BMP390: barometric pressure & temperature](https://envirodiy.github.io/ModularSensors/group__sensor__bmp3xx.html)
 - [Campbell Scientific OBS-3+: turbidity, via TI ADS1115](https://envirodiy.github.io/ModularSensors/group__sensor__obs3.html)
 - [Campbell Scientific ClariVUE10: turbidity](https://envirodiy.github.io/ModularSensors/group__sensor__clarivue.html)
-- [Decagon Devices ES-2: conductivity ](https://envirodiy.github.io/ModularSensors/group__sensor__decagon__ctd.html)
-- [Decagon Devices CTD-10: conductivity, temperature & depth ](https://envirodiy.github.io/ModularSensors/group__sensor__es2.html)
+- [Decagon Devices ES-2: conductivity ](https://envirodiy.github.io/ModularSensors/group__sensor__es2.html)
+- [Decagon Devices CTD-10: conductivity, temperature & depth ](https://envirodiy.github.io/ModularSensors/group__sensor__decagon__ctd.html)
+- [Everlight ALS-PT19 Analog Light Sensor (via processor ADC)](https://envirodiy.github.io/ModularSensors/group__sensor__alspt19.html)
 - [Freescale Semiconductor MPL115A2: barometric pressure and temperature](https://envirodiy.github.io/ModularSensors/group__sensor__mpl115a2.html)
 - [External Arduino I2C Rain Tipping Bucket Counter: rainfall totals](https://envirodiy.github.io/ModularSensors/group__sensor__i2c__rain.html)
-- [Insitu RDO PRO-X: dissolved oxygen](https://envirodiy.github.io/ModularSensors/group__sensor__insitu__rdo.html.html)
+- [In-Situ RDO PRO-X: dissolved oxygen](https://envirodiy.github.io/ModularSensors/group__sensor__insitu__rdo.html)
+- [In-Situ SDI-12 TROLLs: pressure, temperature, and depth](https://envirodiy.github.io/ModularSensors/group__sensor__insitu__troll.html)
 - [Keller Submersible Level Transmitters: pressure and temperature](https://envirodiy.github.io/ModularSensors/group__keller__group.html)
     - [Acculevel](https://envirodiy.github.io/ModularSensors/group__sensor__acculevel.html)
     - [Nanolevel](https://envirodiy.github.io/ModularSensors/group__sensor__nanolevel.html)
@@ -138,6 +141,7 @@ For some generalized information about attaching sensors to an Arduino style boa
 - [Meter Environmental Hydros 21: conductivity, temperature & depth](https://envirodiy.github.io/ModularSensors/group__sensor__hydros21.html)
 - [Northern Widget Tally Event Counter: number of events](https://envirodiy.github.io/ModularSensors/group__sensor__tally.html)
 - [PaleoTerra Redox Sensor: redox potential](https://envirodiy.github.io/ModularSensors/group__sensor__pt__redox.html)
+- [Sensirion SHT40: humidity & temperature](https://envirodiy.github.io/ModularSensors/group__sensor__sht4x.html)
 - [TI ADS1115: external voltage with support for divided current](https://envirodiy.github.io/ModularSensors/group__sensor__ads1x15.html)
 - [TI INA219: current, voltage, and power draw](https://envirodiy.github.io/ModularSensors/group__sensor__ina219.html)
 - [Turner Cyclops-7F: various parameters](https://envirodiy.github.io/ModularSensors/group__sensor__cyclops.html)
@@ -149,13 +153,13 @@ For some generalized information about attaching sensors to an Arduino style boa
     - [Y520-A: Conductivity and Temperature](https://envirodiy.github.io/ModularSensors/group__sensor__y520.html)
     - [Y532-A: Digital pH and Temperature](https://envirodiy.github.io/ModularSensors/group__sensor__y532.html)
     - [Y533: ORP, and Temperature](https://envirodiy.github.io/ModularSensors/group__sensor__y533.html)
-    - [Y550-B: UV254/COD, Turbidity, and Temperature](https://envirodiy.github.io/ModularSensors/group__sensor__y550.html)
+    - [Y551: UV254/COD, Turbidity, and Temperature](https://envirodiy.github.io/ModularSensors/group__sensor__y551.html)
+    - [Y560: Ammonium, Temperature, and pH](https://envirodiy.github.io/ModularSensors/group__sensor__y560.html)
     - [Y4000 Multiparameter Sonde](https://envirodiy.github.io/ModularSensors/group__sensor__y4000.html)
 - [Zebra-Tech D-Opto: dissolved oxygen](https://envirodiy.github.io/ModularSensors/group__sensor__dopto.html)
 
 
-[//]: # ( @section mainpage_data_receivers Data Endpoints )
-## Data Endpoints
+## Data Endpoints <!-- {#mainpage_data_receivers} -->
 
 Within ModularSensors, the "dataPublisher" objects add the functionality to send data to remote web services.
 The currently supported services are the [Monitor My Watershed data portal](http://data.envirodiy.org/), [ThingSpeak](https://thingspeak.com/), and the [Ubidots IoT platform](https://ubidots.com).
@@ -167,8 +171,7 @@ The currently supported services are the [Monitor My Watershed data portal](http
 [//]: # ( @todo Page on Data Endpoints )
 
 
-[//]: # ( @section mainpage_modems Supported Cellular/Wifi Modules )
-## Supported Cellular/Wifi Modules:
+## Supported Cellular/Wifi Modules: <!-- {#mainpage_modems} -->
 
 For information common to all modems and for tables of the proper class, baud rate, and pins to uses, see the [Modem Notes page](https://envirodiy.github.io/ModularSensors/page_modem_notes.html).
 
@@ -188,8 +191,7 @@ For information common to all modems and for tables of the proper class, baud ra
 - u-blox 2G, 3G, and 4G, including the [Sodaq 3GBee](https://envirodiy.github.io/ModularSensors/group__modem__ubee__3g.html)
 
 
-[//]: # ( @section mainpage_contributing Contributing )
-## Contributing
+## Contributing <!-- {#mainpage_contributing} -->
 Open an [issue](https://github.com/EnviroDIY/ModularSensors/issues) to suggest and discuss potential changes/additions.
 Feel free to open issues about any bugs you find or any sensors you would like to have added.
 
@@ -210,8 +212,7 @@ Documentation is licensed as [Creative Commons Attribution-ShareAlike 4.0](https
 
 Hardware designs shared are released, unless otherwise indicated, under the [CERN Open Hardware License 1.2](http://www.ohwr.org/licenses/cern-ohl/v1.2) (CERN_OHL).
 
-[//]: # ( @section mainpage_acknowledgments Acknowledgments )
-## Acknowledgments
+## Acknowledgments <!-- {#mainpage_acknowledgments} -->
 [EnviroDIY](http://envirodiy.org/)™ is presented by the Stroud Water Research Center, with contributions from a community of enthusiasts sharing do-it-yourself ideas for environmental science and monitoring.
 
 [Sara Damiano](https://github.com/SRGDamia1) is the primary developer of the EnviroDIY ModularSensors library, with input from many [other contributors](https://github.com/EnviroDIY/ModularSensors/graphs/contributors).
@@ -223,6 +224,7 @@ This project has benefited from the support from the following funders:
 * National Science Foundation, awards [EAR-0724971](http://www.nsf.gov/awardsearch/showAward?AWD_ID=0724971), [EAR-1331856](http://www.nsf.gov/awardsearch/showAward?AWD_ID=1331856), [ACI-1339834](http://www.nsf.gov/awardsearch/showAward?AWD_ID=1339834)
 * Stroud Water Research Center endowment
 
+
 Other Contributors
 [Beth Fisher](https://github.com/fisherba) for sharing/helping with her vision of ModularSensors.   
 [Anthony Aufdenkampe](https://github.com/aufdenkampe) for releasing the Modbus Interface/WingBoard, and making it possible to access a class of +12V Modbus Industrial Sensors.   
@@ -230,3 +232,18 @@ Other Contributors
  Acknowledgements for this fork
 [Neil Hancock] is solely responsible for its content. 
 
+[//]: # ( @m_innerpage{page_getting_started} )
+
+[//]: # ( @m_innerpage{page_faq} )
+
+[//]: # ( @m_innerpage{page_other_notes} )
+
+[//]: # ( @m_innerpage{page_the_examples} )
+
+[//]: # ( @m_innerpage{license_software-license-agreement-bsd-3-license} )
+
+[//]: # ( @m_innerpage{change_log} )
+
+[//]: # ( @m_innerpage{todo} )
+
+[//]: # ( @m_innerpage{deprecated} )

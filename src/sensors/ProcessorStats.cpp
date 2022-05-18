@@ -106,7 +106,6 @@ ProcessorStats::ProcessorStats(const char* version)
     _version = version;
     sampNum  = 0;
 
- 
 #if defined(ARDUINO_AVR_ENVIRODIY_MAYFLY) || defined(ARDUINO_AVR_SODAQ_MBILI)
     _batteryPin = A6;
 #elif defined(ARDUINO_AVR_FEATHER32U4) || defined(ARDUINO_SAMD_FEATHER_M0) || \
@@ -160,60 +159,9 @@ bool ProcessorStats::addSingleMeasurementResult(void) {
 #endif  // PROC_ADC_DEFAULT_RESOLUTION
     analogReadResolution(PROC_ADC_DEFAULT_RESOLUTION);
     analogReference(AR_DEFAULT);
-#endif  // ARDUINO_ARCH_AVR
-    
-#if defined(ARDUINO_AVR_ENVIRODIY_MAYFLY)
-    uint16_t adc_temp=0;
-    uint8_t adc_lp;
-    //Setup for  1.1,1.0, 0.5,0.5b
-    float adc_correction=4.7;
-    if (strcmp(_version, "v0.3") == 0 || strcmp(_version, "v0.4") == 0) {
-        adc_correction = 1.47 ;
-    }
+#endif  // ARDUINO_ARCH_AVR 
 
-    // Get the battery voltage  2^^2 times for noise reduction
-    for (adc_lp=0;adc_lp<4;adc_lp++) {
-        adc_temp += analogRead(_batteryPin);
-    }
-    float rawBattery    = adc_temp>>2;
-    sensorValue_battery = (3.3 / 1023.) * adc_correction * rawBattery;
-
-#elif defined(ARDUINO_AVR_FEATHER32U4) || defined(ARDUINO_SAMD_FEATHER_M0) || \
-    defined(ARDUINO_SAMD_FEATHER_M0_EXPRESS) ||                               \
-    defined(ADAFRUIT_FEATHER_M4_EXPRESS)
-    float measuredvbat = analogRead(_batteryPin);
-    measuredvbat *= 2;     // we divided by 2, so multiply back
-    measuredvbat *= 3.3;   // Multiply by 3.3V, our reference voltage
-    measuredvbat /= 1024;  // convert to voltage
-    sensorValue_battery       = measuredvbat;
-
-#elif defined(ARDUINO_SODAQ_ONE) || defined(ARDUINO_SODAQ_ONE_BETA)
-    if (strcmp(_version, "v0.1") == 0) {
-        // Get the battery voltage
-        float rawBattery    = analogRead(_batteryPin);
-        sensorValue_battery = (3.3 / 1023.) * 2 * rawBattery;
-    }
-    if (strcmp(_version, "v0.2") == 0) {
-        // Get the battery voltage
-        float rawBattery    = analogRead(_batteryPin);
-        sensorValue_battery = (3.3 / 1023.) * 1.47 * rawBattery;
-    }
-
-#elif defined(ARDUINO_AVR_SODAQ_NDOGO) || defined(ARDUINO_SODAQ_AUTONOMO) || \
-    defined(ARDUINO_AVR_SODAQ_MBILI)
-    // Get the battery voltage
-#if defined ProcessorStatsDef_Resolution
-    analogReadResolution(ProcessorStatsDef_Resolution);
-#endif
-    float rawBattery    = analogRead(_batteryPin);
-    sensorValue_battery = (3.3 / ProcAdc_Max) * 1.47 * rawBattery;
-    MS_DBG(F("  Battery_V("), _batteryPin, F("/"), ProcessorStatsDef_Resolution,
-           F("):"), sensorValue_battery);
-
-#else
-    sensorValue_battery = -9999;
-
-#endif
+    sensorValue_battery = readSensorVbat();
 
     MS_DBG(F("Vbat"), sensorValue_battery);
     verifyAndAddMeasurementResult(PROCESSOR_BATTERY_VAR_NUM,
@@ -244,34 +192,6 @@ bool ProcessorStats::addSingleMeasurementResult(void) {
 
     verifyAndAddMeasurementResult(PROCESSOR_SAMPNUM_VAR_NUM, sampNum);
 
-    // Create a sliding window of sensorValue_battery samples
-    //and use the lowest value.
-    uint8_t svb_lp=0;
-    float svb_lowest=sensorValue_battery;
-    if (svbInit) {
-        //Insert the latest reading into the next slot
-        svb_sliding[svb_idx]=sensorValue_battery;
-        if (++svb_idx >= PROCESSOR_VBATLOW_WINDOW_SZ) {
-            //MS_DEEP_DBG(F("Vbatlow idx rst"),svb_idx);
-            svb_idx=0;
-        } 
-        //Check all slots and find the lowest reading
-        for (svb_lp=0;svb_lp<PROCESSOR_VBATLOW_WINDOW_SZ ;svb_lp++){
-            if (svb_lowest>svb_sliding[svb_lp]) {
-                svb_lowest=svb_sliding[svb_lp];
-                MS_DEEP_DBG(F("Vbatlow i:"),svb_lp, svb_lowest);
-            }
-        }
-    } else {
-        for (svb_lp=0;svb_lp<PROCESSOR_VBATLOW_WINDOW_SZ ;svb_lp++){
-            svb_sliding[svb_lp]=svb_lowest;
-        }
-        svbInit=true;
-    }
-    MS_DBG(F("Vbatlow"), svb_lowest);
-    verifyAndAddMeasurementResult(PROCESSOR_VBATLOW_VAR_NUM,
-                                  svb_lowest);
-
     // Unset the time stamp for the beginning of this measurement
     _millisMeasurementRequested = 0;
     // Unset the status bits for a measurement request (bits 5 & 6)
@@ -279,4 +199,64 @@ bool ProcessorStats::addSingleMeasurementResult(void) {
 
     // Return true when finished
     return true;
+}
+
+float ProcessorStats::readSensorVbat(void) {
+    float sensorValue_battery_V;
+    #if defined(ARDUINO_AVR_ENVIRODIY_MAYFLY)
+    uint16_t adc_temp=0;
+    uint8_t adc_lp;
+    //Setup for  1.1,1.0, 0.5,0.5b
+    #define MAYFLY_BAT_A6_MULT_A 1.47
+    #define MAYFLY_BAT_A6_MULT_B 4.7
+    float adc_correction=MAYFLY_BAT_A6_MULT_B;
+    if (strcmp(_version, "v0.3") == 0 || strcmp(_version, "v0.4") == 0) {
+        adc_correction = MAYFLY_BAT_A6_MULT_A ;
+    }
+
+    // Get the battery voltage  2^^2 times for noise reduction
+    for (adc_lp=0;adc_lp<4;adc_lp++) {
+        adc_temp += analogRead(_batteryPin);
+    }
+    float rawBattery    = adc_temp>>2;
+    sensorValue_battery_V = (3.3 / 1023.) * adc_correction * rawBattery;
+
+#elif defined(ARDUINO_AVR_FEATHER32U4) || defined(ARDUINO_SAMD_FEATHER_M0) || \
+    defined(ARDUINO_SAMD_FEATHER_M0_EXPRESS) ||                               \
+    defined(ADAFRUIT_FEATHER_M4_EXPRESS)
+    float measuredvbat = analogRead(_batteryPin);
+    measuredvbat *= 2;     // we divided by 2, so multiply back
+    measuredvbat *= 3.3;   // Multiply by 3.3V, our reference voltage
+    measuredvbat /= 1024;  // convert to voltage
+    sensorValue_battery_V       = measuredvbat;
+
+#elif defined(ARDUINO_SODAQ_ONE) || defined(ARDUINO_SODAQ_ONE_BETA)
+    if (strcmp(_version, "v0.1") == 0) {
+        // Get the battery voltage
+        float rawBattery    = analogRead(_batteryPin);
+        sensorValue_battery_V = (3.3 / 1023.) * 2 * rawBattery;
+    }
+    if (strcmp(_version, "v0.2") == 0) {
+        // Get the battery voltage
+        float rawBattery    = analogRead(_batteryPin);
+        sensorValue_battery_V = (3.3 / 1023.) * 1.47 * rawBattery;
+    }
+
+#elif defined(ARDUINO_AVR_SODAQ_NDOGO) || defined(ARDUINO_SODAQ_AUTONOMO) || \
+    defined(ARDUINO_AVR_SODAQ_MBILI)
+    // Get the battery voltage
+#if defined ProcessorStatsDef_Resolution
+    analogReadResolution(ProcessorStatsDef_Resolution);
+#endif
+    float rawBattery    = analogRead(_batteryPin);
+    sensorValue_battery_V = (3.3 / ProcAdc_Max) * 1.47 * rawBattery;
+    MS_DBG(F("  Battery_V("), _batteryPin, F("/"), ProcessorStatsDef_Resolution,
+           F("):"), sensorValue_battery_V);
+
+#else
+    sensorValue_battery_V = -9999;
+
+#endif
+return sensorValue_battery_V;
+
 }
