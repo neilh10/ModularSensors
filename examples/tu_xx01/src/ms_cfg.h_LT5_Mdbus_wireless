@@ -1,6 +1,6 @@
 /*****************************************************************************
 ms_cfg.h_LT5_Mdbus_wireless - ModularSensors Config - MMW _LT5/Modbus +LTE/WiFi
-Status 220410: 0.33.1.aaa 
+Status 220517: 0.33.1.aaa 
 Written By:  Neil Hancock www.envirodiy.org/members/neilh20/
 Development Environment: PlatformIO
 Hardware Platform(s): EnviroDIY Mayfly Arduino Datalogger+RS485 Wingboard
@@ -31,6 +31,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 // MAYFLY_BAT_DIGI Digi Modem LTE with onboard battery measurement
 // Choices applied to define MAYFLY_BAT_xx 1) Stc3100 2) ExternVolage_ACT 3) Digi Mode 4) MAYFLY_BAT_A6
 #define MAYFLY_BAT_A6 4
+#define REPORT_FILTERED_BAT_A6_V
 //#define MAYFLY_BAT_AA0 2
 //FUT #define MAYFLY_BAT_DIGI 3
 
@@ -253,8 +254,9 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #endif  // ENVIRODIY_MAYFLY_TEMPERATURE
 
 #if defined UseModem_Module
-// This seems to be de-stabilizing Digi S6B
-//#define DIGI_RSSI_UUID "DIGI_RSSI_UUID"
+// not tested Digi LTE
+// tested Digi S6B 
+#define DIGI_RSSI_UUID "DIGI_RSSI_UUID"
 //#define Modem_SignalPercent_UUID    "SignalPercent_UUID"
 #endif  // UseModem_Module
 

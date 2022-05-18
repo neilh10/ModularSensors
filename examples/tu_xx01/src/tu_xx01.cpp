@@ -228,7 +228,28 @@ const bool useCTSforStatus =
   loggerModem*     loggerModemPhyInst=NULL ;//was modemPhy 
 #define loggerModemPhyDigiWifi ((DigiXBeeWifi *) loggerModemPhyInst)
 #define loggerModemPhyDigiCell ((DigiXBeeCellularTransparent *) loggerModemPhyInst)
-#endif             // UseModem_Module
+
+#if defined DIGI_RSSI_UUID
+//The loggerModemPhyInst is created at run time 
+Variable*  modemPhyRssi_var = new Modem_RSSI(loggerModemPhyInst);
+float  modemPhyRssiGetValue(void) {  // Can't get value till instatiated
+    if (NULL==loggerModemPhyInst) return 0;
+
+    return modemPhyRssi_var->getValue(true);
+}
+// Create the calculated RSSI Variable object 
+Variable* modemPhyRssi_calc =
+    new Variable(modemPhyRssiGetValue,  // function that does the calculation
+                 MODEM_RSSI_RESOLUTION, // resolution
+                 MODEM_RSSI_UNIT_NAME, // var name.
+                              //from http://vocabulary.odm2.org/variablename/
+                 "dBm",  // var unit. 
+                          //from http://vocabulary.odm2.org/units/
+                 MODEM_RSSI_DEFAULT_CODE,  // var code MODEM_RSSI_DEFAULT_CODE
+                 DIGI_RSSI_UUID);
+#endif //DIGI_RSSI_UUID
+
+#endif // UseModem_Module
 
 // ==========================================================================
 // Create a reference to the serial port for modbus
@@ -758,6 +779,24 @@ float getBatteryVoltageProc() {
     return bat_filtered_v;
 }
 #define bms_SetBattery() bms.setBatteryV(getBatteryVoltageProc());
+
+#if defined REPORT_FILTERED_BAT_A6_V
+float BatFilteredGetValue_V(void) {
+    return bat_filtered_v;
+}
+// Create the calculated Battery Filtered V object 
+Variable* BatFiltered_calc =
+    new Variable(BatFilteredGetValue_V,  // function that does the calculation
+                 PROCESSOR_BATTERY_RESOLUTION, // resolution
+                 PROCESSOR_BATTERY_VAR_NAME, // var name.
+                        //from  http://vocabulary.odm2.org/variablename/
+                 PROCESSOR_BATTERY_UNIT_NAME, // var unit.
+                        // from http://vocabulary.odm2.org/units/
+                 PROCESSOR_BATTERY_DEFAULT_CODE, // var code
+                 ProcessorStats_Batt_UUID);
+
+#endif //REPORT_FILTERED_BAT_A6_V
+
 #endif  //MAYFLY_BAT_A6
 #else 
 #warning MAYFLY_BAT_CHOICE not defined
@@ -879,9 +918,12 @@ Variable* variableList[] = {
     pLionBatExt_var,
 #endif
 #if defined MAYFLY_BAT_A6
-    //FUT return the filtered vbat_low
+    #if defined REPORT_FILTERED_BAT_A6_V
+    BatFiltered_calc,
+    #else 
     new ProcessorStats_Battery(&mcuBoardPhy, ProcessorStats_Batt_UUID),
-#endif  // MAYFLY_BAT_A6
+    #endif // REPORT_FILTERED_BAT_A6_V
+#endif  // MAYFLY_BAT_A6 
 #if defined AnalogProcEC_ACT
     // Do Analog processing measurements.
     new AnalogElecConductivityM_EC(&analogEC_phy, EC1_UUID),
@@ -943,9 +985,10 @@ Variable* variableList[] = {
 #if defined MaximDS3231_TEMPF_UUID
     ds3231TempFcalc,
 #endif  // MaximDS3231_TempF_UUID
-#if 0 //modemPhy not setup, belay defined DIGI_RSSI_UUID
-    new Modem_RSSI(&modemPhy, DIGI_RSSI_UUID),
-// new Modem_RSSI(&modemPhy, "12345678-abcd-1234-ef00-1234567890ab"),
+#if defined DIGI_RSSI_UUID
+    //loggerModemPhyInst not setup
+    //new Modem_RSSI(&loggerModemPhyInst, DIGI_RSSI_UUID),
+    modemPhyRssi_calc,
 #endif  // DIGI_RSSI_UUID
 
 
