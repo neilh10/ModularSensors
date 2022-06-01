@@ -1187,9 +1187,14 @@ void unusedBitsMakeSafe() {
     PORT_SAFE(19);  // Xbee CTS
     PORT_SAFE(20);  // Xbee RTS
     PORT_SAFE(21);
-    // PORT_SAFE(22);  //Pwr Sw
+    // All Rs485 and Modbus Insitu_TrollModbus_UUID
+    #if defined KellerXxxLevel_ACT || defined InsituLTrs485_ACT 
+    PORT_LOW(22);  //Pwr Sw rs485AdapterPower
+    #else 
+    PORT_SAFE(22);
+    #endif
 #if defined  UseModem_Module
-    PORT_LOW(23);  // Xbee DTR modemSleepRqPin LOW until Modem takes over
+    PORT_HIGH(23);  // Xbee DTR modemSleepRqPin LOW until Modem takes over
  #else 
     PORT_SAFE(23);
  #endif //UseModem_Module
