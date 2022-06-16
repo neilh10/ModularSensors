@@ -37,8 +37,9 @@
 // Bring in the libraries to handle the processor sleep/standby modes
 // The SAMD library can also the built-in clock on those modules
 #if defined(ARDUINO_ARCH_SAMD)
-#include <RTCZero.h>
 #include "WatchDogs/WatchDogSAMD.h"
+#include "DateTime.h"
+   //using namespace seeedArduinoRtc_nm;
 #elif defined(ARDUINO_ARCH_AVR) || defined(__AVR__)
 #include <avr/power.h>
 #include <avr/sleep.h>
@@ -52,6 +53,7 @@
 //#include <RTClib.h>  //conflict DateTime was <Sodaq_DS3231.h>
 #elif defined(ARDUINO_ARCH_AVR) || defined(__AVR__)
 #include <Sodaq_DS3231.h>
+using namespace sodaq_DS3231_nm;
 #endif
 
 /**
@@ -717,7 +719,15 @@ class Logger {
      * @note Only one RTC may be used.  Either the built-in RTC of a SAMD board
      * *OR* a DS3231
      */
-    static RTCZero zero_sleep_rtc;
+
+   #if defined __SAMD51__
+   #include "RTC_SAMD51.h"
+   #define RTC_INT_CLASS Logger::RTC_SAMD51
+   #else 
+   #include "RTC_SAMD21.h"
+   #define RTC_INT_CLASS LOgger::RTC_SAMD21
+   #endif //__SAMD51__
+   static RTC_INT_CLASS  zero_sleep_rtc;
 #endif
 
     /**

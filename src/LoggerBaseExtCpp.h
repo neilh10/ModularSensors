@@ -926,7 +926,7 @@ void Logger::setExtRtcSleep() {
     #if defined ARDUINO_AVR_ENVIRODIY_MAYFLY
     #define MAYFLY_WR_RETRYS 3
     for (uint8_t chklp=0;chklp<MAYFLY_WR_RETRYS;chklp++) {
-        isRtcRegBad = rtc.enableInterruptsCheckAlm1(EveryMinute);
+        isRtcRegBad = rtcExtPhy.enableInterruptsCheckAlm1(EveryMinute);
         if (0==isRtcRegBad) {
             MS_DBG(F("RTC Alarm good." ));
             break;
@@ -934,7 +934,7 @@ void Logger::setExtRtcSleep() {
         Serial.print(chklp);
         Serial.print(F("]RTC Alarm set for every minute. Reg check was 0x"));
         Serial.println(isRtcRegBad,HEX);
-        rtc.enableInterrupts(EveryMinute);
+        rtcExtPhy.enableInterrupts(EveryMinute);
         //rtc.enableInterruptsAlm2(EveryMinute);
     } 
     #else
