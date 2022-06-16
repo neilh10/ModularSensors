@@ -206,7 +206,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
   #define SD_QSPI_2MFLASH
 
 //The RTClib.h has a number of PHY which work together and replaced Sodaq_DS3231
-  #define USE_RTCLIB RTC_PCF2127
+  //#define USE_RTCLIB RTC_PCF2127
   //#define ADAFRUIT_FEATHERWING_RTC_SD
   //#define USE_RTCLIBRTC PCF8523
 
