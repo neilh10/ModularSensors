@@ -21,7 +21,7 @@ WiFiUDP udp;
 
 //ntpHelper:: {}
 bool ntpHelper::connectToWiFi(const char* ssid, const char* pwd) {
-    Serial.println("Connecting to WiFi network: " + String(ssid));
+    Serial.println("Connecting to WiFi network: " + String(ssid)+"/"+String(pwd));
 
     // delete old config
     WiFi.disconnect(true);
@@ -32,7 +32,8 @@ bool ntpHelper::connectToWiFi(const char* ssid, const char* pwd) {
     WiFi.begin(ssid, pwd);
 
     while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
+        delay(2000);
+        Serial.print(".");
     }
 
     Serial.println("Connected.");

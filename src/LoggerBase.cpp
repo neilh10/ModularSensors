@@ -591,7 +591,7 @@ uint32_t Logger::getNowUTCEpoch(void) {
     return currentEpochTime;
 }
 void Logger::setNowUTCEpoch(uint32_t ts) {
-    zero_sleep_rtc.setEpoch(ts);
+    zero_sleep_rtc.adjust(DateTime(ts));
 }
 uint32_t Logger::getNowLocalEpoch(void) {
     return (uint32_t)(getNowUTCEpoch() + (_loggerRTCOffset * HOURS_TO_SECS));
@@ -1096,14 +1096,14 @@ void        Logger::systemSleep(uint8_t sleep_min) {
            " adj=", adjust_secs, " fm now=", timeNow_secs,
            " Awake=", timeNow_secs - wakeUpTime_secs);
 #define RTC_ALM_ID 0
-    zero_sleep_rtc.setAlarm(targetWakeup_secs);
+    zero_sleep_rtc.setAlarm(RTC_ALM_ID,targetWakeup_secs);
     //zero_sleep_rtc.setAlarmEpoch(targetWakeup_secs);
 #define zsr zero_sleep_rtc
     /*MS_DBG("Alm:", zsr.getAlarmYear(), zsr.getAlarmMonth(), zsr.getAlarmDay(),
            "-", zsr.getAlarmHours(), ":", zsr.getAlarmMinutes(), ":",
            zsr.getAlarmSeconds());*/
     // Assume max is an hour - need to revisit
-    zero_sleep_rtc.enableAlarm(zero_sleep_rtc.MATCH_MMSS);
+    zero_sleep_rtc.enableAlarm(RTC_ALM_ID,zero_sleep_rtc.MATCH_MMSS);
 #endif
 
     // Send one last message before shutting down serial ports
@@ -1310,7 +1310,7 @@ void        Logger::systemSleep(uint8_t sleep_min) {
     //disableInterrupt(_mcuWakePin); moved up disable
 
 #elif defined ARDUINO_ARCH_SAMD
-    zero_sleep_rtc.disableAlarm();
+    zero_sleep_rtc.disableAlarm(RTC_ALM_ID);
 #endif
 
     // Wake-up message
