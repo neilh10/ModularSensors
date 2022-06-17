@@ -44,17 +44,18 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 //Two heavy sensors with power useage
 #define BM_PWR_SENSOR_CONFIG_BUILD_SPECIFIC BM_PWR_LOW_REQ
 
+#if defined(ARDUINO_AVR_ENVIRODIY_MAYFLY)
 // Mayfly configuration
 // Carrier board for Digi XBEE LTE CAT-M1 and jumper from battery
 // Digi WiFi S6 plugged in directly
 // For debug: C4 removed, strap for AA2/Vbat AA3/SolarV,
 //#define MFVersion_DEF "v0.5b"
 #define MFName_DEF "Mayfly"
-#define HwVersion_DEF MFVersion_DEF
+//#define HwVersion_DEF MFVersion_DEF
 #define HwName_DEF MFName_DEF
 #define CONFIGURATION_DESCRIPTION_STR "Maylfy Digi LTE XB3-C-A2 MMW"
 
-//#define USE_MS_SD_INI 1
+#define USE_MS_SD_INI 1
 //#define USE_PS_EEPROM 1
 //#define USE_PS_HW_BOOT 1
 
@@ -79,6 +80,8 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define modemSerial_Upstream_DEF Serial1
 #define modemBaud_Upstream_DEF 9600
 
+#elif defined(WIO_TERMINAL) 
+#endif //Board
 #define LOGGERID_DEF_STR "msLog01"
 #define NEW_LOGGERID_MAX_SIZE 40
 #define configIniID_DEF_STR "ms_cfg.ini"
