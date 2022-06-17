@@ -33,6 +33,7 @@
 //  Include the libraries required for any data logger
 // ==========================================================================
 /** Start [includes] */
+#include "ms_cfg.h"  //must be before ms_common.h & Arduino.h
 // The Arduino library is needed for every Arduino program.
 #include <Arduino.h>
 
@@ -49,29 +50,44 @@
 //  Data Logging Options
 // ==========================================================================
 /** Start [logging_options] */
+// The name of this file
+extern const String build_ref = "a\\" __FILE__ " " __DATE__ " " __TIME__ " ";
+#ifdef PIO_SRC_REV
+const char git_branch[] = PIO_SRC_REV;
+#else
+const char git_branch[] = "brnch";
+#endif
+#ifdef PIO_SRC_USR
+const char git_usr[] = PIO_SRC_USR;
+#else
+const char git_usr[] = "usr";
+#endif
+
 // The name of this program file
-const char* sketchName = "logging_to MMW.ino";
 // Logger ID, also becomes the prefix for the name of the data file on SD card
-const char* LoggerID = "XXXXX";
+const char* LoggerID          = LOGGERID_DEF_STR;
+const char* configIniID_def   = configIniID_DEF_STR;
+const char* configDescription = CONFIGURATION_DESCRIPTION_STR;
+
 // How frequently (in minutes) to log data
-const uint8_t loggingInterval = 5;
+const uint8_t loggingIntervaldef = loggingInterval_CDEF_MIN;
 // Your logger's timezone.
-const int8_t timeZone = -5;  // Eastern Standard Time
+const int8_t timeZone = CONFIG_TIME_ZONE_DEF;  
 // NOTE:  Daylight savings time will not be applied!  Please use standard time!
 
 // Set the input and output pins for the logger
 // NOTE:  Use -1 for pins that do not apply
-const int32_t serialBaud = 115200;  // Baud rate for debugging
-const int8_t  greenLED   = 8;       // Pin for the green LED
-const int8_t  redLED     = 9;       // Pin for the red LED
-const int8_t  buttonPin  = 21;      // Pin for debugging mode (ie, button pin)
-const int8_t  wakePin    = 31;  // MCU interrupt/alarm pin to wake from sleep
+const int32_t serialBaud = serialBaudDebugDef;  // Baud rate for debugging
+const int8_t  greenLED   = greenLEDPinDef;
+const int8_t  redLED     = redLEDPinDef; 
+const int8_t  buttonPin  = buttonPinDef; // Pin for debugging mode (ie, button pin)
+const int8_t  wakePin    = wakePinDef ;  // MCU interrupt/alarm pin to wake from sleep
 // Mayfly 0.x D31 = A7
 // Set the wake pin to -1 if you do not want the main processor to sleep.
 // In a SAMD system where you are using the built-in rtc, set wakePin to 1
-const int8_t sdCardPwrPin   = -1;  // MCU SD card power pin
-const int8_t sdCardSSPin    = 12;  // SD card chip select/slave select pin
-const int8_t sensorPowerPin = 22;  // MCU pin controlling main sensor power
+const int8_t sdCardPwrPin   = sdCardPwrPinDef; // MCU SD card power pin
+const int8_t sdCardSSPin    = sdCardSSPinDef;  // SD card chip select/slave select pin
+const int8_t sensorPowerPin = sensorPowerPin_DEF;  // MCU pin controlling main sensor power
 /** End [logging_options] */
 
 
@@ -86,21 +102,23 @@ const int8_t sensorPowerPin = 22;  // MCU pin controlling main sensor power
 #include <modems/DigiXBeeCellularTransparent.h>
 
 // Create a reference to the serial port for the modem
-HardwareSerial& modemSerial = Serial1;  // Use hardware serial if possible
-const int32_t   modemBaud   = 9600;     // All XBee's use 9600 by default
+HardwareSerial& modemSerial = modemSerial_Upstream_DEF;  // Use hardware serial if possible
+const int32_t   modemBaud   = modemBaud_Upstream_DEF ;   // All XBee's use 9600 by default
 
 // Modem Pins - Describe the physical pin connection of your modem to your board
 // NOTE:  Use -1 for pins that do not apply
-const int8_t modemVccPin    = -2;     // MCU pin controlling modem power
-const int8_t modemStatusPin = 19;     // MCU pin used to read modem status
+const int8_t modemVccPin    = modemVccPin_DEF;    // MCU pin controlling modem power
+const int8_t modemStatusPin = modemStatusPin_DEF; // MCU pin used to read modem status
 const bool useCTSforStatus  = false;  // Flag to use the XBee CTS pin for status
-const int8_t modemResetPin  = 20;     // MCU pin connected to modem reset pin
-const int8_t modemSleepRqPin = 23;    // MCU pin for modem sleep/wake request
+const int8_t modemResetPin  = modemResetPin_DEF;     // MCU pin connected to modem reset pin
+const int8_t modemSleepRqPin = modemSleepRqPin_DEF;    // MCU pin for modem sleep/wake request
 const int8_t modemLEDPin = redLED;    // MCU pin connected an LED to show modem
                                       // status (-1 if unconnected)
 
+//njh need to make WiFI
 // Network connection information
 const char* apn = "xxxxx";  // The APN for the gprs connection
+
 
 // NOTE:  If possible, use the `STATUS/SLEEP_not` (XBee pin 13) for status, but
 // the `CTS` pin can also be used if necessary
@@ -115,6 +133,7 @@ DigiXBeeCellularTransparent modem = modemXBCT;
 // ==========================================================================
 //  Using the Processor as a Sensor
 // ==========================================================================
+#if 1
 /** Start [processor_sensor] */
 #include <sensors/ProcessorStats.h>
 
@@ -122,22 +141,24 @@ DigiXBeeCellularTransparent modem = modemXBCT;
 const char*    mcuBoardVersion = "v1.1";
 ProcessorStats mcuBoard(mcuBoardVersion);
 /** End [processor_sensor] */
-
+#endif
 
 // ==========================================================================
 //  Maxim DS3231 RTC (Real Time Clock)
 // ==========================================================================
+#if 0
 /** Start [ds3231] */
 #include <sensors/MaximDS3231.h>
 
 // Create a DS3231 sensor object
 MaximDS3231 ds3231(1);
 /** End [ds3231] */
-
+#endif //00
 
 // ==========================================================================
 //  Bosch BME280 Environmental Sensor
 // ==========================================================================
+#if 0
 /** Start [bme280] */
 #include <sensors/BoschBME280.h>
 
@@ -149,7 +170,7 @@ uint8_t      BMEi2c_addr = 0x76;
 // Create a Bosch BME280 sensor object
 BoschBME280 bme280(I2CPower, BMEi2c_addr);
 /** End [bme280] */
-
+#endif //0
 
 // ==========================================================================
 //  Maxim DS18 One Wire Temperature Sensor
@@ -162,7 +183,7 @@ BoschBME280 bme280(I2CPower, BMEi2c_addr);
 // DeviceAddress OneWireAddress1 = {0x28, 0xFF, 0xBD, 0xBA, 0x81, 0x16, 0x03,
 // 0x0C};
 const int8_t OneWirePower = sensorPowerPin;  // Power pin (-1 if unconnected)
-const int8_t OneWireBus   = 6;  // OneWire Bus Pin (-1 if unconnected)
+const int8_t OneWireBus   = OneWireBus_DEF;  // OneWire Bus Pin (-1 if unconnected)
 
 // Create a Maxim DS18 sensor objects (use this form for a known address)
 // MaximDS18 ds18(OneWireAddress1, OneWirePower, OneWireBus);
@@ -180,16 +201,16 @@ MaximDS18 ds18(OneWirePower, OneWireBus);
 Variable* variableList[] = {
     new ProcessorStats_SampleNumber(&mcuBoard,
                                     "12345678-abcd-1234-ef00-1234567890ab"),
-    new BoschBME280_Temp(&bme280, "12345678-abcd-1234-ef00-1234567890ab"),
-    new BoschBME280_Humidity(&bme280, "12345678-abcd-1234-ef00-1234567890ab"),
-    new BoschBME280_Pressure(&bme280, "12345678-abcd-1234-ef00-1234567890ab"),
-    new BoschBME280_Altitude(&bme280, "12345678-abcd-1234-ef00-1234567890ab"),
+    //new BoschBME280_Temp(&bme280, "12345678-abcd-1234-ef00-1234567890ab"),
+    //new BoschBME280_Humidity(&bme280, "12345678-abcd-1234-ef00-1234567890ab"),
+    //new BoschBME280_Pressure(&bme280, "12345678-abcd-1234-ef00-1234567890ab"),
+    //new BoschBME280_Altitude(&bme280, "12345678-abcd-1234-ef00-1234567890ab"),
     new MaximDS18_Temp(&ds18, "12345678-abcd-1234-ef00-1234567890ab"),
     new ProcessorStats_Battery(&mcuBoard,
                                "12345678-abcd-1234-ef00-1234567890ab"),
-    new MaximDS3231_Temp(&ds3231, "12345678-abcd-1234-ef00-1234567890ab"),
+    //new MaximDS3231_Temp(&ds3231, "12345678-abcd-1234-ef00-1234567890ab"),
     new Modem_RSSI(&modem, "12345678-abcd-1234-ef00-1234567890ab"),
-    new Modem_SignalPercent(&modem, "12345678-abcd-1234-ef00-1234567890ab"),
+    //new Modem_SignalPercent(&modem, "12345678-abcd-1234-ef00-1234567890ab"),
 };
 
 
@@ -206,7 +227,7 @@ VariableArray varArray(variableCount, variableList);
 // ==========================================================================
 /** Start [loggers] */
 // Create a new logger instance
-Logger dataLogger(LoggerID, loggingInterval, &varArray);
+Logger dataLogger(LoggerID, loggingIntervaldef, &varArray);
 /** End [loggers] */
 
 
@@ -217,10 +238,8 @@ Logger dataLogger(LoggerID, loggingInterval, &varArray);
 // A Publisher to Monitor My Watershed / EnviroDIY Data Sharing Portal
 // Device registration and sampling feature information can be obtained after
 // registration at https://monitormywatershed.org or https://data.envirodiy.org
-const char* registrationToken =
-    "12345678-abcd-1234-ef00-1234567890ab";  // Device registration token
-const char* samplingFeature =
-    "12345678-abcd-1234-ef00-1234567890ab";  // Sampling feature UUID
+const char* registrationToken = registrationToken_UUID;
+const char* samplingFeature =   samplingFeature_UUID;
 
 // Create a data publisher for the Monitor My Watershed/EnviroDIY POST endpoint
 #include <publishers/EnviroDIYPublisher.h>
@@ -271,11 +290,17 @@ void setup() {
     Serial.begin(serialBaud);
 
     // Print a start-up note to the first serial port
-    Serial.print(F("Now running "));
-    Serial.print(sketchName);
-    Serial.print(F(" on Logger "));
-    Serial.println(LoggerID);
-    Serial.println();
+    Serial.print(F("\n---Boot("));
+    //Serial.print(mcu_status,HEX);
+    Serial.print(F(") Sw Build: "));
+    Serial.print(build_ref);
+    Serial.print(" ");
+    Serial.println(git_usr);
+    Serial.print(" ");
+    Serial.println(git_branch);
+
+    Serial.print(F("Sw Name: "));
+    Serial.println(configDescription);
 
     Serial.print(F("Using ModularSensors Library version "));
     Serial.println(MODULAR_SENSORS_VERSION);
@@ -320,13 +345,15 @@ void setup() {
 
     // Note:  Please change these battery voltages to match your battery
     // Set up the sensors, except at lowest battery level
-    if (getBatteryVoltage() > 3.4) {
+    //if (getBatteryVoltage() > 3.4) 
+    {
         Serial.println(F("Setting up sensors..."));
         varArray.setupSensors();
     }
 
     // Sync the clock if it isn't valid or we have battery to spare
-    if (getBatteryVoltage() > 3.55 || !dataLogger.isRTCSane()) {
+    if (/*getBatteryVoltage() > 3.55 ||*/ !dataLogger.isRTCSane()) 
+    {
         // Synchronize the RTC with NIST
         // This will also set up the modem
         dataLogger.syncRTC();
@@ -337,7 +364,8 @@ void setup() {
     // all sensor names correct
     // Writing to the SD card can be power intensive, so if we're skipping
     // the sensor setup we'll skip this too.
-    if (getBatteryVoltage() > 3.4) {
+    //if (getBatteryVoltage() > 3.4) 
+    {
         Serial.println(F("Setting up file on SD card"));
         dataLogger.turnOnSDcard(
             true);  // true = wait for card to settle after power up
@@ -359,13 +387,16 @@ void setup() {
 /** Start [loop] */
 // Use this short loop for simple data logging and sending
 void loop() {
-    // Note:  Please change these battery voltages to match your battery
+    // Note:  primitive but take a guess and set voltages
+    // For hardware always take one reading and reference that  can change each time read
+    float battery_V = getBatteryVoltage() ;
     // At very low battery, just go back to sleep
-    if (getBatteryVoltage() < 3.4) {
+    if (battery_V < 3.4) 
+    {
         dataLogger.systemSleep();
     }
     // At moderate voltage, log data but don't send it over the modem
-    else if (getBatteryVoltage() < 3.55) {
+    else if (battery_V  < 3.55)  {
         dataLogger.logData();
     }
     // If the battery is good, send the data to the world
