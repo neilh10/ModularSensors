@@ -44,6 +44,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 //Two heavy sensors with power useage
 #define BM_PWR_SENSOR_CONFIG_BUILD_SPECIFIC BM_PWR_LOW_REQ
 
+//Board specific 
 #if defined(ARDUINO_AVR_ENVIRODIY_MAYFLY)
 // Mayfly configuration
 // Carrier board for Digi XBEE LTE CAT-M1 and jumper from battery
@@ -61,6 +62,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 
 //#define USE_PS_modularSensorsCommon 1
 #define serialBaudDebugDef 115200 
+#define USE_LEDS
 #define greenLEDPinDef 8  // MCU pin for the green LED (-1 if not applicable)
 #define redLEDPinDef 9    // MCU pin for the red LED (-1 if not applicable)
 #define buttonPinDef 21
@@ -81,7 +83,42 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define modemBaud_Upstream_DEF 9600
 
 #elif defined(WIO_TERMINAL) 
+// Wio configuration
+// Carrier board for Digi XBEE LTE CAT-M1 and jumper from battery
+// On board WiFi 
+
+
+#define HwName_DEF "WioTerminal"
+#define CONFIGURATION_DESCRIPTION_STR "WioTerm WiFi Basic"
+
+#define USE_MS_SD_INI 1
+//#define USE_PS_EEPROM 1
+//#define USE_PS_HW_BOOT 1
+
+//#define USE_PS_modularSensorsCommon 1
+#define serialBaudDebugDef 115200 
+#define greenLEDPinDef -1  // wioT no LED MCU pin for the green LED (-1 if not applicable)
+#define redLEDPinDef -1   //wioT no LED M MCU pin for the red LED (-1 if not applicable)
+#define buttonPinDef WIO_KEY_A //wioT 
+#define wakePinDef  WIO_KEY_B  //wioT
+// ALso WIO_KEY_C and 5 way switch
+
+#define sdCardPwrPinDef   -1  //  MCU SD card power pin
+#define sdCardSSPinDef PIN_SPI_SS //wioManual SD card chip select/slave select pin
+
+
+#define sensorPowerPin_DEF 22 //mayfly 
+#define OneWireBus_DEF 6  //mayfly 
+
+#define modemVccPin_DEF -2  // wioT MCU pin controlling modem power
+//#define modemSleepRqPin_DEF 23 //mayfly 
+//#define modemStatusPin_DEF  19  //mayfly  MCU pin used to read modem status (-1 if not applicable)
+//#define modemResetPin_DEF   20  //mayfly  MCU pin connected to modem reset pin (-1 if unconnected)
+#define modemSerial_Upstream_DEF Serial1 //mayfly 
+#define modemBaud_Upstream_DEF 9600 //mayfly 
+
 #endif //Board
+
 #define LOGGERID_DEF_STR "msLog01"
 #define NEW_LOGGERID_MAX_SIZE 40
 #define configIniID_DEF_STR "ms_cfg.ini"

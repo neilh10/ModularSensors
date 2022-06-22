@@ -94,13 +94,7 @@ const int8_t sensorPowerPin = sensorPowerPin_DEF;  // MCU pin controlling main s
 // ==========================================================================
 //  Wifi/Cellular Modem Options
 // ==========================================================================
-/** Start [digi_xbee_cellular_transparent] */
-// For any Digi Cellular XBee's
-// NOTE:  The u-blox based Digi XBee's (3G global and LTE-M global) can be used
-// in either bypass or transparent mode, each with pros and cons
-// The Telit based Digi XBees (LTE Cat1) can only use this mode.
-#include <modems/DigiXBeeCellularTransparent.h>
-
+#if defined(ARDUINO_AVR_ENVIRODIY_MAYFLY)
 // Create a reference to the serial port for the modem
 HardwareSerial& modemSerial = modemSerial_Upstream_DEF;  // Use hardware serial if possible
 const int32_t   modemBaud   = modemBaud_Upstream_DEF ;   // All XBee's use 9600 by default
@@ -109,11 +103,20 @@ const int32_t   modemBaud   = modemBaud_Upstream_DEF ;   // All XBee's use 9600 
 // NOTE:  Use -1 for pins that do not apply
 const int8_t modemVccPin    = modemVccPin_DEF;    // MCU pin controlling modem power
 const int8_t modemStatusPin = modemStatusPin_DEF; // MCU pin used to read modem status
-const bool useCTSforStatus  = false;  // Flag to use the XBee CTS pin for status
+const bool useCTSforStatus  = true;  // Flag to use the XBee CTS pin for status
 const int8_t modemResetPin  = modemResetPin_DEF;     // MCU pin connected to modem reset pin
 const int8_t modemSleepRqPin = modemSleepRqPin_DEF;    // MCU pin for modem sleep/wake request
 const int8_t modemLEDPin = redLED;    // MCU pin connected an LED to show modem
                                       // status (-1 if unconnected)
+#if 0
+/** Start [digi_xbee_cellular_transparent] */
+// For any Digi Cellular XBee's
+// NOTE:  The u-blox based Digi XBee's (3G global and LTE-M global) can be used
+// in either bypass or transparent mode, each with pros and cons
+// The Telit based Digi XBees (LTE Cat1) can only use this mode.
+#include <modems/DigiXBeeCellularTransparent.h>
+
+
 
 //njh need to make WiFI
 // Network connection information
@@ -126,9 +129,66 @@ DigiXBeeCellularTransparent modemXBCT(&modemSerial, modemVccPin, modemStatusPin,
                                       useCTSforStatus, modemResetPin,
                                       modemSleepRqPin, apn);
 // Create an extra reference to the modem by a generic name
-DigiXBeeCellularTransparent modem = modemXBCT;
+DigiXBeeCellularTransparent modemPhy = modemXBCT;
 /** End [digi_xbee_cellular_transparent] */
+#else 
+/** Start [digi_xbee_wifi] */
+// For the Digi Wifi XBee (S6B)
+#include <modems/DigiXBeeWifi.h>
 
+
+// Network connection information
+const char* wifiId  = "xxxxx";  // WiFi access point name
+const char* wifiPwd = "xxxxx";  // WiFi password (WPA2)
+
+// Create the modem object
+DigiXBeeWifi modemXBWF(&modemSerial, modemVccPin, modemStatusPin,
+                       useCTSforStatus, modemResetPin, modemSleepRqPin, wifiId,
+                       wifiPwd);
+// Create an extra reference to the modem by a generic name
+DigiXBeeWifi modemPhy = modemXBWF;
+/** End [digi_xbee_wifi] */
+#endif //digi
+#elif defined(WIO_TERMINAL) 
+/** Start [WIO_TERMINAL_COMMS] */
+// For WIO_TERMINAL that has WiFi and BT
+#include <modems/WioTerminal_rpcwifi.h>
+//Has an API not serial
+//#include "ntpHelper.h"
+
+// Create a reference to the serial port for the modem
+//HardwareSerial& modemSerial = modemSerial_Upstream_DEF;  // Use hardware serial if possible
+//HardwareSerial& modemSerial = NULL;  
+//const int32_t   modemBaud   = modemBaud_Upstream_DEF ;   // All XBee's use 9600 by default
+
+// Modem Pins - Describe the physical pin connection of your modem to your board
+// NOTE:  Use -1 for pins that do not apply
+const int8_t modemVccPin    = modemVccPin_DEF;    // MCU pin controlling modem power
+const int8_t modemStatusPin = -1;//modemStatusPin_DEF; // MCU pin used to read modem status
+const bool useCTSforStatus  = false;  // Flag to use the XBee CTS pin for status
+const int8_t modemResetPin  = -1;//modemResetPin_DEF;     // MCU pin connected to modem reset pin
+const int8_t modemSleepRqPin = -1;//modemSleepRqPin_DEF;    // MCU pin for modem sleep/wake request
+//const int8_t modemLEDPin = redLED;    // MCU pin connected an LED to show modem
+                                      // status (-1 if unconnected)
+const int8_t espSleepRqPin = -1;  // ESP8266 light sleep request
+const int8_t espStatusPin = -1;   // ESP8266 light sleep status
+// Network connection information
+const char* wifi_ssid  = "xxxxx";  // The WiFi access point
+const char* wifi_pwd = "xxxxx";  // The password for connecting to WiFi
+
+// Create the loggerModem object
+/*EspressifESP8266 modemESP(&modemSerial, modemVccPin, modemStatusPin,
+                          modemResetPin, modemSleepRqPin, wifiId, wifiPwd,
+                          espSleepRqPin, espStatusPin); */
+WioTerminal_rpcwifi modemWIOT(/*&modemSerial,*/ modemVccPin, 
+                        modemStatusPin, modemResetPin, modemSleepRqPin,  
+                        wifi_ssid, wifi_pwd, 
+                        espSleepRqPin, espStatusPin);
+
+WioTerminal_rpcwifi modem = modemWIOT;
+/** End [WIO_TERMINAL_COMMS] */
+
+#endif //ARDUINO_AVR_ENVIRODIY_MAYFLY
 
 // ==========================================================================
 //  Using the Processor as a Sensor
@@ -209,8 +269,10 @@ Variable* variableList[] = {
     new ProcessorStats_Battery(&mcuBoard,
                                "12345678-abcd-1234-ef00-1234567890ab"),
     //new MaximDS3231_Temp(&ds3231, "12345678-abcd-1234-ef00-1234567890ab"),
-    new Modem_RSSI(&modem, "12345678-abcd-1234-ef00-1234567890ab"),
+    #if defined(ARDUINO_AVR_ENVIRODIY_MAYFLY)
+    new Modem_RSSI(&modemPhy, "12345678-abcd-1234-ef00-1234567890ab"),
     //new Modem_SignalPercent(&modem, "12345678-abcd-1234-ef00-1234567890ab"),
+    #endif // ARDUINO_AVR_ENVIRODIY_MAYFLY
 };
 
 
@@ -234,6 +296,7 @@ Logger dataLogger(LoggerID, loggingIntervaldef, &varArray);
 // ==========================================================================
 //  Creating Data Publisher[s]
 // ==========================================================================
+#if defined(ARDUINO_AVR_ENVIRODIY_MAYFLY)
 /** Start [publishers] */
 // A Publisher to Monitor My Watershed / EnviroDIY Data Sharing Portal
 // Device registration and sampling feature information can be obtained after
@@ -243,15 +306,16 @@ const char* samplingFeature =   samplingFeature_UUID;
 
 // Create a data publisher for the Monitor My Watershed/EnviroDIY POST endpoint
 #include <publishers/EnviroDIYPublisher.h>
-EnviroDIYPublisher EnviroDIYPOST(dataLogger, &modem.gsmClient,
+EnviroDIYPublisher EnviroDIYPOST(dataLogger, &modemPhy.gsmClient,
                                  registrationToken, samplingFeature);
 /** End [publishers] */
-
+#endif //ARDUINO_AVR_ENVIRODIY_MAYFLY
 
 // ==========================================================================
 //  Working Functions
 // ==========================================================================
 /** Start [working_functions] */
+#if defined USE_LEDS
 // Flashes the LED's on the primary board
 void greenredflash(uint8_t numFlash = 4, uint8_t rate = 75) {
     for (uint8_t i = 0; i < numFlash; i++) {
@@ -264,6 +328,7 @@ void greenredflash(uint8_t numFlash = 4, uint8_t rate = 75) {
     }
     digitalWrite(redLED, LOW);
 }
+#endif //USE_LEDS
 
 // Reads the battery voltage
 // NOTE: This will actually return the battery level from the previous update!
@@ -304,8 +369,8 @@ void setup() {
 
     Serial.print(F("Using ModularSensors Library version "));
     Serial.println(MODULAR_SENSORS_VERSION);
-    Serial.print(F("TinyGSM Library version "));
-    Serial.println(TINYGSM_VERSION);
+    //Serial.print(F("TinyGSM Library version "));
+    //Serial.println(TINYGSM_VERSION);
     Serial.println();
 
 // Allow interrupts for software serial
@@ -318,16 +383,17 @@ void setup() {
 #endif
 
     // Start the serial connection with the modem
-    modemSerial.begin(modemBaud);
+    // nh modemSerial.begin(modemBaud);
 
     // Set up pins for the LED's
+    #if defined USE_LEDS
     pinMode(greenLED, OUTPUT);
     digitalWrite(greenLED, LOW);
     pinMode(redLED, OUTPUT);
     digitalWrite(redLED, LOW);
     // Blink the LEDs to show the board is on and starting up
     greenredflash();
-
+    #endif //USE_LEDS
     // Set the timezones for the logger/data and the RTC
     // Logging in the given time zone
     Logger::setLoggerTimeZone(timeZone);
@@ -335,8 +401,8 @@ void setup() {
     Logger::setRTCTimeZone(0);
 
     // Attach the modem and information pins to the logger
-    dataLogger.attachModem(modem);
-    modem.setModemLED(modemLEDPin);
+    // nh dataLogger.attachModem(modemPhy);
+    //modemPhy.setModemLED(modemLEDPin);
     dataLogger.setLoggerPins(wakePin, sdCardSSPin, sdCardPwrPin, buttonPin,
                              greenLED);
 
