@@ -48,6 +48,8 @@ Notes:
 #if defined RADIO_WIFI
 #include "ntpHelper.h"
 ntpHelper ntph;
+
+
 #else 
 #define ntph
 #endif //
@@ -215,6 +217,7 @@ void loop() {
 
             ui_display.update3(now_dt.timestamp(DateTime::TIMESTAMP_FULL).c_str(),temperature_reading,humidity_reading,light_reading_raw );
         }
+        ntph.sendDataTuple();
         updateDelay.repeat(); // timer
     }
 }
