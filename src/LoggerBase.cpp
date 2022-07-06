@@ -60,8 +60,9 @@ volatile bool Logger::startTesting = false;
 // RTCZero internal registers based on year 2000/20yk
 // "Epoch19yk" seconds from 1900, using  "struct tm", mktime, gmtime
 RTC_INT_CLASS zero_sleep_rtc;
+#define log_zero_sleep_rtc zero_sleep_rtc
 //For time being assume ony internal RTC - zero_sleep_rtc  name to be changed later
-#define rtcExtPhy zero_sleep_rtc
+#define rtcExtPhy log_zero_sleep_rtc
 #endif
 
 #if defined USE_RTCLIB
@@ -579,8 +580,7 @@ void Logger::setNowUTCEpoch(uint32_t ts) {
 #elif defined ARDUINO_ARCH_SAMD
 
 uint32_t Logger::getNowUTCEpoch(void) {
-    uint32_t currentEpochTime = zero_sleep_rtc.now().unixtime();
-    //uint32_t currentEpochTime = zero_sleep_rtc.getEpoch();
+    uint32_t currentEpochTime = log_zero_sleep_rtc.now().unixtime();
     if (!isRTCSane(currentEpochTime)) {
         PRINTOUT(F("Bad time, resetting clock."), currentEpochTime, " ",
                  formatDateTime_ISO8601(currentEpochTime), " Setting to ",
@@ -591,7 +591,7 @@ uint32_t Logger::getNowUTCEpoch(void) {
     return currentEpochTime;
 }
 void Logger::setNowUTCEpoch(uint32_t ts) {
-    zero_sleep_rtc.adjust(DateTime(ts));
+    log_zero_sleep_rtc.adjust(DateTime(ts));
 }
 uint32_t Logger::getNowLocalEpoch(void) {
     return (uint32_t)(getNowUTCEpoch() + (_loggerRTCOffset * HOURS_TO_SECS));
@@ -1096,14 +1096,13 @@ void        Logger::systemSleep(uint8_t sleep_min) {
            " adj=", adjust_secs, " fm now=", timeNow_secs,
            " Awake=", timeNow_secs - wakeUpTime_secs);
 #define RTC_ALM_ID 0
-    zero_sleep_rtc.setAlarm(RTC_ALM_ID,targetWakeup_secs);
-    //zero_sleep_rtc.setAlarmEpoch(targetWakeup_secs);
-#define zsr zero_sleep_rtc
+    log_zero_sleep_rtc.setAlarm(RTC_ALM_ID,targetWakeup_secs);
+#define zsr log_zero_sleep_rtc
     /*MS_DBG("Alm:", zsr.getAlarmYear(), zsr.getAlarmMonth(), zsr.getAlarmDay(),
            "-", zsr.getAlarmHours(), ":", zsr.getAlarmMinutes(), ":",
            zsr.getAlarmSeconds());*/
     // Assume max is an hour - need to revisit
-    zero_sleep_rtc.enableAlarm(RTC_ALM_ID,zero_sleep_rtc.MATCH_MMSS);
+    log_zero_sleep_rtc.enableAlarm(RTC_ALM_ID,log_zero_sleep_rtc.MATCH_MMSS);
 #endif
 
     // Send one last message before shutting down serial ports
@@ -1310,7 +1309,7 @@ void        Logger::systemSleep(uint8_t sleep_min) {
     //disableInterrupt(_mcuWakePin); moved up disable
 
 #elif defined ARDUINO_ARCH_SAMD
-    zero_sleep_rtc.disableAlarm(RTC_ALM_ID);
+    log_zero_sleep_rtc.disableAlarm(RTC_ALM_ID);
 #endif
 
     // Wake-up message
@@ -1797,7 +1796,7 @@ void Logger::begin() {
 
 #if defined ARDUINO_ARCH_SAMD
     MS_DBG(F("Beginning internal real time clock"));
-    zero_sleep_rtc.begin();
+    log_zero_sleep_rtc.begin();
 #endif
     watchDogTimer.resetWatchDog();
 
@@ -1921,7 +1920,7 @@ void Logger::begin() {
 #else  // no external _RTC
        // If Power-on Reset Rcause.Bit0 have
        // specific processing
-#define zr zero_sleep_rtc
+#define zr log_zero_sleep_rtc
     if ((0 == zr.now().year()) && (1 == zr.now().month()) && (1 == zr.now().day())) {
         MS_DBG("RTC.setDay to 2 for Power-On Reset case ");
         //zr.setDay(2);  // Allow for calcs for -11hrs

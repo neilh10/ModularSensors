@@ -50,7 +50,13 @@
 // clock This also implements a needed date/time class
 #if defined(ARDUINO_ARCH_SAMD)
 // intRtcPhy ?? and fut extRtcPhy RTClib?
-//#include <RTClib.h>  //conflict DateTime was <Sodaq_DS3231.h>
+   #if defined __SAMD51__
+   #include "RTC_SAMD51.h"
+   #define RTC_INT_CLASS RTC_SAMD51
+   #else 
+   #include "RTC_SAMD21.h"
+   #define RTC_INT_CLASS RTC_SAMD21
+   #endif //__SAMD51__
 #elif defined(ARDUINO_ARCH_AVR) || defined(__AVR__)
 #include <Sodaq_DS3231.h>
 using namespace sodaq_DS3231_nm;
@@ -719,15 +725,8 @@ class Logger {
      * @note Only one RTC may be used.  Either the built-in RTC of a SAMD board
      * *OR* a DS3231
      */
-
-   #if defined __SAMD51__
-   #include "RTC_SAMD51.h"
-   #define RTC_INT_CLASS Logger::RTC_SAMD51
-   #else 
-   #include "RTC_SAMD21.h"
-   #define RTC_INT_CLASS LOgger::RTC_SAMD21
-   #endif //__SAMD51__
-   static RTC_INT_CLASS  zero_sleep_rtc;
+   // nh: static declaration has challanges, not sure value 
+   //static RTC_INT_CLASS  zero_sleep_rtc;
 #endif
 
     /**
