@@ -218,7 +218,8 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define rs485AdapterPower_DEF \
     22  // Pin to switch RS485 adapter power on and off (-1 if unconnected)
 #define modbusSensorPower_DEF \
-    22;  // Pin to switch power on and off (-1 if unconnected)
+    11 //Knh2rev8b1
+//    22  // Pin to switch power on and off (-1 if unconnected)
 #ifndef MODBUS_BAUD_RATE
 #define MODBUS_BAUD_RATE 9600
 #endif  // MODBUS_BAUD_RATE

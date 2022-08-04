@@ -1,7 +1,8 @@
 /** =========================================================================
  * @file logging_to_MMW.ino
- * @brief Example logging data and publishing to Monitor My Watershed.
+ * @brief Mayfly & WioT logging data and publishing to Monitor My Watershed 
  *
+ * @author Neil Hancock port to Wio Terminal
  * @author Sara Geleskie Damiano <sdamiano@stroudcenter.org>
  * @copyright (c) 2017-2022 Stroud Water Research Center (SWRC)
  *                          and the EnviroDIY Development Team
@@ -94,7 +95,49 @@ const int8_t sensorPowerPin = sensorPowerPin_DEF;  // MCU pin controlling main s
 // ==========================================================================
 //  Wifi/Cellular Modem Options
 // ==========================================================================
-#if defined(ARDUINO_AVR_ENVIRODIY_MAYFLY)
+#if 1 //defined WIO_TERMINAL 
+/** Start [WIO_TERMINAL_COMMS] */
+// For WIO_TERMINAL that has WiFi and BT
+#include <modems/WioTerminal_rpcwifi.h>
+//Has an API not serial
+//#include "ntpHelper.h"
+
+// Create a reference to the serial port for the modem
+//HardwareSerial& modemSerial = modemSerial_Upstream_DEF;  // Use hardware serial if possible
+//HardwareSerial& modemSerial = NULL;  
+//const int32_t   modemBaud   = modemBaud_Upstream_DEF ;   // All XBee's use 9600 by default
+
+// Modem Pins - Describe the physical pin connection of your modem to your board
+// NOTE:  Use -1 for pins that do not apply
+const int8_t modemVccPin    = modemVccPin_DEF;    // MCU pin controlling modem power
+const int8_t modemStatusPin = -1;//modemStatusPin_DEF; // MCU pin used to read modem status
+const bool useCTSforStatus  = false;  // Flag to use the XBee CTS pin for status
+const int8_t modemResetPin  = -1;//modemResetPin_DEF;     // MCU pin connected to modem reset pin
+const int8_t modemSleepRqPin = -1;//modemSleepRqPin_DEF;    // MCU pin for modem sleep/wake request
+//const int8_t modemLEDPin = redLED;    // MCU pin connected an LED to show modem
+                                      // status (-1 if unconnected)
+const int8_t espSleepRqPin = -1;  // ESP8266 light sleep request
+const int8_t espStatusPin = -1;   // ESP8266 light sleep status
+// Network connection information
+const char* wifi_ssid  = "xxxxx";  // The WiFi access point
+const char* wifi_pwd = "xxxxx";  // The password for connecting to WiFi
+
+// Create the loggerModem object
+/*EspressifESP8266 modemESP(&modemSerial, modemVccPin, modemStatusPin,
+                          modemResetPin, modemSleepRqPin, wifiId, wifiPwd,
+                          espSleepRqPin, espStatusPin); */
+
+#if 0
+WioTerminal_rpcwifi modemWIOT(/*&modemSerial,*/ modemVccPin, 
+                        modemStatusPin, modemResetPin, modemSleepRqPin,  
+                        wifi_ssid, wifi_pwd, 
+                        espSleepRqPin, espStatusPin);*/
+#endif
+WioTerminal_rpcwifi modemWIOT(/*&modemSerial,*/ 
+                        wifi_ssid, wifi_pwd);
+WioTerminal_rpcwifi modemPhy = modemWIOT;
+/** End [WIO_TERMINAL_COMMS] */
+#elif defined(ARDUINO_AVR_ENVIRODIY_MAYFLY)
 // Create a reference to the serial port for the modem
 HardwareSerial& modemSerial = modemSerial_Upstream_DEF;  // Use hardware serial if possible
 const int32_t   modemBaud   = modemBaud_Upstream_DEF ;   // All XBee's use 9600 by default
@@ -149,45 +192,6 @@ DigiXBeeWifi modemXBWF(&modemSerial, modemVccPin, modemStatusPin,
 DigiXBeeWifi modemPhy = modemXBWF;
 /** End [digi_xbee_wifi] */
 #endif //digi
-#elif defined(WIO_TERMINAL) 
-/** Start [WIO_TERMINAL_COMMS] */
-// For WIO_TERMINAL that has WiFi and BT
-#include <modems/WioTerminal_rpcwifi.h>
-//Has an API not serial
-//#include "ntpHelper.h"
-
-// Create a reference to the serial port for the modem
-//HardwareSerial& modemSerial = modemSerial_Upstream_DEF;  // Use hardware serial if possible
-//HardwareSerial& modemSerial = NULL;  
-//const int32_t   modemBaud   = modemBaud_Upstream_DEF ;   // All XBee's use 9600 by default
-
-// Modem Pins - Describe the physical pin connection of your modem to your board
-// NOTE:  Use -1 for pins that do not apply
-const int8_t modemVccPin    = modemVccPin_DEF;    // MCU pin controlling modem power
-const int8_t modemStatusPin = -1;//modemStatusPin_DEF; // MCU pin used to read modem status
-const bool useCTSforStatus  = false;  // Flag to use the XBee CTS pin for status
-const int8_t modemResetPin  = -1;//modemResetPin_DEF;     // MCU pin connected to modem reset pin
-const int8_t modemSleepRqPin = -1;//modemSleepRqPin_DEF;    // MCU pin for modem sleep/wake request
-//const int8_t modemLEDPin = redLED;    // MCU pin connected an LED to show modem
-                                      // status (-1 if unconnected)
-const int8_t espSleepRqPin = -1;  // ESP8266 light sleep request
-const int8_t espStatusPin = -1;   // ESP8266 light sleep status
-// Network connection information
-const char* wifi_ssid  = "xxxxx";  // The WiFi access point
-const char* wifi_pwd = "xxxxx";  // The password for connecting to WiFi
-
-// Create the loggerModem object
-/*EspressifESP8266 modemESP(&modemSerial, modemVccPin, modemStatusPin,
-                          modemResetPin, modemSleepRqPin, wifiId, wifiPwd,
-                          espSleepRqPin, espStatusPin); */
-WioTerminal_rpcwifi modemWIOT(/*&modemSerial,*/ modemVccPin, 
-                        modemStatusPin, modemResetPin, modemSleepRqPin,  
-                        wifi_ssid, wifi_pwd, 
-                        espSleepRqPin, espStatusPin);
-
-WioTerminal_rpcwifi modem = modemWIOT;
-/** End [WIO_TERMINAL_COMMS] */
-
 #endif //ARDUINO_AVR_ENVIRODIY_MAYFLY
 
 // ==========================================================================

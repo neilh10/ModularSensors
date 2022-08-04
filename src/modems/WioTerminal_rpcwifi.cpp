@@ -13,6 +13,30 @@
 //#include "LoggerModemMacros.h"
 
 // Constructor
+WioTerminal_rpcwifi::WioTerminal_rpcwifi(/*Stream* modemStream,*/ 
+                                   const char* ssid, const char* pwd
+                                   )
+    : loggerModem(-1, -1, ESP8266update_STATUS_LEVEL, -1,
+                  ESP8266update_RESET_LEVEL, ESP8266update_RESET_PULSE_MS, -1,
+                  ESP8266update_WAKE_LEVEL, ESP8266update_WAKE_PULSE_MS,
+                  ESP8266update_STATUS_TIME_MS, ESP8266update_DISCONNECT_TIME_MS,
+                  ESP8266update_WAKE_DELAY_MS, ESP8266update_ATRESPONSE_TIME_MS)
+#ifdef MS_WIOTERMINAL_RPCWIFI_DEBUG_DEEP
+      //_modemATDebugger(*modemStream, DEEP_DEBUGGING_SERIAL_OUTPUT),
+      //gsmModem(_modemATDebugger),
+#else
+      //gsmModem(*modemStream),
+#endif
+      //gsmClient(gsmModem) 
+      {
+    _ssid = ssid;
+    _pwd  = pwd;
+
+    //_espSleepRqPin = espSleepRqPin;
+    //_espStatusPin  = espStatusPin;
+
+    //_modemStream = modemStream;
+}
 WioTerminal_rpcwifi::WioTerminal_rpcwifi(/*Stream* modemStream,*/ int8_t powerPin,
                         int8_t statusPin, int8_t modemResetPin,int8_t modemSleepRqPin, 
                                    const char* ssid, const char* pwd, 
