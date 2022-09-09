@@ -1,0 +1,43 @@
+---Boot() Sw Build: a\src\logging_to_MMW.cpp Sep  8 2022 17:34:01  b'neilh20'
+ b'rel1_dvlp1m'
+Sw Name: WioTerm WiFi Basic
+Using ModularSensors Library version 0.33.1.aaa
+
+Logger timezone is set to UTC -8
+RTC timezone is set to UTC
+Pin 29 set as RTC wake up pin <--LoggerBase
+Pin 64 set as SD Card Slave/Chip Select <--LoggerBase
+Button on pin 28 can be used to enter sensor testing mode. <--LoggerBase
+ minute intervals. <--LoggerBase
+Setting up a watch-dog timer to fire after 5minutes after loggingInterval 2 <--LoggerBase
+Beginning internal real time clock <--LoggerBase
+Setting I2C Pins to INPUT_PULLUP <--LoggerBase
+Beginning wire (I2C) <--LoggerBase
+Pin 29 set as RTC wake up pin <--LoggerBase
+Pin 64 set as SD Card Slave/Chip Select <--LoggerBase
+Button on pin 28 can be used to enter sensor testing mode. <--LoggerBase
+RTC set to CC time for Power-On Reset case  Sep  8 2022 17:31:20 <--LoggerBase
+Def UTC : 2022-09-09T01:31:20-08:00
+Current1 RTC time is: 2022-09-09T01:31:20-08:00
+Current2 RTC time is: 2022-09-09T01:31:20-08:00
+Current localized logger time is: 2022-09-08T17:31:20-08:00
+SampNum has a non-unique UUID!
+12345678-abcd-1234-ef00-1234567890ab -> SampNum
+12345678-abcd-1234-ef00-1234567890ab -> Battery
+
+There are 0 calculated variables in the group. <--VariableArray
+There are 0 calculated variables in the group. <--VariableArray
+This logger has a variable array with 2 variables, of which 2 come from 1 sensors and 0 are calculated.
+Logger portion of setup finished.
+
+Setting up sensors...
+Beginning setup for sensors and variables... <--VariableArray
+Running sensor setup functions. <--VariableArray
+    Set up of WIO_TERMINAL at WIO_TERMINAL ... <--VariableArray
+        ... setup succeeded. <--VariableArray
+... Success! <--VariableArray
+Setting up file on SD card
+Successfully connected to SD Card with card/slave select on pin 64 <--LoggerBase
+Opened existing file: logdef_2022-09-08.csv <--LoggerBase
+Data will be saved as logdef_2022-09-08.csv
+Putting processor to sleep

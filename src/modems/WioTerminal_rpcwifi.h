@@ -1,7 +1,8 @@
 /**
  * @file WioTerminal_rpcwifi.h
- * @copyright 2020 Stroud Water Research Center
+ * @copyright 2022 Stroud Water Research Center
  * Part of the EnviroDIY ModularSensors library for Arduino
+ * @author Neil Hancock, based on the work 
  * @author Sara Geleskie Damiano <sdamiano@stroudcenter.org>
  *
  * @brief Contains the WioTerminal_rpcwifi subclass of loggerModem which _SHOULD_
@@ -78,6 +79,10 @@
 #ifdef MS_WIOTERMINAL_RPCWIFI_DEBUG
 #define MS_DEBUGGING_STD "WIOTERMINAL_RPCWIFI"
 #endif
+
+#include "ModSensorDebugger.h"
+#undef MS_DEBUGGING_STD
+#undef MS_DEBUGGING_DEEP
 
 /** @ingroup modem_rpcWifiRTL8720 */
 /**@{*/

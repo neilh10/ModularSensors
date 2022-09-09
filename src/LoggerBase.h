@@ -424,7 +424,7 @@ class Logger {
     /**
      * @brief The logger id
      */
-    const char* _loggerID;
+    const char* _loggerID = "None";
     /**
      * @brief The logging interval in minutes
      */

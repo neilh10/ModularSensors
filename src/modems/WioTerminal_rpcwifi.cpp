@@ -1,6 +1,6 @@
 /**
  * @file WioTerminal_rpcwifi.cpp
- * @copyright 2022  Neil Hancock Stroud Water Research Center
+ * @copyright 2022  Neil Hancock & Stroud Water Research Center
  * Part of the EnviroDIY ModularSensors library for Arduino
  * @author Neil Hancock https://github.com/neilh10/ModularSensors
  * @author Sara Geleskie Damiano <sdamiano@stroudcenter.org>
@@ -10,7 +10,9 @@
 
 // Included Dependencies
 #include "WioTerminal_rpcwifi.h"
-//#include "LoggerModemMacros.h"
+//#include "LoggerModemMacros.h" NOT used, uniquely created in this file 
+#include <rpcWiFi.h>
+#include <HTTPClient.h>
 
 // Constructor
 WioTerminal_rpcwifi::WioTerminal_rpcwifi(/*Stream* modemStream,*/ 
@@ -66,7 +68,8 @@ WioTerminal_rpcwifi::WioTerminal_rpcwifi(/*Stream* modemStream,*/ int8_t powerPi
 // Destructor
 WioTerminal_rpcwifi::~WioTerminal_rpcwifi() {}
 
-/*MS_IS_MODEM_AWAKE(WioTerminal_rpcwifi);
+/* the marcros are  not used, specific WioTerminal_rpcwifi
+MS_IS_MODEM_AWAKE(WioTerminal_rpcwifi);
 MS_MODEM_WAKE(WioTerminal_rpcwifi);
 
 MS_MODEM_CONNECT_INTERNET(WioTerminal_rpcwifi);
@@ -91,7 +94,8 @@ bool WioTerminal_rpcwifi::RTLwaitForBoot(void) {
     delay(200);  // It will take at least this long
     uint32_t start   = millis();
     bool     success = false;
-    while (!_modemStream->available() && millis() - start < 1000) {}
+    if (NULL == _modemStream) {return false;}
+    while (!_modemStream->available() && ((millis() - start) < 1000) ) {}
     if (_modemStream->available()) {
         success = true;
         // Read the boot log to empty it from the serial buffer
@@ -222,7 +226,7 @@ bool WioTerminal_rpcwifi::modemSleepFxn(void) {
 
 // Set up the light-sleep status pin, if applicable
 bool WioTerminal_rpcwifi::extraModemSetup(void) {
-    if (_modemSleepRqPin >= 0) { digitalWrite(_modemSleepRqPin, !_wakeLevel); }
+    //??if (_modemSleepRqPin >= 0) { digitalWrite(_modemSleepRqPin, !_wakeLevel); }
     /*nh gsmModem.init();
     gsmClient.init(&gsmModem);
     _modemName = gsmModem.getModemName();*/
@@ -235,6 +239,21 @@ bool WioTerminal_rpcwifi::extraModemSetup(void) {
     // // Set the wifi settings as default
     // // This will speed up connecting after resets
     // gsmModem.sendAT(GF("+CWJAP_DEF=\""), _ssid, GF("\",\""), _pwd, GF("\""));
+    WiFi.disconnect(true);
+    uint16_t wifi_times = 1;
+    #define WIFI_CONNECTION_ATTEMPTS 5
+    #define WIFI_DELAY_MS 500
+    do {
+
+        MS_DBG(_ssid, " connection #",wifi_times);
+        WiFi.begin(_ssid, _pwd);
+        if (++wifi_times > WIFI_CONNECTION_ATTEMPTS) {
+            MS_DBG(_ssid, " failed");
+            return false;}
+        delay (WIFI_DELAY_MS);
+    } while (WiFi.status() != WL_CONNECTED);
+
+    MS_DBG(_ssid, " connected :",WiFi.localIP());
     // if (gsmModem.waitResponse(30000L, GFP(GSM_OK), GF(GSM_NL "FAIL" GSM_NL))
     // !=
     //     1) {
@@ -259,15 +278,33 @@ bool WioTerminal_rpcwifi::extraModemSetup(void) {
     return true;
 }
 
-// Holders - need to be filled in
-bool WioTerminal_rpcwifi::modemWake(void) {return true;}
-bool WioTerminal_rpcwifi::connectInternet(uint32_t maxConnectionTime) {return true;}
-void WioTerminal_rpcwifi::disconnectInternet(void) {}
-uint32_t WioTerminal_rpcwifi::getNISTTime(void) {return 0;}
-bool  WioTerminal_rpcwifi::getModemSignalQuality(int16_t& rssi, int16_t& percent) {return true;};
-bool  WioTerminal_rpcwifi::getModemBatteryStats(uint8_t& chargeState, int8_t& percent,
-                               uint16_t& milliVolts) {return true;};
-float WioTerminal_rpcwifi::getModemChipTemperature(void) {return 0.0;}
 
-bool WioTerminal_rpcwifi::isInternetAvailable(void) {return true;}
-bool WioTerminal_rpcwifi::isModemAwake(void) {return true;}
+inline bool WioTerminal_rpcwifi::isInternetAvailable(void) {
+    return WiFi.isConnected(); 
+    }
+
+uint32_t WioTerminal_rpcwifi::getNISTTime(void) {
+
+    if (!isInternetAvailable()) {                                         \
+        MS_DBG("No internet connection, cannot connect to NIST.");     \
+        return 0;                                                         \
+    }        
+    MS_DBG("tbd need to get NIST ");
+    // see getNPTtime udp https://wiki.seeedstudio.com/Connect-Wio-Terminal-to-Google-Cloud-IoT-Core/
+    return 0;
+    }
+
+// Holders - need to be filled in
+// for streams somewhere there may be caller to .write(const uint8_t *buf, size_t size)
+bool WioTerminal_rpcwifi::modemWake(void) {MS_DBG("modemWake tbd"); return true;}
+bool WioTerminal_rpcwifi::connectInternet(uint32_t maxConnectionTime) {MS_DBG("connectInternet tbd"); return true;}
+void WioTerminal_rpcwifi::disconnectInternet(void) { MS_DBG("tbd need to disconnectInternet ");}
+
+//WiFi.RSSI()) + "db";
+bool  WioTerminal_rpcwifi::getModemSignalQuality(int16_t& rssi, int16_t& percent) {MS_DBG("getModemSQ tbd"); return true;};
+bool  WioTerminal_rpcwifi::getModemBatteryStats(uint8_t& chargeState, int8_t& percent,
+                               uint16_t& milliVolts) {MS_DBG("getModemBatteryStats tbd"); return true;};
+float WioTerminal_rpcwifi::getModemChipTemperature(void) {MS_DBG("getModemChipTemperature tbd"); return 0.0;}
+
+
+bool WioTerminal_rpcwifi::isModemAwake(void) {MS_DBG("isModemWake tbd"); return true;}

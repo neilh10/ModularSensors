@@ -104,7 +104,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 // ALso WIO_KEY_C and 5 way switch
 
 #define sdCardPwrPinDef   -1  //  MCU SD card power pin
-#define sdCardSSPinDef PIN_SPI_SS //wioManual SD card chip select/slave select pin
+#define sdCardSSPinDef PIN_SPI2_SS //wioManual SD card chip select/slave select pin
 
 
 #define sensorPowerPin_DEF 22 //mayfly 

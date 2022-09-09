@@ -123,9 +123,7 @@ const char* wifi_ssid  = "xxxxx";  // The WiFi access point
 const char* wifi_pwd = "xxxxx";  // The password for connecting to WiFi
 
 // Create the loggerModem object
-/*EspressifESP8266 modemESP(&modemSerial, modemVccPin, modemStatusPin,
-                          modemResetPin, modemSleepRqPin, wifiId, wifiPwd,
-                          espSleepRqPin, espStatusPin); */
+
 
 #if 0
 WioTerminal_rpcwifi modemWIOT(/*&modemSerial,*/ modemVccPin, 
@@ -269,7 +267,7 @@ Variable* variableList[] = {
     //new BoschBME280_Humidity(&bme280, "12345678-abcd-1234-ef00-1234567890ab"),
     //new BoschBME280_Pressure(&bme280, "12345678-abcd-1234-ef00-1234567890ab"),
     //new BoschBME280_Altitude(&bme280, "12345678-abcd-1234-ef00-1234567890ab"),
-    new MaximDS18_Temp(&ds18, "12345678-abcd-1234-ef00-1234567890ab"),
+    //debug disable new MaximDS18_Temp(&ds18, "12345678-abcd-1234-ef00-1234567890ab"),
     new ProcessorStats_Battery(&mcuBoard,
                                "12345678-abcd-1234-ef00-1234567890ab"),
     //new MaximDS3231_Temp(&ds3231, "12345678-abcd-1234-ef00-1234567890ab"),
@@ -409,7 +407,9 @@ void setup() {
     //modemPhy.setModemLED(modemLEDPin);
     dataLogger.setLoggerPins(wakePin, sdCardSSPin, sdCardPwrPin, buttonPin,
                              greenLED);
-
+    dataLogger.setLoggerID("logdef");
+    dataLogger.setLoggingInterval(2);
+    delay(500);
     // Begin the logger
     dataLogger.begin();
 
@@ -418,6 +418,7 @@ void setup() {
     //if (getBatteryVoltage() > 3.4) 
     {
         Serial.println(F("Setting up sensors..."));
+        delay(1000);
         varArray.setupSensors();
     }
 
@@ -446,6 +447,7 @@ void setup() {
 
     // Call the processor sleep
     Serial.println(F("Putting processor to sleep\n"));
+    delay(1000);
     dataLogger.systemSleep();
 }
 /** End [setup] */
@@ -461,16 +463,24 @@ void loop() {
     // For hardware always take one reading and reference that  can change each time read
     float battery_V = getBatteryVoltage() ;
     // At very low battery, just go back to sleep
+    Serial.print(F("BatteryVoltage="));
+    Serial.print(battery_V);
     if (battery_V < 3.4) 
     {
+        Serial.println(F(" systemSleep"));
+        delay(500);
         dataLogger.systemSleep();
     }
     // At moderate voltage, log data but don't send it over the modem
     else if (battery_V  < 3.55)  {
+        Serial.println(F(" logData"));
+        delay(500);
         dataLogger.logData();
     }
     // If the battery is good, send the data to the world
     else {
+        Serial.println(F(" logDataAndPublish"));
+        delay(500);
         dataLogger.logDataAndPublish();
     }
 }

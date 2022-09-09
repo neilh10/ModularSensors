@@ -74,7 +74,7 @@ USE_RTCLIB  rtcExtPhy;
 #else
 // For Sodaq_DS3231.h:DateTime(long) uses secs since 2000
 #define DateTimeClass(varNam, epochTime) \
-    DateTime varNam((long)((uint64_t)(epochTime - EPOCH_TIME_OFF)));
+    DateTime varNam((long)((uint64_t)(epochTime)));
 #endif  //  USE_RTCLIB
 
 // Constructors
@@ -1452,7 +1452,7 @@ bool Logger::initializeSDCard(void) {
 
 void Logger::setFileTimestampTz(File fileToStamp, uint8_t stampFlag) {
     //DateTime markedDt(Logger::markedEpochTime - EPOCH_TIME_OFF);
-    DateTime markedDtTz(getNowLocalEpoch()- EPOCH_TIME_OFF );
+    DateTime markedDtTz(getNowLocalEpoch() );
 
     MS_DEEP_DBG(F("setFTTz"),markedDtTz.year(),markedDtTz.month(), markedDtTz.date(),
         markedDtTz.hour(), markedDtTz.minute(), markedDtTz.second());
@@ -1796,7 +1796,7 @@ void Logger::begin() {
 
 #if defined ARDUINO_ARCH_SAMD
     MS_DBG(F("Beginning internal real time clock"));
-    log_zero_sleep_rtc.begin();
+    log_zero_sleep_rtc.begin(); //Soft start, preserve good time
 #endif
     watchDogTimer.resetWatchDog();
 
@@ -1843,9 +1843,9 @@ void Logger::begin() {
      */
 
     // eg Apr 22 2019 16:46:09 in this TZ
-    DateTime ccTimeTZ(__DATE__, __TIME__);
-    DateTime ccTimeUTC(((uint32_t)ccTimeTZ.unixtime()) +
-                       ((int32_t)getTimeZone() *
+    DateTime ccTimeTZ(__DATE__, __TIME__); //base is Y2K, set local Time
+    DateTime ccTimeUTC(((uint32_t)ccTimeTZ.unixtime()) -
+                       ((int32_t)getLoggerTimeZone() *
                         HOURS_TO_SECS));  // set to secs from UST/GMT Year 2000
 #define COMPILE_TIME_UTC ((uint32_t)ccTimeUTC.unixtime() - (24 * HOURS_TO_SECS))
 #define TIME_FUT_UPPER_UTC (COMPILE_TIME_UTC + 50 * 365 * 24 * 60 * 60)
@@ -1921,10 +1921,14 @@ void Logger::begin() {
        // If Power-on Reset Rcause.Bit0 have
        // specific processing
 #define zr log_zero_sleep_rtc
-    if ((0 == zr.now().year()) && (1 == zr.now().month()) && (1 == zr.now().day())) {
-        MS_DBG("RTC.setDay to 2 for Power-On Reset case ");
-        //zr.setDay(2);  // Allow for calcs for -11hrs
-    }
+    if (true)//((0 == zr.now().year()) && (1 == zr.now().month()) && (1 == zr.now().day())) 
+    {
+        // Assume Wio Terminal - init to DEFAULT
+        MS_DBG("RTC set to CC time for Power-On Reset case ",__DATE__, __TIME__);
+        PRINTOUT(("Def UTC :"), formatDateTime_ISO8601(ccTimeUTC));
+        zr.adjust(ccTimeUTC); //UTC ref 2000 @ T0
+
+    } else { MS_DBG("RTC already running ");}
 #endif  // ADAFRUIT_FEATHERWING_RTC_SD
 #endif  // ARDUINO_ARCH_SAMD
 
