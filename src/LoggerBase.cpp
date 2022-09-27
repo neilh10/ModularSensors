@@ -74,7 +74,7 @@ USE_RTCLIB  rtcExtPhy;
 #else
 // For Sodaq_DS3231.h:DateTime(long) uses secs since 2000
 #define DateTimeClass(varNam, epochTime) \
-    DateTime varNam((long)((uint64_t)(epochTime)));
+    DateTime varNam((long)((uint64_t)(epochTime - EPOCH_TIME_OFF)));
 #endif  //  USE_RTCLIB
 
 // Constructors
@@ -1452,7 +1452,7 @@ bool Logger::initializeSDCard(void) {
 
 void Logger::setFileTimestampTz(File fileToStamp, uint8_t stampFlag) {
     //DateTime markedDt(Logger::markedEpochTime - EPOCH_TIME_OFF);
-    DateTime markedDtTz(getNowLocalEpoch() );
+    DateTime markedDtTz(getNowLocalEpoch()- EPOCH_TIME_OFF );
 
     MS_DEEP_DBG(F("setFTTz"),markedDtTz.year(),markedDtTz.month(), markedDtTz.date(),
         markedDtTz.hour(), markedDtTz.minute(), markedDtTz.second());
