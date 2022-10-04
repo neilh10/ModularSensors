@@ -1,6 +1,6 @@
 /*****************************************************************************
 ms_cfg.h_LT5_Mdbus_wireless - ModularSensors Config - MMW _LT5/Modbus +LTE/WiFi
-Status 220520: 0.33.1.aaa 
+Status 220929: 0.33.1.aab 
 Written By:  Neil Hancock www.envirodiy.org/members/neilh20/
 Development Environment: PlatformIO
 Hardware Platform(s): EnviroDIY Mayfly Arduino Datalogger+RS485 Wingboard
@@ -218,7 +218,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define rs485AdapterPower_DEF \
     22  // Pin to switch RS485 adapter power on and off (-1 if unconnected)
 #define modbusSensorPower_DEF \
-    22;  // Pin to switch power on and off (-1 if unconnected)
+    11 //Knh2rev8b1 ~ does this matter for knh2rev7?
 #ifndef MODBUS_BAUD_RATE
 #define MODBUS_BAUD_RATE 9600
 #endif  // MODBUS_BAUD_RATE
