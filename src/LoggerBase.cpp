@@ -55,6 +55,7 @@ volatile bool Logger::isLoggingNow = false;
 volatile bool Logger::isTestingNow = false;
 volatile bool Logger::startTesting = false;
 
+// Initialize the RTC for the SAMD boards
 #if defined(ARDUINO_ARCH_SAMD)
 // RTCZero internal registers based on year 2000/20yk
 // "Epoch19yk" seconds from 1900, using  "struct tm", mktime, gmtime
@@ -1923,6 +1924,9 @@ void Logger::begin() {
 #endif  // ARDUINO_ARCH_SAMD
 
     // Print out the current time
+    PRINTOUT(F("RTC valid range"), 
+    formatDateTime_ISO8601(EPOCH_TIME_LOWER_SANITY_SECS),F(" to "),
+    formatDateTime_ISO8601(EPOCH_TIME_UPPER_SANITY_SECS));
     PRINTOUT(F("Current RTC time is:"),
              formatDateTime_ISO8601(getNowUTCEpoch()));
     PRINTOUT(F("Current localized logger time is:"),

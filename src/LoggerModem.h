@@ -1070,10 +1070,14 @@ public:
 
 // Acceptable epoch time range from NIST
 // before Jan 1, 2020  most likely an error
-#define EPOCH_LOWER_RANGE_SEC 1577836800
+//#define EPOCH_LOWER_RANGE_SEC 1577836800
+// before Jan 2, 2022  most likely an error
+#define EPOCH_LOWER_RANGE_SEC 1641081600
 #define EPOCH_TIME_LOWER_SANITY_SECS EPOCH_LOWER_RANGE_SEC
 // after Jan 1, 2030, most likely an error
-#define EPOCH_UPPER_RANGE_SEC 1893456000
+//#define EPOCH_UPPER_RANGE_SEC 1893456000
+// after Jan 1, 2040, most likely an error
+#define EPOCH_UPPER_RANGE_SEC 2208988800
 #define EPOCH_TIME_UPPER_SANITY_SECS EPOCH_UPPER_RANGE_SEC
 
 // typedef float (loggerModem::_*loggerGetValueFxn)(void);
