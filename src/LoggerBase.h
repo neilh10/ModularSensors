@@ -57,9 +57,12 @@
    #include "RTC_SAMD21.h"
    #define RTC_INT_CLASS RTC_SAMD21
    #endif //__SAMD51__
+   #define EPOCH_TIME_DTCLASS 
 #elif defined(ARDUINO_ARCH_AVR) || defined(__AVR__)
 #include <Sodaq_DS3231.h>
 using namespace sodaq_DS3231_nm;
+//This is a fudge for handling time between DS3231 and SAMD
+#define EPOCH_TIME_DTCLASS EPOCH_TIME_OFF
 #endif
 
 /**

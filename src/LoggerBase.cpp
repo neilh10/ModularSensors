@@ -55,7 +55,6 @@ volatile bool Logger::isLoggingNow = false;
 volatile bool Logger::isTestingNow = false;
 volatile bool Logger::startTesting = false;
 
-// Initialize the RTC for the SAMD boards
 #if defined(ARDUINO_ARCH_SAMD)
 // RTCZero internal registers based on year 2000/20yk
 // "Epoch19yk" seconds from 1900, using  "struct tm", mktime, gmtime
@@ -74,7 +73,7 @@ USE_RTCLIB  rtcExtPhy;
 #else
 // For Sodaq_DS3231.h:DateTime(long) uses secs since 2000
 #define DateTimeClass(varNam, epochTime) \
-    DateTime varNam((long)((uint64_t)(epochTime - EPOCH_TIME_OFF)));
+    DateTime varNam((long)((uint64_t)(epochTime - EPOCH_TIME_DTCLASS)));
 #endif  //  USE_RTCLIB
 
 // Constructors
@@ -1443,7 +1442,7 @@ bool Logger::initializeSDCard(void) {
 
 void Logger::setFileTimestampTz(File fileToStamp, uint8_t stampFlag) {
     //DateTime markedDt(Logger::markedEpochTime - EPOCH_TIME_OFF);
-    DateTime markedDtTz(getNowLocalEpoch()- EPOCH_TIME_OFF );
+    DateTime markedDtTz(getNowLocalEpoch()- EPOCH_TIME_DTCLASS );
 
     MS_DEEP_DBG(F("setFTTz"),markedDtTz.year(),markedDtTz.month(), markedDtTz.date(),
         markedDtTz.hour(), markedDtTz.minute(), markedDtTz.second());
