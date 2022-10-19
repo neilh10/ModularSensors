@@ -1925,7 +1925,7 @@ void Logger::begin() {
 
     // Print out the current time
     PRINTOUT(F("RTC valid range"), 
-    formatDateTime_ISO8601(EPOCH_TIME_LOWER_SANITY_SECS),F(" to "),
+    formatDateTime_ISO8601(EPOCH_TIME_LOWER_SANITY_SECS),F("between"),
     formatDateTime_ISO8601(EPOCH_TIME_UPPER_SANITY_SECS));
     PRINTOUT(F("Current RTC time is:"),
              formatDateTime_ISO8601(getNowUTCEpoch()));
