@@ -7,7 +7,7 @@
  *
  * @brief Implements the WioTerminal_rpcwifi class.
  */
-
+#if defined ARDUINO_ARCH_SAMD
 // Included Dependencies
 #include "WioTerminal_rpcwifi.h"
 //#include "LoggerModemMacros.h" NOT used, uniquely created in this file 
@@ -308,3 +308,5 @@ float WioTerminal_rpcwifi::getModemChipTemperature(void) {MS_DBG("getModemChipTe
 
 
 bool WioTerminal_rpcwifi::isModemAwake(void) {MS_DBG("isModemWake tbd"); return true;}
+
+#endif // ARDUINO_ARCH_SAMD

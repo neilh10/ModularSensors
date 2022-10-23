@@ -1,6 +1,6 @@
 /*****************************************************************************
-ms_cfg.h_LT5_Mdbus_wireless - ModularSensors Config - MMW _LT5/Modbus +LTE/WiFi
-Status 220517: 0.33.1.aaa 
+ms_cfg.h_nano - ModularSensors cfg - KellerNano/Modbus + MMW/WiFi
+
 Written By:  Neil Hancock www.envirodiy.org/members/neilh20/
 Development Environment: PlatformIO
 Hardware Platform(s): EnviroDIY Mayfly Arduino Datalogger+RS485 Wingboard
@@ -30,17 +30,15 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 // MAYFLY_BAT_STC3100  sensor IC on RS485 WINGBOARD_KNH002
 // MAYFLY_BAT_DIGI Digi Modem LTE with onboard battery measurement
 // Choices applied to define MAYFLY_BAT_xx 1) Stc3100 2) ExternVolage_ACT 3) Digi Mode 4) MAYFLY_BAT_A6
+
 #define MAYFLY_BAT_A6 4
-#define REPORT_FILTERED_BAT_A6_V
 //#define MAYFLY_BAT_AA0 2
 //FUT #define MAYFLY_BAT_DIGI 3
 
 
 //#define ENVIRODIY_MAYFLY_TEMPERATURE 1
 //#define Decagon_CTD_UUID 1
-//For Insitu_Troll specify one or none 
 //#define Insitu_TrollSdi12_UUID 1
-#define Insitu_TrollModbus_UUID 1
 
 #define WINGBOARD_KNH002 1
 #if defined WINGBOARD_KNH002
@@ -52,31 +50,29 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 // KellerAcculevel units can be 1 (meter) 2 (feet)
 //#define KellerAcculevel_DepthUnits 2
 
-//#define KellerNanolevel_ACT 1
+#define KellerNanolevel_ACT 1
 #endif //WINGBOARD_KNH002
 
 //Select one of following MAYFLY_BAT_xx as the source for BatterManagement Analysis
-#define MAYFLY_BAT_CHOICE MAYFLY_BAT_A6
+//#define MAYFLY_BAT_CHOICE MAYFLY_BAT_A6
 //#define MAYFLY_BAT_CHOICE MAYFLY_BAT_AA0
-//#define MAYFLY_BAT_CHOICE MAYFLY_BAT_STC3100
+#define MAYFLY_BAT_CHOICE MAYFLY_BAT_STC3100
 // FUT #define MAYFLY_BAT_CHOICE  MAYFLY_BAT_DIGI
 
-//Only define 1 below . SENSIRION_SHT4X is on Mayfly 1.x
-#define SENSIRION_SHT4X_UUID
-//#define ASONG_AM23XX_UUID 1
+#define ASONG_AM23XX_UUID 1
 
-//Two heavy sensors with power useage
+//One light sensors RS485 with power useage
 #define BM_PWR_SENSOR_CONFIG_BUILD_SPECIFIC BM_PWR_LOW_REQ
 
 // Mayfly configuration
 // Carrier board for Digi XBEE LTE CAT-M1 and jumper from battery
 // Digi WiFi S6 plugged in directly
 // For debug: C4 removed, strap for AA2/Vbat AA3/SolarV,
-//#define MFVersion_DEF "v0.5b"
+#define MFVersion_DEF "v0.5b"
 #define MFName_DEF "Mayfly"
 #define HwVersion_DEF MFVersion_DEF
 #define HwName_DEF MFName_DEF
-#define CONFIGURATION_DESCRIPTION_STR "LT500/Modbus Digi WiFi S6/LTE XB3-C-A2 MMW"
+#define CONFIGURATION_DESCRIPTION_STR "Nano/Modbus Digi WiFi S6/LTE XB3-C-A2 MMW"
 
 #define USE_MS_SD_INI 1
 #define USE_PS_EEPROM 1
@@ -120,7 +116,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 
 // Supports DigiXBeeCellularTransparent & DigiXBeeWifi
 #define UseModem_Module 1
-#if UseModem_Module 
+#if defined UseModem_Module 
 // The Modem is used to push data and also sync Time
 // In standalong logger, no internet, Modem can be required at factor to do a
 // sync Time Normally enable both of the following. In standalone, disable
@@ -200,6 +196,9 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define KellerXxlevel_Temp_UUID "KellerXxlevel_Temp_UUID"
 #define CONFIG_SENSOR_RS485_PHY 1
 #define KellerAcculevelModbusAddress_DEF 0x01
+// Setup for Keller Acculevel is 900 1Start 8Data, Parity None 1Stop
+#define MODBUS_BAUD_RATE 9600
+#define MODBUS_SERIAL_CONFIG SERIAL_8N1
 #endif  // KellerAcculevel_ACT
 
 #ifdef KellerNanolevel_ACT
@@ -207,6 +206,9 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define KellerXxlevel_Temp_UUID "KellerXxlevel_Temp_UUID"
 #define CONFIG_SENSOR_RS485_PHY 1
 #define KellerNanolevelModbusAddress_DEF 0x01
+// Setup for Keller Nanolevel is 900 1Start 8Data, Parity None 1Stop
+#define MODBUS_BAUD_RATE 9600
+#define MODBUS_SERIAL_CONFIG SERIAL_8N1
 #endif  // KellerNanolevel_ACT
 
 #ifdef CONFIG_SENSOR_RS485_PHY
@@ -237,11 +239,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define INA219M_VOLT_UUID "INA219_VOLT_UUID"
 #endif  // INA219_PHY_ACT
 
-#if defined SENSIRION_SHT4X_UUID
-#define SENSIRION_SHT4X_Air_Temperature_UUID "Air_Temperature_UUID"
-//#define SENSIRION_SHT4X_Air_TemperatureF_UUID "Air_TemperatureF_UUID"
-#define SENSIRION_SHT4X_Air_Humidity_UUID "Air_Humidity_UUID"
-#elif defined ASONG_AM23XX_UUID 
+#if defined ASONG_AM23XX_UUID
 #define ASONG_AM23_Air_Temperature_UUID "Air_Temperature_UUID"
 #define ASONG_AM23_Air_TemperatureF_UUID "Air_TemperatureF_UUID"
 #define ASONG_AM23_Air_Humidity_UUID "Air_Humidity_UUID"
@@ -254,8 +252,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #endif  // ENVIRODIY_MAYFLY_TEMPERATURE
 
 #if defined UseModem_Module
-// not tested Digi LTE
-// tested Digi S6B 
+// This seems to be de-stabilizing Digi S6B
 #define DIGI_RSSI_UUID "DIGI_RSSI_UUID"
 //#define Modem_SignalPercent_UUID    "SignalPercent_UUID"
 #endif  // UseModem_Module
@@ -270,7 +267,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 
 #if defined MAYFLY_BAT_STC3100
 #define STC3100_Volt_UUID "STC3100Volt_UUID"
-//#define STC3100_USED1_mAhr_UUID "STC3100used1_mAhr_UUID"
+#define STC3100_USED1_mAhr_UUID "STC3100used1_mAhr_UUID"
 //#define STC3100_AVLBL_mAhr_UUID "STC3100avlbl_mAhr_UUID"
 #endif // MAYFLY_BAT_STC3100
 
