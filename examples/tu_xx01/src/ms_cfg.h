@@ -1,5 +1,6 @@
 /*****************************************************************************
-ms_cfg.h_nano - ModularSensors cfg - KellerNano/Modbus + MMW/WiFi
+ms_cfg.h_EC  - ModularSensors Configuration - tgt relative _EC
+Status: 220219: updated to use comms but not tested
 
 Written By:  Neil Hancock www.envirodiy.org/members/neilh20/
 Development Environment: PlatformIO
@@ -22,7 +23,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 //**************************************************************************
 // This configuration is for a standard Mayfly0.5b
 // Sensors Used - two std to begin then
-//#define AnalogProcEC_ACT 1
+#define AnalogProcEC_ACT 1
 // Power Availability monitoring decisions use LiIon Voltge,
 // Battery Voltage measurements can be derived from a number of sources
 // MAYFLY_BAT_A6  - standard measures Solar Charging or LiIon battry V which ever is greated
@@ -40,7 +41,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 //#define Decagon_CTD_UUID 1
 //#define Insitu_TrollSdi12_UUID 1
 
-#define WINGBOARD_KNH002 1
+//#define WINGBOARD_KNH002 1
 #if defined WINGBOARD_KNH002
 //This supports RS485 1.9W and STC3100
 //#define USE_STC3100_DD 1
@@ -54,25 +55,27 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #endif //WINGBOARD_KNH002
 
 //Select one of following MAYFLY_BAT_xx as the source for BatterManagement Analysis
-//#define MAYFLY_BAT_CHOICE MAYFLY_BAT_A6
+#define MAYFLY_BAT_CHOICE MAYFLY_BAT_A6
 //#define MAYFLY_BAT_CHOICE MAYFLY_BAT_AA0
-#define MAYFLY_BAT_CHOICE MAYFLY_BAT_STC3100
+//#define MAYFLY_BAT_CHOICE MAYFLY_BAT_STC3100
 // FUT #define MAYFLY_BAT_CHOICE  MAYFLY_BAT_DIGI
 
-#define ASONG_AM23XX_UUID 1
+//#define ASONG_AM23XX_UUID 1
 
-//One light sensors RS485 with power useage
-#define BM_PWR_SENSOR_CONFIG_BUILD_SPECIFIC BM_PWR_LOW_REQ
+// sensors with low power useage -
+#define BM_PWR_SENSOR_CONFIG_BUILD_SPECIFIC BM_PWR_MEDIUM_REQ
+// with Modem use above ^^ else use below \|/
+//#define BM_PWR_SENSOR_CONFIG_BUILD_SPECIFIC BM_PWR_LOW_REQ
+
 
 // Mayfly configuration
 // Carrier board for Digi XBEE LTE CAT-M1 and jumper from battery
 // Digi WiFi S6 plugged in directly
 // For debug: C4 removed, strap for AA2/Vbat AA3/SolarV,
-#define MFVersion_DEF "v0.5b"
-#define MFName_DEF "Mayfly"
-#define HwVersion_DEF MFVersion_DEF
-#define HwName_DEF MFName_DEF
-#define CONFIGURATION_DESCRIPTION_STR "Nano/Modbus Digi WiFi S6/LTE XB3-C-A2 MMW"
+//Assume Mayfly, and version determined on boot See mcuBoardVersion_
+//#define MFName_DEF "Mayfly"
+//#define HwName_DEF MFName_DEF
+#define CONFIGURATION_DESCRIPTION_STR "Electrical Conductivity MMW Digi WiFi S6/LTE XB3-C-A2"
 
 #define USE_MS_SD_INI 1
 #define USE_PS_EEPROM 1
@@ -116,7 +119,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 
 // Supports DigiXBeeCellularTransparent & DigiXBeeWifi
 #define UseModem_Module 1
-#if defined UseModem_Module 
+#if UseModem_Module 
 // The Modem is used to push data and also sync Time
 // In standalong logger, no internet, Modem can be required at factor to do a
 // sync Time Normally enable both of the following. In standalone, disable
@@ -166,29 +169,12 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #endif  // Decagon_CTD_UUID
 
 
-#if defined Insitu_TrollSdi12_UUID || defined Insitu_TrollModbus_UUID
+#ifdef Insitu_TrollSdi12_UUID
 // Mayfly definitions
-#ifdef Insitu_TrollModbus_UUID
-#define InsituLTrs485_ACT 1
-#ifdef InsituLTrs485_ACT
-#define CONFIG_SENSOR_RS485_PHY 1
-#define InsituLTrs485_Depth_UUID "ITROLL_DEPTH_UUID"
-#define InsituLTrs485_Temp_UUID "ITROLL_TEMP_UUID"
-#define InsituLTrs485ModbusAddress_DEF 0x01
-// Setup for LT500 is 19200 1Start 8Data, 1Parity Even 1Stop
-//#define MODBUS_BAUD_RATE 9600
-#define MODBUS_BAUD_RATE 19200
-//Default for AltsoftSerial is SERIAL_8N1
-//#define MODBUS_SERIAL_CONFIG SERIAL_8N1
-#define MODBUS_SERIAL_CONFIG SERIAL_8E1 
-#endif  // InsituLTrs485_ACT
-#elif defined Insitu_TrollSdi12_UUID
-#define ITROLLS_DEPTH_UUID "ITROLL_DEPTH_UUID"
-#define ITROLLS_TEMP_UUID "ITROLL_TEMP_UUID"
+#define ITROLL_DEPTH_UUID "ITROLL_DEPTH_UUID"
+#define ITROLL_TEMP_UUID "ITROLL_TEMP_UUID"
 //#define ITROLL_PRESSURE_UUID  "ITROLL_PRESSURE_UUID"
-#endif  // Insitu_TrollSdi12_UUID
-#endif  // Insitu_Trollxxx
-
+#endif  // Insitu_Troll_UUID
 
 
 #ifdef KellerAcculevel_ACT
@@ -196,9 +182,6 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define KellerXxlevel_Temp_UUID "KellerXxlevel_Temp_UUID"
 #define CONFIG_SENSOR_RS485_PHY 1
 #define KellerAcculevelModbusAddress_DEF 0x01
-// Setup for Keller Acculevel is 900 1Start 8Data, Parity None 1Stop
-#define MODBUS_BAUD_RATE 9600
-#define MODBUS_SERIAL_CONFIG SERIAL_8N1
 #endif  // KellerAcculevel_ACT
 
 #ifdef KellerNanolevel_ACT
@@ -206,10 +189,17 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define KellerXxlevel_Temp_UUID "KellerXxlevel_Temp_UUID"
 #define CONFIG_SENSOR_RS485_PHY 1
 #define KellerNanolevelModbusAddress_DEF 0x01
-// Setup for Keller Nanolevel is 900 1Start 8Data, Parity None 1Stop
-#define MODBUS_BAUD_RATE 9600
-#define MODBUS_SERIAL_CONFIG SERIAL_8N1
 #endif  // KellerNanolevel_ACT
+
+//#define InsituLTrs485_ACT 1 -not working
+#ifdef InsituLTrs485_ACT
+#define CONFIG_SENSOR_RS485_PHY 1
+#define InsituLTrs485_Height_UUID "KellerNanolevel_Height_UUID"
+#define InsituLTrs485_Temp_UUID "KellerNanolevel_Temp_UUID"
+#define InsituLTrs485ModbusAddress_DEF 0x01
+// Default is 19200 lets hope serial works with it.
+#define MODBUS_BAUD_RATE 19200
+#endif  // InsituLTrs485_ACT
 
 #ifdef CONFIG_SENSOR_RS485_PHY
 // Mayfly definitions
@@ -253,7 +243,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 
 #if defined UseModem_Module
 // This seems to be de-stabilizing Digi S6B
-#define DIGI_RSSI_UUID "DIGI_RSSI_UUID"
+//#define DIGI_RSSI_UUID "DIGI_RSSI_UUID"
 //#define Modem_SignalPercent_UUID    "SignalPercent_UUID"
 #endif  // UseModem_Module
 
@@ -268,7 +258,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #if defined MAYFLY_BAT_STC3100
 #define STC3100_Volt_UUID "STC3100Volt_UUID"
 #define STC3100_USED1_mAhr_UUID "STC3100used1_mAhr_UUID"
-//#define STC3100_AVLBL_mAhr_UUID "STC3100avlbl_mAhr_UUID"
+#define STC3100_AVLBL_mAhr_UUID "STC3100avlbl_mAhr_UUID"
 #endif // MAYFLY_BAT_STC3100
 
 #ifdef MAYFLY_BAT_AA0
