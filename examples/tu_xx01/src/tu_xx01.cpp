@@ -1385,6 +1385,7 @@ void setup() {
     // uint8_t resetCause = REG_RSTC_RCAUSE;        AVR ?//Reads from hw
     // uint8_t resetBackupExit = REG_RSTC_BKUPEXIT; AVR ?//Reads from hw
     //MCUSR = 0; //reset for unique read
+    noInterrupts(); //should be off
     initFreeRam();
 // Wait for USB connection to be established by PC
 // NOTE:  Only use this when debugging - if not connected to a PC, this
