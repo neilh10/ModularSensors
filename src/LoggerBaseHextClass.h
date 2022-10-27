@@ -183,6 +183,15 @@ void publishDataQuedToRemotes(bool internetPresent);
  */
 void setExtRtcSleep(); 
 
+private:
+/**
+ * @brief Check HTTP status response
+ *
+ * @param rspCode  true if server is deemed to have received message
+ * or nothing further can be done with message. 
+ */
+bool publishRspCodeAccepted(int16_t  rspCode);
+
 // ===================================================================== //
 /* Serializing/Deserialing
   A common set of functions that operate on files

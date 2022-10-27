@@ -926,7 +926,7 @@ void Logger::setExtRtcSleep() {
     #if defined ARDUINO_AVR_ENVIRODIY_MAYFLY
     #define MAYFLY_WR_RETRYS 3
     for (uint8_t chklp=0;chklp<MAYFLY_WR_RETRYS;chklp++) {
-        isRtcRegBad = rtc.enableInterruptsCheckAlm1(EveryMinute);
+        isRtcRegBad = rtcExtPhy.enableInterruptsCheckAlm1(EveryMinute);
         if (0==isRtcRegBad) {
             MS_DBG(F("RTC Alarm good." ));
             break;
@@ -934,7 +934,7 @@ void Logger::setExtRtcSleep() {
         Serial.print(chklp);
         Serial.print(F("]RTC Alarm set for every minute. Reg check was 0x"));
         Serial.println(isRtcRegBad,HEX);
-        rtc.enableInterrupts(EveryMinute);
+        rtcExtPhy.enableInterrupts(EveryMinute);
         //rtc.enableInterruptsAlm2(EveryMinute);
     } 
     #else
@@ -942,6 +942,22 @@ void Logger::setExtRtcSleep() {
     #endif 
 }
 #endif // __AVR__
+
+bool Logger::publishRspCodeAccepted(int16_t  rspCode) {
+    if (HTTPSTATUS_CREATED_201 == rspCode) return true;
+    //return (HTTPSTATUS_CREATED_201 == rspCode);
+    #if defined MS_DISCARD_HTTP_500
+    if (HTTPSTATUS_GT_500 == rspCode) {
+        //As of 2022Sept15 this error is repetitive and prevents more messages being sent 
+        // https://github.com/ODM2/ODM2DataSharingPortal/issues/628
+        //https://github.com/neilh10/ModularSensors/issues/119
+        // Unfortunately throw away this reading
+        PRINTOUT(F("pubRspCode SERVER ERROR discard reading"));
+        return true;
+        }
+    #endif //MS_DISCARD_HTTP_500
+    return false;
+} //publishRspCodeAccepted
 
 void Logger::publishDataQuedToRemotes(bool internetPresent) {
     // Assumes that there is an internet connection
@@ -998,7 +1014,7 @@ void Logger::publishDataQuedToRemotes(bool internetPresent) {
                     // MS_PRINT_DEBUG_TIMER,    F("ms\n"));
                     postLogLine( (millis() -tmrThisPublish_ms), rspCode);
 
-                    if (HTTPSTATUS_CREATED_201 != rspCode) {
+                    if (false == publishRspCodeAccepted(rspCode)) {
 #define DESLZ_STATUS_UNACK '1'
 #define DESLZ_STATUS_MAX '8'
 #define DESLZ_STATUS_POS 0
@@ -1054,7 +1070,7 @@ void Logger::publishDataQuedToRemotes(bool internetPresent) {
                          ((float)(millis() - tmrGateway_ms)) / 1000,
                          F("sec. Queued readings="), desz_pending_records);
 
-                if (HTTPSTATUS_CREATED_201 == rspCode) {
+                if (true == publishRspCodeAccepted(rspCode)) {
                     // Do retrys through publisher - if file exists
                     if (sd1_card_fatfs.exists(serzQuedFn)) {
                         uint16_t tot_posted           = 0;
@@ -1073,7 +1089,7 @@ void Logger::publishDataQuedToRemotes(bool internetPresent) {
                             rspCode = dataPublishers[i]->publishData();
                             watchDogTimer.resetWatchDog();
                             postLogLine(i, rspCode);
-                            if (HTTPSTATUS_CREATED_201 != rspCode) break;
+                            if (false == publishRspCodeAccepted(rspCode)) break;
 
                             tot_posted++;
                             published_this_pass++;

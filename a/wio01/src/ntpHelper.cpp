@@ -1,6 +1,6 @@
 /**
  * @file ntpHelper.cpp
- * @copyright 2020 Neil Hancock
+ * @copyright 2022 Neil Hancock
  * Used for Wio Terminal testing,  mostly mashup 
  * @author neil hancock <neilh20@wllw.net>
  *
@@ -21,19 +21,28 @@ WiFiUDP udp;
 
 //ntpHelper:: {}
 bool ntpHelper::connectToWiFi(const char* ssid, const char* pwd) {
-    Serial.println("Connecting to WiFi network: " + String(ssid));
+    Serial.println("Connecting to WiFi network: " + String(ssid)+"/"+String(pwd));
 
     // delete old config
     WiFi.disconnect(true);
-
     Serial.println("Waiting for WIFI connection...");
-
+    delay(500);
     //Initiate connection
     WiFi.begin(ssid, pwd);
-
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-    }
+#define CONNECT_RETRYS 20
+    uint16_t connect_try=CONNECT_RETRYS;
+    do {
+        if (++connect_try > 20) {
+            connect_try =0;
+            WiFi.disconnect(true);
+            delay(500);
+            WiFi.begin(ssid, pwd);
+            Serial.print("R\n\r");
+        } else {
+            Serial.print(".");
+        }
+        delay(200);
+    } while (WiFi.status() != WL_CONNECTED) ;
 
     Serial.println("Connected.");
     printWifiStatus();
@@ -128,7 +137,48 @@ unsigned long ntpHelper::sendNTPpacket(const char* address) {
     return udp.endPacket();
 }
 
+#include "HTTPClientMmw.h"
+#define USE_SERIAL Serial
+bool ntpHelper::sendDataTuple() {
+    bool retStatus=false;
 
+    if((WiFi.status() == WL_CONNECTED)) {
+
+        HTTPClientMmw  http;
+        int httpCode;
+
+        USE_SERIAL.print("[HTTP] begin...\n");
+        // configure traged server and url
+        http.begin("monitormywatershed.org",0,"/api/data-stream/"); //HTTP
+        http.begin("monitormywatershed.org"); //HTTP
+
+
+
+        String mmwTest;
+        mmwTest = "{\"sampling_feature\":\"12a82902-e312-445a-b607-328a6d4aaa87\",\"timestamp\":\"2022-06-19T03:04:00-08:00\",\"f9f90ef7-745a-44e8-9525-a373b59c28e0\":516,\"c2c6407b-03db-45c4-a736-2cfd0b212b22\":4.063,\"8267249c-614d-4bdf-b161-257ef69b2ee9\":10.54,\"84ce98bc-8a6d-48f0-9d8c-e53c00874dae\":0.0504,\"78a6da23-53d1-48d3-b286-f038fcf94572\":56.39,\"f964780d-87f0-443e-abbc-6089b6deafaf\":10.80,\"c467201d-6abe-4b5a-bde7-9551e0b34bd1\":-69}";
+        //USE_SERIAL.print("[HTTP] POST=");
+
+
+
+        httpCode = http.POSTmmw(mmwTest);
+        if(httpCode > 0) {
+            // HTTP header has been send and Server response header has been handled
+            USE_SERIAL.printf("[HTTP] POST rsp: Code=%d\n", httpCode);
+            USE_SERIAL.println(mmwTest);
+            // file found at server
+            if(httpCode == HTTP_CODE_OK) {
+                String payload = http.getString();
+                Serial.println(payload);
+                retStatus=true;
+            }
+        } else {
+            USE_SERIAL.printf("[HTTP] POST... failed, error: %s\n", http.errorToString(httpCode).c_str());
+        }
+        http.end();
+    }
+    return retStatus;
+
+}
 void  ntpHelper::printWifiStatus() {
     // print the SSID of the network you're attached to:
     Serial.println("");

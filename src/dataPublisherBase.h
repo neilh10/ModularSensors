@@ -387,6 +387,9 @@ class dataPublisher {
 
 #define HTTPSTATUS_CREATED_201 201
 // Server Error indicating a Gateway Timeout.
+// Server error that doesn't seem to receover 
+// https://github.com/ODM2/ODM2DataSharingPortal/issues/628
+#define HTTPSTATUS_GT_500 500
 // Also supplied if the server didn't respond to a POST
 #define HTTPSTATUS_GT_504 504
 // This is an internaly created error, indicating No Connection with server

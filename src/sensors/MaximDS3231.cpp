@@ -9,9 +9,10 @@
 
 #if defined(ARDUINO_AVR_ENVIRODIY_MAYFLY)
 #include <Sodaq_DS3231.h>
+using namespace sodaq_DS3231_nm;
 #else
 #include <RTClib.h>  //was <Sodaq_DS3231.h>
-extern RTC_DS3231 rtc;  // was Sodaq_DS3231 rtc njh going to need revisiting
+extern RTC_DS3231 rtcExtPhy;  // was Sodaq_DS3231 rtc njh going to need revisiting
 #endif               // ARDUINO_ARCH_SAMD
 #include "MaximDS3231.h"
 
@@ -29,7 +30,7 @@ String MaximDS3231::getSensorLocation(void) {
 
 
 bool MaximDS3231::setup(void) {
-    rtc.begin();  // NOTE:  This also turns off interrupts on the RTC!
+    rtcExtPhy.begin();  // NOTE:  This also turns off interrupts on the RTC!
     return Sensor::setup();  // this will set pin modes and the setup status bit
     // The clock should be continuously powered, so we never need to worry about
     // power up
@@ -49,7 +50,7 @@ bool MaximDS3231::startSingleMeasurement(void) {
     // accordingly!
     MS_DBG(F("Forcing new temperature reading by DS3231"));
 #if defined(ARDUINO_AVR_ENVIRODIY_MAYFLY)
-    rtc.convertTemperature(false);
+    rtcExtPhy.convertTemperature(false);
 #else
 #warning could add alieas for rtc.convertTemperature(false)
     rtc.getTemperature();
@@ -62,7 +63,7 @@ bool MaximDS3231::startSingleMeasurement(void) {
 bool MaximDS3231::addSingleMeasurementResult(void) {
     // get the temperature value
     MS_DBG(getSensorNameAndLocation(), F("is reporting:"));
-    float tempVal = rtc.getTemperature();
+    float tempVal = rtcExtPhy.getTemperature();
     MS_DBG(F("  Temp:"), tempVal, F("°C"));
 
     verifyAndAddMeasurementResult(DS3231_TEMP_VAR_NUM, tempVal);

@@ -32,6 +32,7 @@ void uiHelper::fillscreen(const char *msg) {
 
 void uiHelper::update3(String status, float param1,float param2, float param3) {
 // -----------------LCD---------------------
+    tft.fillScreen(TFT_BLACK);
     tft.setFreeFont(FF17);
     tft.setTextColor(tft.color565(224,225,232));
     tft.drawString(status,20,10);
@@ -42,20 +43,23 @@ void uiHelper::update3(String status, float param1,float param2, float param3) {
  
     tft.setFreeFont(FM9);
     tft.drawString("temperature:", 75, 50);
-    tft.drawString("pressure:",75, 110);
-    tft.drawString("humidity:",75, 170);
+    tft.drawString("humidity:",75, 110);
+    tft.drawString("light:",75, 170);
  
     tft.setFreeFont(FMB12);
     tft.setTextColor(TFT_RED);
     tft.drawFloat(param1,2 , 140, 75);
+    
     tft.setTextColor(tft.color565(224,225,232));
     tft.drawFloat(param2,2 , 140, 135);
+
     tft.setTextColor(TFT_GREEN);
-    tft.drawFloat(param3,2 , 140, 195);
+    //tft.drawFloat(param3,2 , 140, 195);
+    tft.drawNumber(param3, 140, 195);
 
     tft.drawString("C", 210, 75);
-    tft.drawString("KPa",210, 135);
-    tft.drawString("%",210, 195);
+    tft.drawString("%",210, 135);
+    //tft.drawString("%",210, 195);
 }
 
 

@@ -63,7 +63,7 @@
   },
   "dependencies": [
     {
-      "name": "EnviroDIY_DS3231xxx",
+      "name": "EnviroDIY_DS3231use_neilh10",
       "owner": "envirodiy",
       "library id": "2079",
       "url": "https://github.com/EnviroDIY/Sodaq_DS3231",

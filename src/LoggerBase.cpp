@@ -59,17 +59,22 @@ volatile bool Logger::startTesting = false;
 #if defined(ARDUINO_ARCH_SAMD)
 // RTCZero internal registers based on year 2000/20yk
 // "Epoch19yk" seconds from 1900, using  "struct tm", mktime, gmtime
-RTCZero Logger::zero_sleep_rtc;
+RTC_INT_CLASS zero_sleep_rtc;
+#define log_zero_sleep_rtc zero_sleep_rtc
+//For time being assume ony internal RTC - zero_sleep_rtc  name to be changed later
+#define rtcExtPhy log_zero_sleep_rtc
 #endif
 
 #if defined USE_RTCLIB
+// or change to 
+// USE_RTC_EXTPHY rtcExtPhy;
 USE_RTCLIB  rtcExtPhy;
 // For RTClib.h:DateTime(uint32_t) use secs since 1970
 #define DateTimeClass(varNam, epochTime) DateTime varNam(epochTime);
 #else
 // For Sodaq_DS3231.h:DateTime(long) uses secs since 2000
 #define DateTimeClass(varNam, epochTime) \
-    DateTime varNam((long)((uint64_t)(epochTime - EPOCH_TIME_OFF)));
+    DateTime varNam((long)((uint64_t)(epochTime - EPOCH_TIME_DTCLASS)));
 #endif  //  USE_RTCLIB
 
 // Constructors
@@ -411,15 +416,6 @@ bool Logger::syncRTC() {
             _logModem->disconnectInternet();
             _logModem->modemSleepPowerDown();
         }
-        watchDogTimer.resetWatchDog();
-        // Power down the modem - but only if there will be more than 15 seconds
-        // before the NEXT logging interval - it can take the modem that long to
-        // shut down
-        if (Logger::getNowLocalEpoch() % (_loggingIntervalMinutes * 60) > 15) {
-            Serial.println(F("Putting modem to sleep"));
-            _logModem->disconnectInternet();
-            _logModem->modemSleepPowerDown();
-        }
     }
     watchDogTimer.resetWatchDog();
     return success;
@@ -556,7 +552,7 @@ uint32_t Logger::getNowLocalEpoch(void) {
 
 
 uint32_t Logger::getNowUTCEpoch(void) {
-    uint32_t currentEpochTime = rtc.now().getEpoch();
+    uint32_t currentEpochTime = rtcExtPhy.now().getEpoch();
     if (!isRTCSane(currentEpochTime)) {
         PRINTOUT(F("Bad time "), currentEpochTime, " ",
                  formatDateTime_ISO8601(currentEpochTime).substring(0, 10),
@@ -569,13 +565,13 @@ uint32_t Logger::getNowUTCEpoch(void) {
     return currentEpochTime;
 }
 void Logger::setNowUTCEpoch(uint32_t ts) {
-    rtc.setEpoch(ts);
+    rtcExtPhy.setEpoch(ts);
 }
 
 #elif defined ARDUINO_ARCH_SAMD
 
 uint32_t Logger::getNowUTCEpoch(void) {
-    uint32_t currentEpochTime = zero_sleep_rtc.getEpoch();
+    uint32_t currentEpochTime = log_zero_sleep_rtc.now().unixtime();
     if (!isRTCSane(currentEpochTime)) {
         PRINTOUT(F("Bad time, resetting clock."), currentEpochTime, " ",
                  formatDateTime_ISO8601(currentEpochTime), " Setting to ",
@@ -586,7 +582,7 @@ uint32_t Logger::getNowUTCEpoch(void) {
     return currentEpochTime;
 }
 void Logger::setNowUTCEpoch(uint32_t ts) {
-    zero_sleep_rtc.setEpoch(ts);
+    log_zero_sleep_rtc.adjust(DateTime(ts));
 }
 uint32_t Logger::getNowLocalEpoch(void) {
     return (uint32_t)(getNowUTCEpoch() + (_loggerRTCOffset * HOURS_TO_SECS));
@@ -1059,7 +1055,7 @@ void        Logger::systemSleep(uint8_t sleep_min) {
     // Clear the last interrupt flag in the RTC status register
     // It will float high if not already there, and then be pulled low
     // on next match
-    rtc.clearINTStatus();
+    rtcExtPhy.clearINTStatus();
  
 #elif defined ARDUINO_ARCH_SAMD
 
@@ -1090,13 +1086,14 @@ void        Logger::systemSleep(uint8_t sleep_min) {
            targetWakeup_secs, " ", formatDateTime_ISO8601(targetWakeup_secs),
            " adj=", adjust_secs, " fm now=", timeNow_secs,
            " Awake=", timeNow_secs - wakeUpTime_secs);
-    zero_sleep_rtc.setAlarmEpoch(targetWakeup_secs);
-#define zsr zero_sleep_rtc
-    MS_DBG("Alm:", zsr.getAlarmYear(), zsr.getAlarmMonth(), zsr.getAlarmDay(),
+#define RTC_ALM_ID 0
+    log_zero_sleep_rtc.setAlarm(RTC_ALM_ID,targetWakeup_secs);
+#define zsr log_zero_sleep_rtc
+    /*MS_DBG("Alm:", zsr.getAlarmYear(), zsr.getAlarmMonth(), zsr.getAlarmDay(),
            "-", zsr.getAlarmHours(), ":", zsr.getAlarmMinutes(), ":",
-           zsr.getAlarmSeconds());
+           zsr.getAlarmSeconds());*/
     // Assume max is an hour - need to revisit
-    zero_sleep_rtc.enableAlarm(zero_sleep_rtc.MATCH_MMSS);
+    log_zero_sleep_rtc.enableAlarm(RTC_ALM_ID,log_zero_sleep_rtc.MATCH_MMSS);
 #endif
 
     // Send one last message before shutting down serial ports
@@ -1303,7 +1300,7 @@ void        Logger::systemSleep(uint8_t sleep_min) {
     //disableInterrupt(_mcuWakePin); moved up disable
 
 #elif defined ARDUINO_ARCH_SAMD
-    zero_sleep_rtc.disableAlarm();
+    log_zero_sleep_rtc.disableAlarm(RTC_ALM_ID);
 #endif
 
     // Wake-up message
@@ -1446,7 +1443,7 @@ bool Logger::initializeSDCard(void) {
 
 void Logger::setFileTimestampTz(File fileToStamp, uint8_t stampFlag) {
     //DateTime markedDt(Logger::markedEpochTime - EPOCH_TIME_OFF);
-    DateTime markedDtTz(getNowLocalEpoch()- EPOCH_TIME_OFF );
+    DateTime markedDtTz(getNowLocalEpoch()- EPOCH_TIME_DTCLASS );
 
     MS_DEEP_DBG(F("setFTTz"),markedDtTz.year(),markedDtTz.month(), markedDtTz.date(),
         markedDtTz.hour(), markedDtTz.minute(), markedDtTz.second());
@@ -1790,7 +1787,7 @@ void Logger::begin() {
 
 #if defined ARDUINO_ARCH_SAMD
     MS_DBG(F("Beginning internal real time clock"));
-    zero_sleep_rtc.begin();
+    log_zero_sleep_rtc.begin(); //Soft start, preserve good time
 #endif
     watchDogTimer.resetWatchDog();
 
@@ -1822,7 +1819,7 @@ void Logger::begin() {
 
 #if defined MS_SAMD_DS3231 || not defined ARDUINO_ARCH_SAMD
     MS_DBG(F("Beginning DS3231 real time clock"));
-    rtc.begin();
+    rtcExtPhy.begin();
 #endif
     watchDogTimer.resetWatchDog();
 
@@ -1837,9 +1834,9 @@ void Logger::begin() {
      */
 
     // eg Apr 22 2019 16:46:09 in this TZ
-    DateTime ccTimeTZ(__DATE__, __TIME__);
-    DateTime ccTimeUTC(((uint32_t)ccTimeTZ.unixtime()) +
-                       ((int32_t)getTimeZone() *
+    DateTime ccTimeTZ(__DATE__, __TIME__); //base is Y2K, set local Time
+    DateTime ccTimeUTC(((uint32_t)ccTimeTZ.unixtime()) -
+                       ((int32_t)getLoggerTimeZone() *
                         HOURS_TO_SECS));  // set to secs from UST/GMT Year 2000
 #define COMPILE_TIME_UTC ((uint32_t)ccTimeUTC.unixtime() - (24 * HOURS_TO_SECS))
 #define TIME_FUT_UPPER_UTC (COMPILE_TIME_UTC + 50 * 365 * 24 * 60 * 60)
@@ -1914,15 +1911,22 @@ void Logger::begin() {
 #else  // no external _RTC
        // If Power-on Reset Rcause.Bit0 have
        // specific processing
-#define zr zero_sleep_rtc
-    if ((0 == zr.getYear()) && (1 == zr.getMonth()) && (1 == zr.getDay())) {
-        MS_DBG("RTC.setDay to 2 for Power-On Reset case ");
-        zr.setDay(2);  // Allow for calcs for -11hrs
-    }
+#define zr log_zero_sleep_rtc
+    if (true)//((0 == zr.now().year()) && (1 == zr.now().month()) && (1 == zr.now().day())) 
+    {
+        // Assume Wio Terminal - init to DEFAULT
+        MS_DBG("RTC set to CC time for Power-On Reset case ",__DATE__, __TIME__);
+        PRINTOUT(("Def UTC :"), formatDateTime_ISO8601(ccTimeUTC));
+        zr.adjust(ccTimeUTC); //UTC ref 2000 @ T0
+
+    } else { MS_DBG("RTC already running ");}
 #endif  // ADAFRUIT_FEATHERWING_RTC_SD
 #endif  // ARDUINO_ARCH_SAMD
 
     // Print out the current time
+    PRINTOUT(F("RTC valid range"), 
+    formatDateTime_ISO8601(EPOCH_TIME_LOWER_SANITY_SECS),F("between"),
+    formatDateTime_ISO8601(EPOCH_TIME_UPPER_SANITY_SECS));
     PRINTOUT(F("Current RTC time is:"),
              formatDateTime_ISO8601(getNowUTCEpoch()));
     PRINTOUT(F("Current localized logger time is:"),

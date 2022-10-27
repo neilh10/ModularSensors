@@ -1,6 +1,6 @@
 /*****************************************************************************
 ms_cfg.h_LT5_Mdbus_wireless - ModularSensors Config - MMW _LT5/Modbus +LTE/WiFi
-Status 2201004: 0.33.1.aac 
+Status 220927: 0.33.1.aab test for wirelss dBm readings 
 Written By:  Neil Hancock www.envirodiy.org/members/neilh20/
 Development Environment: PlatformIO
 Hardware Platform(s): EnviroDIY Mayfly Arduino Datalogger+RS485 Wingboard
@@ -40,7 +40,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 //#define Decagon_CTD_UUID 1
 //For Insitu_Troll specify one or none 
 //#define Insitu_TrollSdi12_UUID 1
-#define Insitu_TrollModbus_UUID 1
+//#define Insitu_TrollModbus_UUID 1
 
 #define WINGBOARD_KNH002 1
 #if defined WINGBOARD_KNH002
@@ -62,7 +62,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 // FUT #define MAYFLY_BAT_CHOICE  MAYFLY_BAT_DIGI
 
 //Only define 1 below . SENSIRION_SHT4X is on Mayfly 1.x
-#define SENSIRION_SHT4X_UUID
+//#define SENSIRION_SHT4X_UUID
 //#define ASONG_AM23XX_UUID 1
 
 //Two heavy sensors with power useage
@@ -218,7 +218,8 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define rs485AdapterPower_DEF \
     22  // Pin to switch RS485 adapter power on and off (-1 if unconnected)
 #define modbusSensorPower_DEF \
-    10 //Knh2rev8b1 ~ use D10
+    11 //Knh2rev8b1
+//    22  // Pin to switch power on and off (-1 if unconnected)
 #ifndef MODBUS_BAUD_RATE
 #define MODBUS_BAUD_RATE 9600
 #endif  // MODBUS_BAUD_RATE

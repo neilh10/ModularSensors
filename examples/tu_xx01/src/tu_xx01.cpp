@@ -198,7 +198,7 @@ StreamDebugger modemDebugger(modemSerial, STANDARD_SERIAL_OUTPUT);
 // Modem Pins - Describe the physical pin connection of your modem to your board
 #define MODEM_VCC_CE_PIN 18
 // Set the default for startup
-const int8_t modemVccPin_mayfly_1_x = -2;  //Pin18 on Xbee  Mayfly v1.x,
+const int8_t modemVccPin_mayfly_1_x = MODEM_VCC_CE_PIN;  //Pin18 on Xbee  Mayfly v1.x,
 const int8_t modemVccPin_mayfly_0_5 = -2; //No power control rev 0.5b
 #define modemVccPin modemVccPin_mayfly_1_x 
 
@@ -1385,6 +1385,7 @@ void setup() {
     // uint8_t resetCause = REG_RSTC_RCAUSE;        AVR ?//Reads from hw
     // uint8_t resetBackupExit = REG_RSTC_BKUPEXIT; AVR ?//Reads from hw
     //MCUSR = 0; //reset for unique read
+    noInterrupts(); //should be off
     initFreeRam();
 // Wait for USB connection to be established by PC
 // NOTE:  Only use this when debugging - if not connected to a PC, this
@@ -1437,16 +1438,6 @@ void setup() {
     } else {
         PRINTOUT( F(" Board: Assume Mayfly 1.1A ") );  
 
-        #ifdef UseModem_Module 
-        // For Mayfly1.x needs the Modem Turned on
-        // as of 0.33.1 LTE power up not handled well so do manual 
-        if (0 > modemVccPin_mayfly_1_x) {
-            // Set up pins for the BEE_VCC_EN pwr ON HIGH- default LOW, R pulled LOW
-            // Must be turned on before any other pins connected to modem are taken high
-            pinMode(MODEM_VCC_CE_PIN , OUTPUT);
-            digitalWrite(MODEM_VCC_CE_PIN, HIGH);         
-        } 
-        #endif //seModem_Module 
     }
 
     // set up for escape out of battery check if too low.
@@ -1573,8 +1564,8 @@ void setup() {
     if ( loggerModemPhyInst->getPowerPin() > -1) {
         //For Mayfly1.0 turn on power 
         pinMode(loggerModemPhyInst->getPowerPin()  , OUTPUT);
-        digitalWrite(loggerModemPhyInst->getPowerPin() , HIGH); //On
-        PRINTOUT(F("---pwr Xbee ON"));
+        digitalWrite(loggerModemPhyInst->getPowerPin() , LOW); //Off
+        PRINTOUT(F("---pwr Xbee OFF on pin "),loggerModemPhyInst->getPowerPin());
     } 
 
     dataLogger.attachModem(loggerModemPhyInst);
