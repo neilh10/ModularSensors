@@ -37,7 +37,7 @@ bool ntpHelper::connectToWiFi(const char* ssid, const char* pwd) {
             WiFi.disconnect(true);
             delay(500);
             WiFi.begin(ssid, pwd);
-            Serial.print("R\n\r");
+            Serial.println("Retry");
         } else {
             Serial.print(".");
         }
