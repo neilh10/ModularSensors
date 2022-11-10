@@ -101,7 +101,7 @@ const char* sketchName = "data_saving.ino";
 // Logger ID, also becomes the prefix for the name of the data file on SD card
 const char* LoggerID = "XXXXX";
 // How frequently (in minutes) to log data
-const uint8_t loggingInterval = 5;
+const uint8_t loggingInterval = 15;
 // Your logger's timezone.
 const int8_t timeZone = -5;  // Eastern Standard Time
 // NOTE:  Daylight savings time will not be applied!  Please use standard time!
@@ -404,7 +404,9 @@ void setup() {
 // NOTE:  Only use this when debugging - if not connected to a PC, this
 // could prevent the script from starting
 #if defined SERIAL_PORT_USBVIRTUAL
-    while (!SERIAL_PORT_USBVIRTUAL && (millis() < 10000)) {}
+    while (!SERIAL_PORT_USBVIRTUAL && (millis() < 10000)) {
+        // wait
+    }
 #endif
 
     // Start the primary serial connection
@@ -622,4 +624,5 @@ void loop() {
     // Only need to do this for one of the loggers
     loggerAllVars.systemSleep();
 }
+
 /** End [loop] */

@@ -1,6 +1,6 @@
 /**
  * @file EnviroDIYPublisher.cpp
- * @copyright 2020 Stroud Water Research Center
+ * @copyright 2017-2022 Stroud Water Research Center
  * Part of the EnviroDIY ModularSensors library for Arduino
  * @author Sara Geleskie Damiano <sdamiano@stroudcenter.org>
  *
@@ -17,13 +17,10 @@
 // Constant values for post requests
 // I want to refer to these more than once while ensuring there is only one copy
 // in memory
-const char* EnviroDIYPublisher::postEndpoint  = "/api/data-stream/";
-const char* EnviroDIYPublisher::enviroDIYHostDef = "data.envirodiy.org";
-const int   EnviroDIYPublisher::enviroDIYPort = 80;
-const char* EnviroDIYPublisher::tokenHeader   = "\r\nTOKEN: ";
-// const unsigned char *EnviroDIYPublisher::cacheHeader = "\r\nCache-Control:
-// no-cache"; const unsigned char *EnviroDIYPublisher::connectionHeader =
-// "\r\nConnection: close";
+const char* EnviroDIYPublisher::postEndpoint        = "/api/data-stream/";
+const char* EnviroDIYPublisher::enviroDIYHostDef       = "data.envirodiy.org";
+const int   EnviroDIYPublisher::enviroDIYPort       = 80;
+const char* EnviroDIYPublisher::tokenHeader         = "\r\nTOKEN: ";
 const char* EnviroDIYPublisher::contentLengthHeader = "\r\nContent-Length: ";
 const char* EnviroDIYPublisher::contentTypeHeader =
     "\r\nContent-Type: application/json\r\n\r\n";
@@ -40,17 +37,10 @@ EnviroDIYPublisher::EnviroDIYPublisher() : dataPublisher() {
 }
 EnviroDIYPublisher::EnviroDIYPublisher(Logger& baseLogger, uint8_t sendEveryX,
                                        uint8_t sendOffset)
-    : dataPublisher(baseLogger, sendEveryX, sendOffset) {
-    // MS_DBG(F("dataPublisher object created"));
-    _registrationToken = NULL;
-    setDIYHost(enviroDIYHostDef);
-}
+    : dataPublisher(baseLogger, sendEveryX, sendOffset) {}
 EnviroDIYPublisher::EnviroDIYPublisher(Logger& baseLogger, Client* inClient,
                                        uint8_t sendEveryX, uint8_t sendOffset)
-    : dataPublisher(baseLogger, inClient, sendEveryX, sendOffset) {
-    // MS_DBG(F("dataPublisher object created"));
-    setDIYHost(enviroDIYHostDef);
-}
+    : dataPublisher(baseLogger, inClient, sendEveryX, sendOffset) {}
 EnviroDIYPublisher::EnviroDIYPublisher(Logger&     baseLogger,
                                        const char* registrationToken,
                                        const char* samplingFeatureUUID,
@@ -59,7 +49,6 @@ EnviroDIYPublisher::EnviroDIYPublisher(Logger&     baseLogger,
     setToken(registrationToken);
     setDIYHost(enviroDIYHostDef);
     _baseLogger->setSamplingFeatureUUID(samplingFeatureUUID);
-    // MS_DBG(F("dataPublisher object created"));
 }
 EnviroDIYPublisher::EnviroDIYPublisher(Logger& baseLogger, Client* inClient,
                                        const char* registrationToken,
@@ -69,7 +58,6 @@ EnviroDIYPublisher::EnviroDIYPublisher(Logger& baseLogger, Client* inClient,
     setToken(registrationToken);
     setDIYHost(enviroDIYHostDef);
     _baseLogger->setSamplingFeatureUUID(samplingFeatureUUID);
-    // MS_DBG(F("dataPublisher object created"));
 }
 // Destructor
 EnviroDIYPublisher::~EnviroDIYPublisher() {}
@@ -77,7 +65,6 @@ EnviroDIYPublisher::~EnviroDIYPublisher() {}
 
 void EnviroDIYPublisher::setToken(const char* registrationToken) {
     _registrationToken = registrationToken;
-    // MS_DBG(F("Registration token set!"));
 }
 
 
@@ -110,33 +97,12 @@ uint16_t EnviroDIYPublisher::calculateJsonSize() {
     return jsonLength;
 }
 
-
-/*
-// Calculates how long the full post request will be, including headers
-uint16_t EnviroDIYPublisher::calculatePostSize()
-{
-    uint16_t postLength = 31;  // "POST /api/data-stream/ HTTP/1.1"
-    postLength += 28;  // "\r\nHost: data.envirodiy.org"
-    postLength += 11;  // "\r\nTOKEN: "
-    postLength += 36;  // registrationToken
-    // postLength += 27;  // "\r\nCache-Control: no-cache"
-    // postLength += 21;  // "\r\nConnection: close"
-    postLength += 20;  // "\r\nContent-Length: "
-    postLength += String(calculateJsonSize()).length();
-    postLength += 42;  // "\r\nContent-Type: application/json\r\n\r\n"
-    postLength += calculateJsonSize();
-    return postLength;
-}
-*/
-
-
 // This prints a properly formatted JSON for EnviroDIY to an Arduino stream
 void EnviroDIYPublisher::printSensorDataJSON(Stream* stream) {
     stream->print(samplingFeatureTag);
     stream->print(_baseLogger->getSamplingFeatureUUID());
     stream->print(timestampTag);
-    stream->print(
-        _baseLogger->formatDateTime_ISO8601(Logger::markedLocalEpochTime));
+    stream->print(Logger::formatDateTime_ISO8601(Logger::markedLocalEpochTime));
     stream->print(F("\","));
 
     for (uint8_t i = 0; i < _baseLogger->getArrayVarCount(); i++) {
@@ -162,8 +128,6 @@ void EnviroDIYPublisher::printEnviroDIYRequest(Stream* stream) {
     stream->print(_enviroDIYHost);
     stream->print(tokenHeader);
     stream->print(_registrationToken);
-    // stream->print(cacheHeader);
-    // stream->print(connectionHeader);
     stream->print(contentLengthHeader);
     stream->print(calculateJsonSize());
     stream->print(contentTypeHeader);

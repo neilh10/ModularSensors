@@ -1,6 +1,6 @@
 /**
  * @file SodaqUBeeR410M.cpp
- * @copyright 2020 Stroud Water Research Center
+ * @copyright 2017-2022 Stroud Water Research Center
  * Part of the EnviroDIY ModularSensors library for Arduino
  * @author Sara Geleskie Damiano <sdamiano@stroudcenter.org>
  *
@@ -46,8 +46,8 @@ SodaqUBeeR410M::SodaqUBeeR410M(Stream* modemStream, int8_t powerPin,
 #else
       gsmModem(*modemStream),
 #endif
-      gsmClient(gsmModem) {
-    _apn = apn;
+      gsmClient(gsmModem),
+      _apn(apn) {
 }
 #endif
 
@@ -92,7 +92,9 @@ bool SodaqUBeeR410M::modemWakeFxn(void) {
             }
 
             // But at least 0.15s
-            while (millis() - startTimer < 150) {}
+            while (millis() - startTimer < 150) {
+                // wait
+            }
             // Say how long we pulsed for
             MS_DBG(F("Pulsed for"), millis() - startTimer, F("ms"));
 

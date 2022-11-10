@@ -1,6 +1,6 @@
 /**
  * @file KellerParent.cpp
- * @copyright 2020 Stroud Water Research Center
+ * @copyright 2017-2022 Stroud Water Research Center
  * Part of the EnviroDIY ModularSensors library for Arduino
  * @author Written By: Anthony Aufdenkampe <aaufdenkampe@limno.com>
  * Edited by Sara Geleskie Damiano <sdamiano@stroudcenter.org>
@@ -22,8 +22,11 @@ KellerParent::KellerParent(byte modbusAddress, Stream* stream, int8_t powerPin,
     : Sensor(sensName, numVariables, warmUpTime_ms, stabilizationTime_ms,
              measurementTime_ms, powerPin, -1, measurementsToAverage,
              KELLER_INC_CALC_VARIABLES),
-      _ksensor(), _model(model), _modbusAddress(modbusAddress), _stream(stream),
-      _RS485EnablePin(enablePin), _powerPin2(powerPin2) {}
+      _model(model),
+      _modbusAddress(modbusAddress),
+      _stream(stream),
+      _RS485EnablePin(enablePin),
+      _powerPin2(powerPin2) {}
 KellerParent::KellerParent(byte modbusAddress, Stream& stream, int8_t powerPin,
                            int8_t powerPin2, int8_t enablePin,
                            uint8_t measurementsToAverage, kellerModel model,
@@ -34,8 +37,11 @@ KellerParent::KellerParent(byte modbusAddress, Stream& stream, int8_t powerPin,
     : Sensor(sensName, numVariables, warmUpTime_ms, stabilizationTime_ms,
              measurementTime_ms, powerPin, -1, measurementsToAverage,
              KELLER_INC_CALC_VARIABLES),
-      _ksensor(), _model(model), _modbusAddress(modbusAddress),
-      _stream(&stream), _RS485EnablePin(enablePin), _powerPin2(powerPin2) {}
+      _model(model),
+      _modbusAddress(modbusAddress),
+      _stream(&stream),
+      _RS485EnablePin(enablePin),
+      _powerPin2(powerPin2) {}
 // Destructor
 KellerParent::~KellerParent() {}
 

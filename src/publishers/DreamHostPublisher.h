@@ -1,6 +1,6 @@
 /**
  * @file DreamHostPublisher.h
- * @copyright 2020 Stroud Water Research Center
+ * @copyright 2017-2022 Stroud Water Research Center
  * Part of the EnviroDIY ModularSensors library for Arduino
  * @author Sara Geleskie Damiano <sdamiano@stroudcenter.org>
  *
@@ -197,8 +197,8 @@ class DreamHostPublisher : public dataPublisher {
 
 
  private:
-    const char* _DreamHostPortalRX;
-    bool        _dualPost = true;
+    const char* _DreamHostPortalRX = nullptr;
+    bool        _dualPost          = true;
 };
 
 #endif  // SRC_PUBLISHERS_DREAMHOSTPUBLISHER_H_

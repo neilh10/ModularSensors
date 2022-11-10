@@ -1,6 +1,6 @@
 /**
  * @file VariableBase.h
- * @copyright 2020 Stroud Water Research Center
+ * @copyright 2017-2022 Stroud Water Research Center
  * Part of the EnviroDIY ModularSensors library for Arduino
  * @author Sara Geleskie Damiano <sdamiano@stroudcenter.org>
  *
@@ -361,28 +361,32 @@ class Variable {
     /**
      * @brief Pointer to the parent sensor
      */
-    Sensor* parentSensor;
+    Sensor* parentSensor = nullptr;
     /**
      * @brief Internal note as to whether the value is calculated.
      */
-    bool isCalculated;
+    bool isCalculated = false;
 
  protected:
     /**
      * @brief The current data value
+     *
+     * When we create the variable, we also want to initialize it with a current
+     * value of -9999 (ie, a bad result).
      */
-    float _currentValue;
+    float _currentValue = -9999;
+
 
  private:
-    float (*_calcFxn)(void);
+    float (*_calcFxn)(void) = nullptr;
 
-    const uint8_t _sensorVarNum;
-    uint8_t       _decimalResolution;
+    const uint8_t _sensorVarNum      = 0;
+    uint8_t       _decimalResolution = 0;
 
-    const char* _varName;
-    const char* _varUnit;
-    const char* _varCode;
-    const char* _uuid;
+    const char* _varName = nullptr;
+    const char* _varUnit = nullptr;
+    const char* _varCode = nullptr;
+    const char* _uuid    = nullptr;
 
     /* atl_extension */
     char* _UUID_buf_atl = NULL;

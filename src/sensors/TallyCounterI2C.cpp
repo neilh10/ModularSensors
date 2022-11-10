@@ -1,6 +1,6 @@
 /**
  * @file TallyCounterI2C.h
- * @copyright 2020 Stroud Water Research Center
+ * @copyright 2017-2022 Stroud Water Research Center
  * Part of the EnviroDIY ModularSensors library for Arduino
  * @author Anthony Aufdenkampe <aaufdenkampe@limno.com>
  * Edited by Sara Geleskie Damiano <sdamiano@stroudcenter.org>
@@ -15,9 +15,8 @@
 TallyCounterI2C::TallyCounterI2C(int8_t powerPin, uint8_t i2cAddressHex)
     : Sensor("TallyCounterI2C", TALLY_NUM_VARIABLES, TALLY_WARM_UP_TIME_MS,
              TALLY_STABILIZATION_TIME_MS, TALLY_MEASUREMENT_TIME_MS, powerPin,
-             -1, 1, TALLY_INC_CALC_VARIABLES) {
-    _i2cAddressHex = i2cAddressHex;
-}
+             -1, 1, TALLY_INC_CALC_VARIABLES),
+      _i2cAddressHex(i2cAddressHex) {}
 // Destructor
 TallyCounterI2C::~TallyCounterI2C() {}
 

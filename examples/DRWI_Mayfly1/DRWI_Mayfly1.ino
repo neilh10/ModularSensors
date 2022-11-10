@@ -1,5 +1,5 @@
 /** =========================================================================
- * @file DRWI_SIM7080LTE.ino
+ * @file DRWI_Mayfly1.ino
  * @brief Example for DRWI CitSci LTE sites.
  *
  * This example shows proper settings for the following configuration:
@@ -60,7 +60,7 @@ const char* sketchName = "DRWI_Mayfly1.ino";
 // Logger ID, also becomes the prefix for the name of the data file on SD card
 const char* LoggerID = "XXXXX";
 // How frequently (in minutes) to log data
-const uint8_t loggingInterval = 5;
+const uint8_t loggingInterval = 15;
 // Your logger's timezone.
 const int8_t timeZone = -5;  // Eastern Standard Time
 // NOTE:  Daylight savings time will not be applied!  Please use standard time!
@@ -94,12 +94,10 @@ const int32_t   modemBaud = 9600;  //  SIM7080 does auto-bauding by default, but
 // Modem Pins - Describe the physical pin connection of your modem to your board
 // NOTE:  Use -1 for pins that do not apply
 
-const int8_t modemVccPin =
-    18;  // MCU pin controlling modem power ---
-         //  Pin 18 is the power enable pin
-         //  for the bee socket on Mayfly v1.0,
-         //  use -1 if using Mayfly 0.5b or if the bee socket is constantly
-         //  powered (ie you changed SJ18 on Mayfly 1.x to 3.3v)
+const int8_t modemVccPin = 18;
+// MCU pin controlling modem power --- Pin 18 is the power enable pin for the
+// bee socket on Mayfly v1.0, use -1 if using Mayfly 0.5b or if the bee socket
+// is constantly powered (ie you changed SJ18 on Mayfly 1.x to 3.3v)
 const int8_t modemStatusPin  = 19;  // MCU pin used to read modem status
 const int8_t modemSleepRqPin = 23;  // MCU pin for modem sleep/wake request
 const int8_t modemLEDPin = redLED;  // MCU pin connected an LED to show modem

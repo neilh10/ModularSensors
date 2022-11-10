@@ -1,6 +1,6 @@
 /**
  * @file ThingSpeakPublisher.h
- * @copyright 2020 Stroud Water Research Center
+ * @copyright 2017-2022 Stroud Water Research Center
  * Part of the EnviroDIY ModularSensors library for Arduino
  * @author Sara Geleskie Damiano <sdamiano@stroudcenter.org>
  *
@@ -228,9 +228,9 @@ class ThingSpeakPublisher : public dataPublisher {
 
  private:
     // Keys for ThingSpeak
-    const char*  _thingSpeakMQTTKey;
-    const char*  _thingSpeakChannelID;
-    const char*  _thingSpeakChannelKey;
+    const char*  _thingSpeakMQTTKey    = nullptr;
+    const char*  _thingSpeakChannelID  = nullptr;
+    const char*  _thingSpeakChannelKey = nullptr;
     PubSubClient _mqttClient;
 };
 
