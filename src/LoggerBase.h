@@ -36,7 +36,7 @@
 
 // Bring in the libraries to handle the processor sleep/standby modes
 // The SAMD library can also the built-in clock on those modules
-#if defined(ARDUINO_ARCH_SAMD)
+#if defined(ARDUINO_ARCH_SAMD) || defined(ARDUINO_SAMD_ZERO)
 #include "WatchDogs/WatchDogSAMD.h"
 #include "DateTime.h"
    //using namespace seeedArduinoRtc_nm;
@@ -722,7 +722,7 @@ class Logger {
 // This gets the current epoch time (unix time, ie, the number of seconds
 // from January 1, 1970 00:00:00 UTC) and corrects it for the specified time
 // zone
-#if defined(ARDUINO_ARCH_SAMD)
+#if defined(ARDUINO_ARCH_SAMD) || defined(ARDUINO_SAMD_ZERO)
     /**
      * @brief The RTC object.
      *
@@ -930,7 +930,7 @@ class Logger {
      */
     void systemSleep(uint8_t sleep_min = 0); /* atl_extension */
 
-#if defined(ARDUINO_ARCH_SAMD)
+#if defined(ARDUINO_ARCH_SAMD) || defined(ARDUINO_SAMD_ZERO)
     /**
      * @brief A watch-dog implementation to use to reboot the system in case of
      * lock-ups

@@ -56,7 +56,7 @@ volatile bool Logger::isTestingNow = false;
 volatile bool Logger::startTesting = false;
 
 // Initialize the RTC for the SAMD boards
-#if defined(ARDUINO_ARCH_SAMD)
+#if defined(ARDUINO_ARCH_SAMD)  || defined(ARDUINO_SAMD_ZERO)
 // RTCZero internal registers based on year 2000/20yk
 // "Epoch19yk" seconds from 1900, using  "struct tm", mktime, gmtime
 RTC_INT_CLASS zero_sleep_rtc;
@@ -984,31 +984,28 @@ inline uint16_t dumpFreeRam(uint16_t maxCount) {return 0;}
 #endif // __AVR__
 // Puts the system to sleep to conserve battery life.
 // This DOES NOT sleep or wake the sensors!!
-void        Logger::systemSleep(uint8_t sleep_min) {
+void Logger::systemSleep(uint8_t sleep_min) {
 #if defined MS_SAMD_DS3231 || not defined ARDUINO_ARCH_SAMD
-
     // Don't go to sleep unless there's a wake pin!
     if (_mcuWakePin < 0) {
         PRINTOUT(F("MCU not Enabled,Use a non-negative wake pin to request sleep!"), _mcuWakePin);
         return;
     }
-    // Unfortunately, because of the way the alarm on the DS3231 is set up,
-    // it cannot interrupt on any frequencies other than every second,
-    // minute, hour, day, or date.  We could set it to alarm hourly every 5
-    // minutes past the hour, but not every 5 minutes.  This is why we set
-    // the alarm for every minute and use the checkInterval function.  This
-    // is a hardware limitation of the DS3231; it is not due to the
-    // libraries or software.
-    //MS_DBG(F("Setting alarm on DS3231 RTC for every minute."));
-    //rtc.enableInterrupts(EveryMinute);
+
+
+    // Unfortunately, because of the way the alarm on the DS3231 is set up, it
+    // cannot interrupt on any frequencies other than every second, minute,
+    // hour, day, or date.  We could set it to alarm hourly every 5 minutes past
+    // the hour, but not every 5 minutes.  This is why we set the alarm for
+    // every minute and use the checkInterval function.  This is a hardware
+    // limitation of the DS3231; it is not due to the libraries or software.
+    MS_DBG(F("Setting alarm on DS3231 RTC for every minute."));
     setExtRtcSleep();
 
-    // Set up a pin to monitor for change in clock interrupt 
-    // The RTC normally floats and requires pullup to be inactive.
-    // When activated is pulled low
+    // Set up a pin to hear clock interrupt and attach the wake ISR to it
     noInterrupts(); // make a transaction, ensure no race condition.
     pinMode(_mcuWakePin, INPUT_PULLUP);
-    enableInterrupt(_mcuWakePin, wakeISR, FALLING);
+    enableInterrupt(_mcuWakePin, wakeISR, CHANGE);
     interrupts(); 
 
     // Clear the last interrupt flag in the RTC status register
@@ -1251,7 +1248,7 @@ void        Logger::systemSleep(uint8_t sleep_min) {
     // the timeout period is a useless delay.
     Wire.setTimeout(0);
 
-#if defined MS_SAMD_DS3231 || not defined ARDUINO_ARCH_SAMD
+#if defined(MS_SAMD_DS3231) || not defined(ARDUINO_ARCH_SAMD)
     // Stop the clock from sending out any interrupts while we're awake.
     // There's no reason to waste thought on the clock interrupt if it
     // happens while the processor is awake and doing other things.
@@ -1461,7 +1458,7 @@ bool Logger::openFile(String& filename, bool createFile,
                 // Add header information
                 printFileHeader(&logFile);
 // Print out the header for debugging
-#if defined DEBUGGING_SERIAL_OUTPUT && defined MS_DEBUGGING_STD
+#if defined(DEBUGGING_SERIAL_OUTPUT) && defined(MS_DEBUGGING_STD)
                 MS_DBG(F("\n \\/---- File Header ----\\/"));
                 printFileHeader(&DEBUGGING_SERIAL_OUTPUT);
                 MS_DBG('\n');
@@ -1751,7 +1748,7 @@ void Logger::begin() {
     setLoggerPins(_mcuWakePin, _SDCardSSPin, _SDCardPowerPin, _buttonPin,
                   _ledPin);
 
-#if defined MS_SAMD_DS3231 || not defined ARDUINO_ARCH_SAMD
+#if defined(MS_SAMD_DS3231) || not defined(ARDUINO_ARCH_SAMD)
     MS_DBG(F("Beginning DS3231 real time clock"));
     rtcExtPhy.begin();
 #endif
