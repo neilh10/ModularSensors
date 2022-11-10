@@ -57,7 +57,21 @@ DigiXBeeWifi::~DigiXBeeWifi() {}
 MS_IS_MODEM_AWAKE(DigiXBeeWifi);
 MS_MODEM_WAKE(DigiXBeeWifi);
 
-MS_MODEM_CONNECT_INTERNET(DigiXBeeWifi);
+// MS_MODEM_CONNECT_INTERNET(DigiXBeeWifi); has instability
+// See https://github.com/neilh10/ModularSensors/issues/125             
+bool DigiXBeeWifi::connectInternet(uint32_t maxConnectionTime) { 
+    MS_START_DEBUG_TIMER                                          
+    MS_DBG(F("\nDigiXbee Attempting to connect to WiFi network..."));      
+    if (!(gsmModem.isNetworkConnected())) {                       
+        if (!gsmModem.waitForNetwork(maxConnectionTime)) {        
+            PRINTOUT(F("... WiFi connection failed"));            
+            return false;                                         
+        }                                                         
+     }                                                            
+    MS_DBG(F("... WiFi connected after"), MS_PRINT_DEBUG_TIMER, 
+               F("milliseconds!"));                             
+        return true;                                            
+}
 MS_MODEM_IS_INTERNET_AVAILABLE(DigiXBeeWifi);
 
 MS_MODEM_GET_MODEM_BATTERY_DATA(DigiXBeeWifi);
