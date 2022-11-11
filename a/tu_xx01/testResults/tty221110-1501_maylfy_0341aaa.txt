@@ -1,0 +1,389 @@
+ a\tu_xx01 on a Mayfly v1.1
+Initially on merge build with WiFi DigiWifi
+and then on a merged build with Cell CatM1
+Sensor is LT500 with knh002rev8b2
+
+[2022-11-10 15:05:08.484] ---Boot(0) Sw Build: a\src\tu_xx01.cpp Nov 10 2022 15:03:10  b'neilh20'
+[2022-11-10 15:05:08.484]  b'rel1_dvlp_0340'
+[2022-11-10 15:05:08.484] Sw Name: LT500/Modbus Digi WiFi S6/LTE XB3-C-A2 MMW
+[2022-11-10 15:05:08.484] ModularSensors version 0.34.1.aaa
+[2022-11-10 15:05:08.529] TinyGSM Library version 0.11.5
+[2022-11-10 15:05:08.529] Watch-dog timeout is set for 300 sec with the interrupt firing 37 times before the reset. <--WatchDogAVR
+[2022-11-10 15:05:08.529] Watchdog Enabled, Interrupt will fire 37 times before the system resets. <--WatchDogAVR
+[2022-11-10 15:05:08.529] From eeprom boot Name[ mayfly ]  rev[ 1.1X07 ] sn[ MAYFLY22150 ]
+[2022-11-10 15:05:08.686] From eeprom common: Logger File Name[ turc_test08sa01 ]
+[2022-11-10 15:05:08.686]    logging interval= 15 minutes, Tz= -8 battery type= 2 battery mAhr= 4400
+[2022-11-10 15:05:08.686]    Loc= "Reference mayfly_0.33.1.aaa_220520_1634_LT5_Mdbus_wireless"
+[2022-11-10 15:05:08.686] From eeprom Network: Network Type= 2 
+[2022-11-10 15:05:08.686]  APN= APN_NONE 
+[2022-11-10 15:05:08.686]  WiFiId= ArthurGuestSsid  WiFiPwd= Arthur8166 
+[2022-11-10 15:05:08.686]  COLLECT_READINGS= 4  SEND_OFFSET_MIN= 4  POST_MAX_NUM= 100  SEND_QUE_SZ_NUM= 65535
+[2022-11-10 15:05:08.686] From eeprom Provider: Provider Type= 1  PROVIDER_MMW CloudId= monitormywatershed.org 
+[2022-11-10 15:05:08.686]  PROVIDER_MMW Reg Token= 0cf7c40a-232e-457d-87d6-cea5c0757fec 
+[2022-11-10 15:05:08.686]  PROVIDER_MMW Sampling Feature= 236c674b-69b9-43af-b0d6-33d67b870ecc 
+[2022-11-10 15:05:08.686]  PROVIDER_MMW timerPostTout(ms)= 15000 
+[2022-11-10 15:05:08.686]  PROVIDER_MMW timerPostPace(ms)= 1000
+[2022-11-10 15:05:08.686]   PROVIDER_MMW UUIDs (none unless listed), Max= 12
+[2022-11-10 15:05:08.686] 0 ] ITROLL_DEPTH_UUID = 43bcda9b-2973-4639-af2c-f0b6bb3fa44b
+[2022-11-10 15:05:08.686] 1 ] ITROLL_TEMP_UUID = 03e7b375-97a7-4423-a3f0-1d822d8b19b9
+[2022-11-10 15:05:08.686] 2 ] Batt_UUID = 3bebd4a3-8b54-4f92-ba55-5fd2fd021358
+[2022-11-10 15:05:08.686] 3 ] SampleNumber_UUID = 8c57835f-a32f-4d62-82dc-0ba09f04cf52
+[2022-11-10 15:05:08.686] 4 ] DIGI_RSSI_UUID = 7182846e-46e0-4a10-b110-9bc32de4aca9
+[2022-11-10 15:05:08.686] 5 ] Air_Temperature_UUID = 8849814d-1603-4a2f-861f-f31ae68cccf3
+[2022-11-10 15:05:08.686] 6 ] Air_Humidity_UUID = 08646cc3-c5de-414c-af65-c795b2dcac24
+[2022-11-10 15:05:08.686] Board: mayfly rev:'1.1X07' sn:'MAYFLY22150'
+[2022-11-10 15:05:08.686]  Board: Assume Mayfly 1.1A 
+[2022-11-10 15:05:08.686] batteryCheck req/wait/src 1 1 1
+[2022-11-10 15:05:08.686] Vbat_low prev/new 4.003/4.003
+[2022-11-10 15:05:08.686] Bat_V(low) 4.00
+[2022-11-10 15:05:08.686] BatV Good = 4.00
+[2022-11-10 15:05:08.686] modbus Baudrate: 19200 config: 38
+[2022-11-10 15:05:09.267] ---parseIni Start
+[2022-11-10 15:05:09.942] ms_cfg.ini : parsing----
+[2022-11-10 15:05:09.973] COMMON LOGGING_INTERVAL_MINUTES set to: 5(min) from default 15
+[2022-11-10 15:05:09.973] GEOGRAPHICAL_ID:"Reference mayfly_0.33.1.aaa_220927_1449_LT5_Mdbus_wireless"
+[2022-11-10 15:05:10.099] 0:ITROLL_DEPTH_UUID={43bcda9b-2973-4639-af2c-f0b6bb3fa44b} match  & added.
+[2022-11-10 15:05:10.099] 1:ITROLL_TEMP_UUID={03e7b375-97a7-4423-a3f0-1d822d8b19b9} match  & added.
+[2022-11-10 15:05:10.099] 2:Batt_UUID={3bebd4a3-8b54-4f92-ba55-5fd2fd021358} match  & added.
+[2022-11-10 15:05:10.099] 3:SampleNumber_UUID={8c57835f-a32f-4d62-82dc-0ba09f04cf52} match  & added.
+[2022-11-10 15:05:10.099] 4:DIGI_RSSI_UUID={7182846e-46e0-4a10-b110-9bc32de4aca9} match  & added.
+[2022-11-10 15:05:10.099] 5:Air_Temperature_UUID={8849814d-1603-4a2f-861f-f31ae68cccf3} match  & added.
+[2022-11-10 15:05:10.099] 6:Air_Humidity_UUID={08646cc3-c5de-414c-af65-c795b2dcac24} match  & added.
+[2022-11-10 15:05:10.271] Error on line : 41
+[2022-11-10 15:05:10.271] COMMON LoggerId Set:  turc_test08
+[2022-11-10 15:05:10.271] COMMON Logginterval:  5
+[2022-11-10 15:05:10.271] COMMON Battery Type:  2
+[2022-11-10 15:05:10.271] COMMON Battery mAhr:  4400
+[2022-11-10 15:05:10.271] Logger timezone is set to UTC -8
+[2022-11-10 15:05:10.271] NETWORK type:  2
+[2022-11-10 15:05:10.271] NETWORK apn:  APN_NONE
+[2022-11-10 15:05:10.271] NETWORK WiFiId :  ArthurGuestSsid
+[2022-11-10 15:05:10.271] NETWORK WiFiPwd:  Arthur8166
+[2022-11-10 15:05:10.271] NETWORK COLLECT_READINGS 2
+[2022-11-10 15:05:10.271] NETWORK SEND_OFFSET_MIN 1
+[2022-11-10 15:05:10.271] NETWORK POST_MAX_NUM 100
+[2022-11-10 15:05:10.271] NETWORK SEND_QUE_SZ_NUM 65535
+[2022-11-10 15:05:10.271] PROVIDER_MMW CloudId monitormywatershed.org
+[2022-11-10 15:05:10.271] PROVIDER_MMW Registration Token 0cf7c40a-232e-457d-87d6-cea5c0757fec
+[2022-11-10 15:05:10.271] PROVIDER_MMW Samping Feature 236c674b-69b9-43af-b0d6-33d67b870ecc
+[2022-11-10 15:05:10.271] PROVIDER_MMW timerPost Tout(ms) 15000
+[2022-11-10 15:05:10.271] PROVIDER_MMW timerPost Pacing(ms) 1000
+[2022-11-10 15:05:10.271] PROVIDER_xx ITROLL_DEPTH_UUID 43bcda9b-2973-4639-af2c-f0b6bb3fa44b -> InsituLTxHeight
+[2022-11-10 15:05:10.271] PROVIDER_xx ITROLL_TEMP_UUID 03e7b375-97a7-4423-a3f0-1d822d8b19b9 -> Insitu LTxTemp
+[2022-11-10 15:05:10.271] PROVIDER_xx Batt_UUID 3bebd4a3-8b54-4f92-ba55-5fd2fd021358 -> Battery
+[2022-11-10 15:05:10.271] PROVIDER_xx SampleNumber_UUID 8c57835f-a32f-4d62-82dc-0ba09f04cf52 -> SampNum
+[2022-11-10 15:05:10.271] PROVIDER_xx DIGI_RSSI_UUID 7182846e-46e0-4a10-b110-9bc32de4aca9 -> decibelMiliWatt
+[2022-11-10 15:05:10.271] PROVIDER_xx Air_Temperature_UUID 8849814d-1603-4a2f-861f-f31ae68cccf3 -> SHT4xTemp
+[2022-11-10 15:05:10.271] PROVIDER_xx Air_Humidity_UUID 08646cc3-c5de-414c-af65-c795b2dcac24 -> SHT4xHumidity
+[2022-11-10 15:05:10.271] ---parseIni complete
+[2022-11-10 15:05:10.271] 
+[2022-11-10 15:05:10.271] RTC timezone is set to UTC
+[2022-11-10 15:05:10.271] Battery Type=2
+[2022-11-10 15:05:10.271]  Thresholds USEABLE=3.50V LOW=3.55V MEDIUM=3.60V GOOD=3.80V
+[2022-11-10 15:05:10.271] Modem config set as WIFI_DIGI_S6
+[2022-11-10 15:05:10.271] ---pwr Xbee OFF on pin  18
+[2022-11-10 15:05:10.271] Watch-dog timeout is set for 600 sec with the interrupt firing 75 times before the reset. <--WatchDogAVR
+[2022-11-10 15:05:10.271] Watchdog Enabled, Interrupt will fire 75 times before the system resets. <--WatchDogAVR
+[2022-11-10 15:05:10.303] RTC valid range 2022-01-02T00:00:00-08:00 between 2040-01-01T00:00:00-08:00
+[2022-11-10 15:05:10.303] Current RTC time is: 2022-01-02T00:00:12-08:00
+[2022-11-10 15:05:10.303] Current localized logger time is: 2022-01-01T16:00:12-08:00
+[2022-11-10 15:05:10.397] All variable UUID's appear to be correctly formed.
+[2022-11-10 15:05:10.397] 
+[2022-11-10 15:05:10.397] 8c57835f-a32f-4d62-82dc-0ba09f04cf52 -> SampNum
+[2022-11-10 15:05:10.397] 3bebd4a3-8b54-4f92-ba55-5fd2fd021358 -> Battery
+[2022-11-10 15:05:10.397] 03e7b375-97a7-4423-a3f0-1d822d8b19b9 -> Insitu LTxTemp
+[2022-11-10 15:05:10.397] 43bcda9b-2973-4639-af2c-f0b6bb3fa44b -> InsituLTxHeight
+[2022-11-10 15:05:10.397] 08646cc3-c5de-414c-af65-c795b2dcac24 -> SHT4xHumidity
+[2022-11-10 15:05:10.397] 8849814d-1603-4a2f-861f-f31ae68cccf3 -> SHT4xTemp
+[2022-11-10 15:05:10.397] 7182846e-46e0-4a10-b110-9bc32de4aca9 -> decibelMiliWatt
+[2022-11-10 15:05:10.397]  
+[2022-11-10 15:05:10.397] This logger has a variable array with 7 variables, of which 5 come from 3 sensors and 2 are calculated.
+[2022-11-10 15:05:10.397] Logger portion of setup finished.
+[2022-11-10 15:05:10.397] 
+[2022-11-10 15:05:10.397] batteryCheck req/wait/src 4 0 2
+[2022-11-10 15:05:10.397] Vbat_low prev/new 4.003/4.003
+[2022-11-10 15:05:10.397] Bat_V(low) 4.00
+[2022-11-10 15:05:10.397] Attempting to connect to the internet and synchronize RTC with NIST
+[2022-11-10 15:05:10.397] This may take up to two minutes!
+[2022-11-10 15:05:10.475] 
+[2022-11-10 15:05:10.475] Waiting up to 15000 ms for unspecified modem to respond to AT commands...
+[2022-11-10 15:05:17.360] XbeeWiFi internet comms with Digi XBee Wi-Fi Mac/Sn  409D8F65B4 HwVer 2730 FwVer 2026
+[2022-11-10 15:05:17.708] Loop=Sec] rx db : Status #Polled Status every 1sec/30sec
+[2022-11-10 15:05:17.721] 0=9.17] 0:0x0 Cnt=0
+[2022-11-10 15:05:18.726] 1=10.18] 0:0x0 Cnt=1
+[2022-11-10 15:05:18.742]  WATCHDOG ISR barksUntilReset 74 <--WatchDogAVR
+[2022-11-10 15:05:19.745] 2=11.20] 0:0x0 Cnt=2
+[2022-11-10 15:05:20.749] 3=12.21] 0:0x0 Cnt=3
+[2022-11-10 15:05:22.259] XbeeWiFi IP# [ 10.66.67.102 ]
+[2022-11-10 15:05:23.780] XbeeWifi init test PASSED
+[2022-11-10 15:05:23.796] ... Watchdog low barksUntilReset 74  expected 75
+[2022-11-10 15:05:24.330] Connected to internet for RTC sync with NIST
+[2022-11-10 15:05:25.145] NIST lookup mdmIP[ 0 / 4 ] with  132.163.97.1
+[2022-11-10 15:05:30.781] NIST lookup mdmIP[ 1 / 4 ] with  132.163.97.1
+[2022-11-10 15:05:31.397] Internal Clock set  2022-11-10T23:05:34-08:00
+[2022-11-10 15:05:34.819] Sync= 1 with NIST over  Digi XBee Wi-Fi
+[2022-11-10 15:05:34.819] Local Time  2022-11-10T15:05:37-08:00
+[2022-11-10 15:05:34.851] Time local epoch  1668092737
+[2022-11-10 15:05:34.851] Time  UTC  epoch  1668121537
+[2022-11-10 15:05:34.851] Setting up sensors...
+[2022-11-10 15:05:34.851] batteryCheck req/wait/src 2 1 3
+[2022-11-10 15:05:34.851] Vbat_low prev/new 3.987/3.987
+[2022-11-10 15:05:34.851] Bat_V(low) 3.99
+[2022-11-10 15:05:34.866] Setting up file on SD card
+[2022-11-10 15:05:34.945] Data will be saved as turc_test08_2022-11-10.csv
+[2022-11-10 15:05:34.945] batteryCheck req/wait/src 4 0 4
+[2022-11-10 15:05:34.945] Vbat_low prev/new 3.987/4.003
+[2022-11-10 15:05:34.945] Bat_V(low) 3.99
+[2022-11-10 15:05:34.945] logDataAndPubReliably - overide with  3
+[2022-11-10 15:05:34.945] Vbat_low prev/new 3.987/4.003
+[2022-11-10 15:05:34.945] Vbat_low prev/new 3.987/4.003
+[2022-11-10 15:05:34.945] Vbat_low prev/new 3.987/4.003
+[2022-11-10 15:05:34.945] ---logDataAndPubReliably (0x3)----
+[2022-11-10 15:05:34.945] Read sensors...
+[2022-11-10 15:05:43.290]  WATCHDOG ISR barksUntilReset 74 <--WatchDogAVR
+[2022-11-10 15:05:46.843] ... Watchdog low barksUntilReset 74  expected 75
+[2022-11-10 15:05:46.906] 
+[2022-11-10 15:05:46.906]  \/---- Line Saved to turc_test08_2022-11-10.csv ----\/
+[2022-11-10 15:05:46.921] 2022-11-10 15:05:37,1,3.987,15.93,0.2348,43.76,18.17,-33
+[2022-11-10 15:05:46.921] 
+[2022-11-10 15:05:46.921] 
+[2022-11-10 15:05:47.125] 
+[2022-11-10 15:05:47.125] Waiting up to 15000 ms for Digi XBee Wi-Fi to respond to AT commands...
+[2022-11-10 15:05:47.910] Connecting to the Internet with Digi XBee Wi-Fi
+[2022-11-10 15:05:49.997] Connected Internet
+[2022-11-10 15:05:50.044] 
+[2022-11-10 15:05:50.044] pubDQTR Sending data to [ 0 ] monitormywatershed.org
+[2022-11-10 15:05:50.547] POST /api/data-stream/ HTTP/1.1
+[2022-11-10 15:05:50.547] Host: monitormywatershed.org
+[2022-11-10 15:05:50.547] TOKEN: 0cf7c40a-232e-457d-87d6-cea5c0757fec
+[2022-11-10 15:05:50.547] Content-Length: 409
+[2022-11-10 15:05:50.547] Content-Type: application/json
+[2022-11-10 15:05:50.547] 
+[2022-11-10 15:05:50.547] {"sampling_feature":"236c674b-69b9-43af-b0d6-33d67b870ecc","timestamp":"2022-11-10T15:05:37-08:00","8c57835f-a32f-4d62-82dc-0ba09f04cf52":1,"3bebd4a3-8b54-4f92-ba55-5fd2fd021358":3.987,"03e7b375-97a7-4423-a3f0-1d822d8b19b9":15.93,"43bcda9b-2973-4639-af2c-f0b6bb3fa44b":0.2348,"08646cc3-c5de-414c-af65-c795b2dcac24":43.76,"8849814d-1603-4a2f-861f-f31ae68cccf3":18.17,"7182846e-46e0-4a10-b110-9bc32de4aca9":-33}
+[2022-11-10 15:05:50.547] 
+[2022-11-10 15:05:52.689] -- Response Code -- 201 waited  880 mS Timeout 15000
+[2022-11-10 15:05:53.707] Sent 1 readings in 3.65 sec. Queued readings= 0
+[2022-11-10 15:05:53.723] SyncTimeCheck  0  modulo_sec 337  Time 1668092737
+[2022-11-10 15:05:57.104] ---logDataAndPubReliably  Complete----------
+[2022-11-10 15:05:57.104] 0]RTC Alarm set for every minute. Reg check was 0x1D
+[2022-11-10 15:05:57.151] Going to sleep. Ram( 7414 / 153 )  ZZzzz...
+[2022-11-10 15:05:57.417] Watchdog Enabled, Interrupt will fire 75 times before the system resets. <--WatchDogAVR
+[2022-11-10 15:05:57.417] 
+[2022-11-10 15:05:57.417] ... zzzZZ Awake @ 2022-11-10T15:06:00-08:00
+[2022-11-10 15:05:57.417] Vbat_low prev/new 3.987/4.003
+[2022-11-10 15:05:57.417] Vbat_low prev/new 4.003/4.003
+[2022-11-10 15:05:57.417] Vbat_low prev/new 4.003/4.003
+[2022-11-10 15:05:57.417] Going to sleep. Ram( 7414 / 133 )  ZZzzz...
+[2022-11-10 15:06:51.116] 
+
+[2022-11-10 15:17:40.973] ---Boot(0) Sw Build: a\src\tu_xx01.cpp Nov 10 2022 15:14:51  b'neilh20'
+[2022-11-10 15:17:40.973]  b'rel1_dvlp1m'
+[2022-11-10 15:17:40.973] Sw Name: LT500/Modbus Digi WiFi S6/LTE XB3-C-A2 MMW
+[2022-11-10 15:17:40.973] ModularSensors version 0.34.1.aaa
+[2022-11-10 15:17:40.973] TinyGSM Library version 0.11.5
+[2022-11-10 15:17:40.973] Watch-dog timeout is set for 300 sec with the interrupt firing 37 times before the reset. <--WatchDogAVR
+[2022-11-10 15:17:40.973] Watchdog Enabled, Interrupt will fire 37 times before the system resets. <--WatchDogAVR
+[2022-11-10 15:17:40.973] From eeprom boot Name[ mayfly ]  rev[ 1.1X07 ] sn[ MAYFLY22150 ]
+[2022-11-10 15:17:41.145] From eeprom common: Logger File Name[ turc_test08sa01 ]
+[2022-11-10 15:17:41.145]    logging interval= 15 minutes, Tz= -8 battery type= 2 battery mAhr= 4400
+[2022-11-10 15:17:41.145]    Loc= "Reference mayfly_0.33.1.aaa_220520_1634_LT5_Mdbus_wireless"
+[2022-11-10 15:17:41.145] From eeprom Network: Network Type= 2 
+[2022-11-10 15:17:41.145]  APN= APN_NONE 
+[2022-11-10 15:17:41.145]  WiFiId= ArthurGuestSsid  WiFiPwd= Arthur8166 
+[2022-11-10 15:17:41.145]  COLLECT_READINGS= 4  SEND_OFFSET_MIN= 4  POST_MAX_NUM= 100  SEND_QUE_SZ_NUM= 65535
+[2022-11-10 15:17:41.145] From eeprom Provider: Provider Type= 1  PROVIDER_MMW CloudId= monitormywatershed.org 
+[2022-11-10 15:17:41.145]  PROVIDER_MMW Reg Token= 0cf7c40a-232e-457d-87d6-cea5c0757fec 
+[2022-11-10 15:17:41.145]  PROVIDER_MMW Sampling Feature= 236c674b-69b9-43af-b0d6-33d67b870ecc 
+[2022-11-10 15:17:41.145]  PROVIDER_MMW timerPostTout(ms)= 15000 
+[2022-11-10 15:17:41.145]  PROVIDER_MMW timerPostPace(ms)= 1000
+[2022-11-10 15:17:41.145]   PROVIDER_MMW UUIDs (none unless listed), Max= 12
+[2022-11-10 15:17:41.145] 0 ] ITROLL_DEPTH_UUID = 43bcda9b-2973-4639-af2c-f0b6bb3fa44b
+[2022-11-10 15:17:41.145] 1 ] ITROLL_TEMP_UUID = 03e7b375-97a7-4423-a3f0-1d822d8b19b9
+[2022-11-10 15:17:41.145] 2 ] Batt_UUID = 3bebd4a3-8b54-4f92-ba55-5fd2fd021358
+[2022-11-10 15:17:41.145] 3 ] SampleNumber_UUID = 8c57835f-a32f-4d62-82dc-0ba09f04cf52
+[2022-11-10 15:17:41.145] 4 ] DIGI_RSSI_UUID = 7182846e-46e0-4a10-b110-9bc32de4aca9
+[2022-11-10 15:17:41.152] 5 ] Air_Temperature_UUID = 8849814d-1603-4a2f-861f-f31ae68cccf3
+[2022-11-10 15:17:41.152] 6 ] Air_Humidity_UUID = 08646cc3-c5de-414c-af65-c795b2dcac24
+[2022-11-10 15:17:41.152] Board: mayfly rev:'1.1X07' sn:'MAYFLY22150'
+[2022-11-10 15:17:41.152]  Board: Assume Mayfly 1.1A 
+[2022-11-10 15:17:41.152] batteryCheck req/wait/src 1 1 1
+[2022-11-10 15:17:41.152] Vbat_low prev/new 4.018/4.018
+[2022-11-10 15:17:41.152] Bat_V(low) 4.02
+[2022-11-10 15:17:41.152] BatV Good = 4.02
+[2022-11-10 15:17:41.152] modbus Baudrate: 19200 config: 38
+[2022-11-10 15:17:41.710] ---parseIni Start
+[2022-11-10 15:17:42.386] ms_cfg.ini : parsing----
+[2022-11-10 15:17:42.432] COMMON LOGGING_INTERVAL_MINUTES set to: 5(min) from default 15
+[2022-11-10 15:17:42.432] GEOGRAPHICAL_ID:"Reference mayfly_0.33.1.aaa_220927_1449_LT5_Mdbus_wireless"
+[2022-11-10 15:17:42.555] 0:ITROLL_DEPTH_UUID={43bcda9b-2973-4639-af2c-f0b6bb3fa44b} match  & added.
+[2022-11-10 15:17:42.555] 1:ITROLL_TEMP_UUID={03e7b375-97a7-4423-a3f0-1d822d8b19b9} match  & added.
+[2022-11-10 15:17:42.555] 2:Batt_UUID={3bebd4a3-8b54-4f92-ba55-5fd2fd021358} match  & added.
+[2022-11-10 15:17:42.555] 3:SampleNumber_UUID={8c57835f-a32f-4d62-82dc-0ba09f04cf52} match  & added.
+[2022-11-10 15:17:42.555] 4:DIGI_RSSI_UUID={7182846e-46e0-4a10-b110-9bc32de4aca9} match  & added.
+[2022-11-10 15:17:42.555] 5:Air_Temperature_UUID={8849814d-1603-4a2f-861f-f31ae68cccf3} match  & added.
+[2022-11-10 15:17:42.555] 6:Air_Humidity_UUID={08646cc3-c5de-414c-af65-c795b2dcac24} match  & added.
+[2022-11-10 15:17:42.731] Error on line : 41
+[2022-11-10 15:17:42.731] COMMON LoggerId Set:  turc_test08
+[2022-11-10 15:17:42.731] COMMON Logginterval:  5
+[2022-11-10 15:17:42.731] COMMON Battery Type:  2
+[2022-11-10 15:17:42.731] COMMON Battery mAhr:  4400
+[2022-11-10 15:17:42.731] Logger timezone is set to UTC -8
+[2022-11-10 15:17:42.731] NETWORK type:  1
+[2022-11-10 15:17:42.731] NETWORK apn:  VZWINTERNET
+[2022-11-10 15:17:42.731] NETWORK WiFiId :  ArthurGuestSsid
+[2022-11-10 15:17:42.731] NETWORK WiFiPwd:  Arthur8166
+[2022-11-10 15:17:42.731] NETWORK COLLECT_READINGS 2
+[2022-11-10 15:17:42.731] NETWORK SEND_OFFSET_MIN 1
+[2022-11-10 15:17:42.731] NETWORK POST_MAX_NUM 100
+[2022-11-10 15:17:42.731] NETWORK SEND_QUE_SZ_NUM 65535
+[2022-11-10 15:17:42.731] PROVIDER_MMW CloudId monitormywatershed.org
+[2022-11-10 15:17:42.731] PROVIDER_MMW Registration Token 0cf7c40a-232e-457d-87d6-cea5c0757fec
+[2022-11-10 15:17:42.731] PROVIDER_MMW Samping Feature 236c674b-69b9-43af-b0d6-33d67b870ecc
+[2022-11-10 15:17:42.731] PROVIDER_MMW timerPost Tout(ms) 15000
+[2022-11-10 15:17:42.731] PROVIDER_MMW timerPost Pacing(ms) 1000
+[2022-11-10 15:17:42.731] PROVIDER_xx ITROLL_DEPTH_UUID 43bcda9b-2973-4639-af2c-f0b6bb3fa44b -> InsituLTxHeight
+[2022-11-10 15:17:42.731] PROVIDER_xx ITROLL_TEMP_UUID 03e7b375-97a7-4423-a3f0-1d822d8b19b9 -> Insitu LTxTemp
+[2022-11-10 15:17:42.731] PROVIDER_xx Batt_UUID 3bebd4a3-8b54-4f92-ba55-5fd2fd021358 -> Battery
+[2022-11-10 15:17:42.731] PROVIDER_xx SampleNumber_UUID 8c57835f-a32f-4d62-82dc-0ba09f04cf52 -> SampNum
+[2022-11-10 15:17:42.731] PROVIDER_xx DIGI_RSSI_UUID 7182846e-46e0-4a10-b110-9bc32de4aca9 -> decibelMiliWatt
+[2022-11-10 15:17:42.746] PROVIDER_xx Air_Temperature_UUID 8849814d-1603-4a2f-861f-f31ae68cccf3 -> SHT4xTemp
+[2022-11-10 15:17:42.746] PROVIDER_xx Air_Humidity_UUID 08646cc3-c5de-414c-af65-c795b2dcac24 -> SHT4xHumidity
+[2022-11-10 15:17:42.746] ---parseIni complete
+[2022-11-10 15:17:42.746] 
+[2022-11-10 15:17:42.746] RTC timezone is set to UTC
+[2022-11-10 15:17:42.746] Battery Type=2
+[2022-11-10 15:17:42.746]  Thresholds USEABLE=3.50V LOW=3.55V MEDIUM=3.60V GOOD=3.80V
+[2022-11-10 15:17:42.746] Modem config set as LTE_DIGI_CATM1
+[2022-11-10 15:17:42.746] ---pwr Xbee OFF on pin  18
+[2022-11-10 15:17:42.746] Watch-dog timeout is set for 600 sec with the interrupt firing 75 times before the reset. <--WatchDogAVR
+[2022-11-10 15:17:42.746] Watchdog Enabled, Interrupt will fire 75 times before the system resets. <--WatchDogAVR
+[2022-11-10 15:17:42.756] RTC valid range 2022-01-02T00:00:00-08:00 between 2040-01-01T00:00:00-08:00
+[2022-11-10 15:17:42.756] Current RTC time is: 2022-11-10T23:15:02-08:00
+[2022-11-10 15:17:42.756] Current localized logger time is: 2022-11-10T15:15:02-08:00
+[2022-11-10 15:17:42.841] All variable UUID's appear to be correctly formed.
+[2022-11-10 15:17:42.841] 
+[2022-11-10 15:17:42.841] 8c57835f-a32f-4d62-82dc-0ba09f04cf52 -> SampNum
+[2022-11-10 15:17:42.841] 3bebd4a3-8b54-4f92-ba55-5fd2fd021358 -> Battery
+[2022-11-10 15:17:42.841] 03e7b375-97a7-4423-a3f0-1d822d8b19b9 -> Insitu LTxTemp
+[2022-11-10 15:17:42.841] 43bcda9b-2973-4639-af2c-f0b6bb3fa44b -> InsituLTxHeight
+[2022-11-10 15:17:42.841] 08646cc3-c5de-414c-af65-c795b2dcac24 -> SHT4xHumidity
+[2022-11-10 15:17:42.841] 8849814d-1603-4a2f-861f-f31ae68cccf3 -> SHT4xTemp
+[2022-11-10 15:17:42.841] 7182846e-46e0-4a10-b110-9bc32de4aca9 -> decibelMiliWatt
+[2022-11-10 15:17:42.841]  
+[2022-11-10 15:17:42.841] This logger has a variable array with 7 variables, of which 5 come from 3 sensors and 2 are calculated.
+[2022-11-10 15:17:42.841] Logger portion of setup finished.
+[2022-11-10 15:17:42.841] 
+[2022-11-10 15:17:42.841] batteryCheck req/wait/src 4 0 2
+[2022-11-10 15:17:42.841] Vbat_low prev/new 4.003/4.003
+[2022-11-10 15:17:42.841] Bat_V(low) 4.00
+[2022-11-10 15:17:42.841] Attempting to connect to the internet and synchronize RTC with NIST
+[2022-11-10 15:17:42.841] This may take up to two minutes!
+[2022-11-10 15:17:44.175] 
+[2022-11-10 15:17:44.175] Waiting up to 15000 ms for unspecified modem to respond to AT commands...
+[2022-11-10 15:17:49.060] Lte internet comms with Digi XBee3 Cellular LTE-M IMEI  OK HwVer 4B50 FwVer 11418
+[2022-11-10 15:17:49.727] Loop=Sec] rx db : Status ' Operator ' #Polled Cell Status every 1sec
+[2022-11-10 15:17:49.742] 0=8.75] 0:0x22 'OK'
+[2022-11-10 15:17:50.758] 1=9.77] 0:0x22 'OK'
+[2022-11-10 15:17:51.182]  WATCHDOG ISR barksUntilReset 74 <--WatchDogAVR
+[2022-11-10 15:17:51.778] 2=10.79] 0:0x22 'OK'
+[2022-11-10 15:17:52.809] 3=11.81] 0:0xff 'OK'
+[2022-11-10 15:17:53.829] 4=12.83] 0:0xff 'OK'
+[2022-11-10 15:17:54.849] 5=13.85] 0:0xff 'OK'
+[2022-11-10 15:17:55.871] 6=14.88] 0:0xff 'OK'
+[2022-11-10 15:17:56.918] 7=15.90] 0:0x22 'OK'
+[2022-11-10 15:17:57.938] 8=16.92] 0:0x22 'OK'
+[2022-11-10 15:17:58.958] 9=17.94] 0:0x22 'OK'
+[2022-11-10 15:17:59.539]  WATCHDOG ISR barksUntilReset 73 <--WatchDogAVR
+[2022-11-10 15:17:59.978] 10=18.96] 0:0x22 'OK'
+[2022-11-10 15:17:59.997] Try +CREG '
+[2022-11-10 15:18:01.011] 11=19.99] 0:0xe '22'
+[2022-11-10 15:18:02.038] 12=21.01] 0:0x0 '22' Cnt=1
+[2022-11-10 15:18:03.053] 13=22.03] 0:0x0 '22' Cnt=2
+[2022-11-10 15:18:04.072] 14=23.05] 0:0x0 '22' Cnt=3
+[2022-11-10 15:18:04.103] Digi Xbee3 setup Sucess. Registration ' 0 '
+[2022-11-10 15:18:06.626] mdmIP[ 1 / 16 ] ' 0.0.0.0 '= 7
+[2022-11-10 15:18:07.896]  WATCHDOG ISR barksUntilReset 72 <--WatchDogAVR
+[2022-11-10 15:18:08.650] mdmIP[ 2 / 16 ] ' 0.0.0.0 '= 7
+[2022-11-10 15:18:11.150] mdmIP[ 3 / 16 ] ' 100.82.54.28 '= 12
+[2022-11-10 15:18:11.166] XbeeWLTE IP# [ 100.82.54.28 ]
+[2022-11-10 15:18:11.182] ... Watchdog low barksUntilReset 72  expected 75
+[2022-11-10 15:18:11.454] Connected to internet for RTC sync with NIST
+[2022-11-10 15:18:12.019] 0 ] Connect  time.nist.gov
+[2022-11-10 15:18:18.224] NIST Time server did not respond!
+[2022-11-10 15:18:18.491] 1 ] Connect  time.nist.gov
+[2022-11-10 15:18:19.857]  WATCHDOG ISR barksUntilReset 74 <--WatchDogAVR
+[2022-11-10 15:18:23.979] NIST Time server did not respond!
+[2022-11-10 15:18:24.262] 2 ] Connect  time.nist.gov
+[2022-11-10 15:18:28.207]  WATCHDOG ISR barksUntilReset 73 <--WatchDogAVR
+[2022-11-10 15:18:29.857] NIST Time server did not respond!
+[2022-11-10 15:18:30.111] 3 ] Connect  time.nist.gov
+[2022-11-10 15:18:35.803] NIST Time server did not respond!
+[2022-11-10 15:18:36.082] 4 ] Connect  time.nist.gov
+[2022-11-10 15:18:36.571]  WATCHDOG ISR barksUntilReset 72 <--WatchDogAVR
+[2022-11-10 15:18:41.867] NIST Time server did not respond!
+[2022-11-10 15:18:42.134] 5 ] Connect  time.nist.gov
+[2022-11-10 15:18:44.944]  WATCHDOG ISR barksUntilReset 71 <--WatchDogAVR
+[2022-11-10 15:18:48.026] NIST Time server did not respond!
+[2022-11-10 15:18:48.310] 6 ] Connect  time.nist.gov
+[2022-11-10 15:18:53.289]  WATCHDOG ISR barksUntilReset 70 <--WatchDogAVR
+[2022-11-10 15:18:54.294] NIST Time server did not respond!
+[2022-11-10 15:18:54.560] 7 ] Connect  time.nist.gov
+[2022-11-10 15:19:00.652] NIST Time server did not respond!
+[2022-11-10 15:19:00.918] 8 ] Connect  time.nist.gov
+[2022-11-10 15:19:01.657]  WATCHDOG ISR barksUntilReset 69 <--WatchDogAVR
+[2022-11-10 15:19:07.107] NIST Time server did not respond!
+[2022-11-10 15:19:07.390] 9 ] Connect  time.nist.gov
+[2022-11-10 15:19:10.027]  WATCHDOG ISR barksUntilReset 68 <--WatchDogAVR
+[2022-11-10 15:19:13.678] NIST Time server did not respond!
+[2022-11-10 15:19:13.945] Bad timestamp, not setting clock.
+[2022-11-10 15:19:13.969] ... Watchdog low barksUntilReset 68  expected 75
+[2022-11-10 15:19:14.889] Sync= 0 with NIST over  Digi XBee3 Cellular LTE-M
+[2022-11-10 15:19:14.921] Local Time  2022-11-10T15:16:35-08:00
+[2022-11-10 15:19:14.921] Time local epoch  1668093395
+[2022-11-10 15:19:14.921] Time  UTC  epoch  1668122195
+[2022-11-10 15:19:14.921] Setting up sensors...
+[2022-11-10 15:19:14.921] batteryCheck req/wait/src 2 1 3
+[2022-11-10 15:19:14.921] Vbat_low prev/new 4.003/4.003
+[2022-11-10 15:19:14.921] Bat_V(low) 4.00
+[2022-11-10 15:19:14.936] Setting up file on SD card
+[2022-11-10 15:19:15.030] Data will be saved as turc_test08_2022-11-10.csv
+[2022-11-10 15:19:15.030] batteryCheck req/wait/src 4 0 4
+[2022-11-10 15:19:15.030] Vbat_low prev/new 4.003/4.003
+[2022-11-10 15:19:15.030] Bat_V(low) 4.00
+[2022-11-10 15:19:15.030] logDataAndPubReliably - overide with  3
+[2022-11-10 15:19:15.030] Vbat_low prev/new 4.003/4.003
+[2022-11-10 15:19:15.030] Vbat_low prev/new 4.003/4.003
+[2022-11-10 15:19:15.030] Vbat_low prev/new 4.003/4.003
+[2022-11-10 15:19:15.030] ---logDataAndPubReliably (0x3)----
+[2022-11-10 15:19:15.030] Read sensors...
+[2022-11-10 15:19:23.372]  WATCHDOG ISR barksUntilReset 74 <--WatchDogAVR
+[2022-11-10 15:19:26.922] ... Watchdog low barksUntilReset 74  expected 75
+[2022-11-10 15:19:26.969] 
+[2022-11-10 15:19:26.969]  \/---- Line Saved to turc_test08_2022-11-10.csv ----\/
+[2022-11-10 15:19:27.001] 2022-11-10 15:16:35,1,4.003,15.94,0.2347,43.46,18.69,-69
+[2022-11-10 15:19:27.001] 
+[2022-11-10 15:19:27.001] 
+[2022-11-10 15:19:27.863] 
+[2022-11-10 15:19:27.863] Waiting up to 15000 ms for Digi XBee3 Cellular LTE-M to respond to AT commands...
+[2022-11-10 15:19:28.663] Connecting to the Internet with Digi XBee3 Cellular LTE-M
+[2022-11-10 15:19:37.014]  WATCHDOG ISR barksUntilReset 74 <--WatchDogAVR
+[2022-11-10 15:19:45.376]  WATCHDOG ISR barksUntilReset 73 <--WatchDogAVR
+[2022-11-10 15:19:53.432] Connected Internet
+[2022-11-10 15:19:53.463] ... Watchdog low barksUntilReset 73  expected 75
+[2022-11-10 15:19:53.463] 
+[2022-11-10 15:19:53.463] pubDQTR Sending data to [ 0 ] monitormywatershed.org
+[2022-11-10 15:19:54.656] POST /api/data-stream/ HTTP/1.1
+[2022-11-10 15:19:54.656] Host: monitormywatershed.org
+[2022-11-10 15:19:54.656] TOKEN: 0cf7c40a-232e-457d-87d6-cea5c0757fec
+[2022-11-10 15:19:54.656] Content-Length: 409
+[2022-11-10 15:19:54.656] Content-Type: application/json
+[2022-11-10 15:19:54.656] 
+[2022-11-10 15:19:54.656] {"sampling_feature":"236c674b-69b9-43af-b0d6-33d67b870ecc","timestamp":"2022-11-10T15:16:35-08:00","8c57835f-a32f-4d62-82dc-0ba09f04cf52":1,"3bebd4a3-8b54-4f92-ba55-5fd2fd021358":4.003,"03e7b375-97a7-4423-a3f0-1d822d8b19b9":15.94,"43bcda9b-2973-4639-af2c-f0b6bb3fa44b":0.2347,"08646cc3-c5de-414c-af65-c795b2dcac24":43.46,"8849814d-1603-4a2f-861f-f31ae68cccf3":18.69,"7182846e-46e0-4a10-b110-9bc32de4aca9":-69}
+[2022-11-10 15:19:54.656] 
+[2022-11-10 15:19:58.290] -- Response Code -- 201 waited  2083 mS Timeout 15000
+[2022-11-10 15:19:59.327] Sent 1 readings in 5.83 sec. Queued readings= 0
+[2022-11-10 15:19:59.342] SyncTimeCheck  0  modulo_sec 995  Time 1668093395
+[2022-11-10 15:20:07.710]  WATCHDOG ISR barksUntilReset 74 <--WatchDogAVR
+[2022-11-10 15:20:09.139] ---logDataAndPubReliably  Complete----------
+[2022-11-10 15:20:09.170] 0]RTC Alarm set for every minute. Reg check was 0x1
+[2022-11-10 15:20:09.170] Going to sleep. Ram( 7377 / 156 )  ZZzzz...
