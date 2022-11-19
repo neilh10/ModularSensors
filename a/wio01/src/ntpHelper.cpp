@@ -146,16 +146,35 @@ bool ntpHelper::sendDataTuple() {
 
         HTTPClientMmw  http;
         int httpCode;
-
-        USE_SERIAL.print("[HTTP] begin...\n");
+#define TCP_CONNECT_TIMEOUT_MS   5000
+#define TCP_RESPONSE_TIMEOUT_MS 10000
+        USE_SERIAL.print("Timeouts connect/response ");
+        USE_SERIAL.print(TCP_CONNECT_TIMEOUT_MS);
+        USE_SERIAL.println(TCP_RESPONSE_TIMEOUT_MS);
+        http.setConnectTimeout(TCP_CONNECT_TIMEOUT_MS); //default 2000mSIn seconds tv.tv_usec = timeout * 1000;
+        http.setTimeout(TCP_RESPONSE_TIMEOUT_MS);      //mS _client->setTimeout((_tcpTimeout + 500) / 1000);
+        USE_SERIAL.print(" tu_rcru_test03 [HTTP] begin...\n");
         // configure traged server and url
-        http.begin("monitormywatershed.org",0,"/api/data-stream/"); //HTTP
-        http.begin("monitormywatershed.org"); //HTTP
-
-
-
+        String dest_http;
+        dest_http = "monitormywatershed.org"; //Connects to server with no http://
+        //dest_http = "10.66.66.185"; //test01u
+        //dest_http = "test01u";
+        http.begin(dest_http,80,"/api/data-stream/"); //HTTP
+        //http.begin(dest_http+":1880"); //HTTP
+#if 0
+const char* remotePostIp =  "10.66.66.185";
+const uint16_t remotePostPort =  1880;
+const char* remotePostUri =  "/api/data-stream/";
+        http.begin(remotePostIp,remotePostPort,remotePostUri); //HTTP
+#endif //10.66.66.185
         String mmwTest;
-        mmwTest = "{\"sampling_feature\":\"12a82902-e312-445a-b607-328a6d4aaa87\",\"timestamp\":\"2022-06-19T03:04:00-08:00\",\"f9f90ef7-745a-44e8-9525-a373b59c28e0\":516,\"c2c6407b-03db-45c4-a736-2cfd0b212b22\":4.063,\"8267249c-614d-4bdf-b161-257ef69b2ee9\":10.54,\"84ce98bc-8a6d-48f0-9d8c-e53c00874dae\":0.0504,\"78a6da23-53d1-48d3-b286-f038fcf94572\":56.39,\"f964780d-87f0-443e-abbc-6089b6deafaf\":10.80,\"c467201d-6abe-4b5a-bde7-9551e0b34bd1\":-69}";
+
+        //test08
+        mmwTest = "{\"sampling_feature\":\"236c674b-69b9-43af-b0d6-33d67b870ecc\",\"timestamp\":\"2022-11-11T10:10:10-08:00\",\"8c57835f-a32f-4d62-82dc-0ba09f04cf52\":1,\"3bebd4a3-8b54-4f92-ba55-5fd2fd021358\":3.987,\"03e7b375-97a7-4423-a3f0-1d822d8b19b9\":17.37,\"43bcda9b-2973-4639-af2c-f0b6bb3fa44b\":0.2358,\"08646cc3-c5de-414c-af65-c795b2dcac24\":50.04,\"8849814d-1603-4a2f-861f-f31ae68cccf3\":19.88,\"7182846e-46e0-4a10-b110-9bc32de4aca9\":-25}";
+ 
+
+        //test03
+        //mmwTest = "{\"sampling_feature\":\"12a82902-e312-445a-b607-328a6d4aaa87\",\"timestamp\":\"2022-10-19T03:04:00-08:00\",\"f9f90ef7-745a-44e8-9525-a373b59c28e0\":516,\"c2c6407b-03db-45c4-a736-2cfd0b212b22\":4.063,\"8267249c-614d-4bdf-b161-257ef69b2ee9\":10.54,\"84ce98bc-8a6d-48f0-9d8c-e53c00874dae\":0.0504,\"78a6da23-53d1-48d3-b286-f038fcf94572\":56.39,\"f964780d-87f0-443e-abbc-6089b6deafaf\":10.80,\"c467201d-6abe-4b5a-bde7-9551e0b34bd1\":-69}";
         //USE_SERIAL.print("[HTTP] POST=");
 
 

@@ -55,12 +55,13 @@ ntpHelper ntph;
 #endif //
 #include "uiHelper.h"
 
+extern const String build_ref = "a\\" __FILE__ " " __DATE__ " " __TIME__ " ";
 
 uiHelper ui_display;
 
 
 #if defined RADIO_WIFI
-const char ssid[] = "ArthurGuestSsid"; // add your required ssid
+const char ssid[] = "ArthurTest"; // add your required ssid
 const char password[] = "Arthur8166";//"your-passowrd"; // add your own netywork password
 #endif // RADIO_WIFI
 
@@ -112,6 +113,10 @@ void setup() {
     printFree();
     ui_display.begin();
     ui_display.fillscreen("Modular Sensors");
+
+    Serial.print(F("\n\n\r---Boot("));
+    Serial.print(F(") Sw Build: "));
+    Serial.println(build_ref);
 
     if (!rtcPhy.begin()) {
         Serial.println("Couldn't find RTC");
