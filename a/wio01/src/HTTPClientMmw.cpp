@@ -95,8 +95,7 @@ int HTTPClientMmw::sendRequestMmw(const char * type, uint8_t * payload, size_t s
 
 
         if(payload && size_payload > 0) {
-            //addHeader(F("\r\nTOKEN"), "8a297ae4-995e-47e5-af03-3faa6a89d79e",false,false); //Test03
-            addHeader(F("\r\nTOKEN"), "0cf7c40a-232e-457d-87d6-cea5c0757fec",false,false); //Test08
+            addHeader(F("\r\nTOKEN"), _token_mmw,false,false); 
             addHeader(F("Content-Length"), String(size_payload),false,false);
             addHeader(F("Content-Type"), "application/json\r\n",false,false);
             log_d("created header\n");

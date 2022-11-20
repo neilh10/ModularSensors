@@ -1,5 +1,5 @@
 
-/* Status: Basic compile in ModularSensors directory - not callin MS
+/* Status: Basic compile in ModularSensors directory - not calling MS
 
  Name:		wioTerm_logger.cpp  from wioTerm_ntp.ino
  Sensors:
