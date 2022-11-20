@@ -147,21 +147,19 @@ bool ntpHelper::sendDataTuple(size_t seq_cnt,String timeNow) {
         HTTPClientMmw  http;
         int httpCode;
         String mmwPayload;
-        String mmwToken;
-        String mmwSamplingFeature;
+
 
         char intStr[10];
         itoa(seq_cnt,intStr,10);
         String seq_num_str = String(intStr);
 
         USE_SERIAL.print(" https://monitormywatershed.org/sites/tu_rc_test08/ begin...\n");
-        mmwToken ="0cf7c40a-232e-457d-87d6-cea5c0757fec"; //Test08
-        mmwSamplingFeature = "236c674b-69b9-43af-b0d6-33d67b870ecc";//Test08
+        _mmwToken ="0cf7c40a-232e-457d-87d6-cea5c0757fec"; //Test08
+        _mmwSamplingFeature = "236c674b-69b9-43af-b0d6-33d67b870ecc";//Test08
          
-        //mmwToken ="8a297ae4-995e-47e5-af03-3faa6a89d79e",false,false); //Test03
-        //mmwSamplingFeature = 12a82902-e312-445a-b607-328a6d4aaa87; //test03
-
-        mmwPayload = "{\"sampling_feature\":\""+mmwSamplingFeature+"\",\"timestamp\":\""+timeNow+"\",\"8c57835f-a32f-4d62-82dc-0ba09f04cf52\":"+seq_num_str+",\"3bebd4a3-8b54-4f92-ba55-5fd2fd021358\":3.987,\"03e7b375-97a7-4423-a3f0-1d822d8b19b9\":17.37,\"43bcda9b-2973-4639-af2c-f0b6bb3fa44b\":0.2358,\"08646cc3-c5de-414c-af65-c795b2dcac24\":50.04,\"8849814d-1603-4a2f-861f-f31ae68cccf3\":19.88,\"7182846e-46e0-4a10-b110-9bc32de4aca9\":-25}";
+        //_mmwToken ="8a297ae4-995e-47e5-af03-3faa6a89d79e",false,false); //Test03
+        //_mmwSamplingFeature = 12a82902-e312-445a-b607-328a6d4aaa87; //test03
+        mmwPayload = "{\"sampling_feature\":\""+_mmwSamplingFeature+"\",\"timestamp\":\""+timeNow+"\",\"8c57835f-a32f-4d62-82dc-0ba09f04cf52\":"+seq_num_str+",\"3bebd4a3-8b54-4f92-ba55-5fd2fd021358\":3.987,\"03e7b375-97a7-4423-a3f0-1d822d8b19b9\":17.37,\"43bcda9b-2973-4639-af2c-f0b6bb3fa44b\":0.2358,\"08646cc3-c5de-414c-af65-c795b2dcac24\":50.04,\"8849814d-1603-4a2f-861f-f31ae68cccf3\":19.88,\"7182846e-46e0-4a10-b110-9bc32de4aca9\":-25}";
 
 
 #define TCP_CONNECT_TIMEOUT_MS   5000
@@ -178,7 +176,7 @@ bool ntpHelper::sendDataTuple(size_t seq_cnt,String timeNow) {
         dest_http = "monitormywatershed.org"; //Connects to server with no http://
         http.begin(dest_http,80,"/api/data-stream/"); //HTTP
 
-        http.addtoken(mmwToken);
+        http.addtoken(_mmwToken);
         httpCode = http.POSTmmw(mmwPayload);
         if(httpCode > 0) {
             // HTTP header has been send and Server response header has been handled

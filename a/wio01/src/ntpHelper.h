@@ -15,18 +15,20 @@ const int NTP_PACKET_SIZE = 48; // NTP time stamp is in the first 48 bytes of th
 
 class ntpHelper {
 public:
-     bool connectToWiFi(const char* ssid, const char* pwd);
-     void printWifiStatus();
-     unsigned long getNTPtime();
-     bool sendDataTuple(size_t seq_cnt,String timeNow="none" );
-         //WiFiClient& getStream(void);
-
+    bool connectToWiFi(const char* ssid, const char* pwd);
+    void printWifiStatus();
+    unsigned long getNTPtime();
+    bool sendDataTuple(size_t seq_cnt,String timeNow="none" );
+    //WiFiClient& getStream(void);
+    void addToken(String mmwToken) { _mmwToken = mmwToken;}
+    void addSamplingFeature(String mmwSamplingFeature) { _mmwSamplingFeature = mmwSamplingFeature;}
 uint8_t packetBuffer[NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing packets
 int8_t _loggerTimeZone = -8;
 
 private :
 unsigned long sendNTPpacket(const char* address) ;
-
+    String _mmwToken;
+    String _mmwSamplingFeature;
 };
 
 
