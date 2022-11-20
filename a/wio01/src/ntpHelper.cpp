@@ -139,7 +139,7 @@ unsigned long ntpHelper::sendNTPpacket(const char* address) {
 
 #include "HTTPClientMmw.h"
 #define USE_SERIAL Serial
-bool ntpHelper::sendDataTuple(size_t seq_cnt) {
+bool ntpHelper::sendDataTuple(size_t seq_cnt,String timeNow) {
     bool retStatus=false;
 
     if((WiFi.status() == WL_CONNECTED)) {
@@ -160,9 +160,14 @@ bool ntpHelper::sendDataTuple(size_t seq_cnt) {
         http.begin(dest_http,80,"/api/data-stream/"); //HTTP
 
         String mmwTest;
+        char intStr[10];
+        itoa(seq_cnt,intStr,10);
+        String seq_num_str = String(intStr);
 
         //test08
-        mmwTest = "{\"sampling_feature\":\"236c674b-69b9-43af-b0d6-33d67b870ecc\",\"timestamp\":\"2022-11-19T10:10:10-08:00\",\"8c57835f-a32f-4d62-82dc-0ba09f04cf52\":1,\"3bebd4a3-8b54-4f92-ba55-5fd2fd021358\":3.987,\"03e7b375-97a7-4423-a3f0-1d822d8b19b9\":17.37,\"43bcda9b-2973-4639-af2c-f0b6bb3fa44b\":0.2358,\"08646cc3-c5de-414c-af65-c795b2dcac24\":50.04,\"8849814d-1603-4a2f-861f-f31ae68cccf3\":19.88,\"7182846e-46e0-4a10-b110-9bc32de4aca9\":-25}";
+        //mmwTest = "{\"sampling_feature\":\"236c674b-69b9-43af-b0d6-33d67b870ecc\",\"timestamp\":\"2022-11-19T10:10:10-08:00\",\"8c57835f-a32f-4d62-82dc-0ba09f04cf52\":1,\"3bebd4a3-8b54-4f92-ba55-5fd2fd021358\":3.987,\"03e7b375-97a7-4423-a3f0-1d822d8b19b9\":17.37,\"43bcda9b-2973-4639-af2c-f0b6bb3fa44b\":0.2358,\"08646cc3-c5de-414c-af65-c795b2dcac24\":50.04,\"8849814d-1603-4a2f-861f-f31ae68cccf3\":19.88,\"7182846e-46e0-4a10-b110-9bc32de4aca9\":-25}";
+        mmwTest = "{\"sampling_feature\":\"236c674b-69b9-43af-b0d6-33d67b870ecc\",\"timestamp\":\""+timeNow+"\",\"8c57835f-a32f-4d62-82dc-0ba09f04cf52\":"+seq_num_str+",\"3bebd4a3-8b54-4f92-ba55-5fd2fd021358\":3.987,\"03e7b375-97a7-4423-a3f0-1d822d8b19b9\":17.37,\"43bcda9b-2973-4639-af2c-f0b6bb3fa44b\":0.2358,\"08646cc3-c5de-414c-af65-c795b2dcac24\":50.04,\"8849814d-1603-4a2f-861f-f31ae68cccf3\":19.88,\"7182846e-46e0-4a10-b110-9bc32de4aca9\":-25}";
+ 
  
 
         //test03
@@ -207,4 +212,40 @@ void  ntpHelper::printWifiStatus() {
     Serial.print(rssi);
     Serial.println(" dBm");
     Serial.println("");
+}
+
+// This converts a date-time object into a ISO8601 formatted string
+// It assumes the supplied date/time is in the LOGGER's timezone and adds
+// the LOGGER's offset as the time zone offset in the string.
+String ntpHelper::formatDateTime_ISO8601(DateTime& dt) {
+    // Set up an inital string
+    String dateTimeStr;
+    // Convert the DateTime object to a String
+    dt.addToString(dateTimeStr);
+    dateTimeStr.replace(" ", "T");
+    auto tzString = String(_loggerTimeZone);
+    if (-24 <= _loggerTimeZone && _loggerTimeZone <= -10) {
+        tzString += F(":00");
+    } else if (-10 < _loggerTimeZone && _loggerTimeZone < 0) {
+        tzString = tzString.substring(0, 1) + '0' + tzString.substring(1, 2) +
+            F(":00");
+    } else if (_loggerTimeZone == 0) {
+        tzString = 'Z';
+    } else if (0 < _loggerTimeZone && _loggerTimeZone < 10) {
+        tzString = "+0" + tzString + F(":00");
+    } else if (10 <= _loggerTimeZone && _loggerTimeZone <= 24) {
+        tzString = "+" + tzString + F(":00");
+    }
+    dateTimeStr += tzString;
+    return dateTimeStr;
+}
+
+//SAMD variant
+#define DateTimeClass(varNam, epochTime) DateTime varNam(epochTime);
+// This converts an epoch time (unix time) into a ISO8601 formatted string
+// It assumes the supplied date/time is in the LOGGER's timezone
+String ntpHelper::formatDateTime_ISO8601(uint32_t epochTimeTz) {
+    // Create a DateTime object from the epochTime
+    DateTimeClass(dtTz, epochTimeTz);
+    return formatDateTime_ISO8601(dtTz);
 }

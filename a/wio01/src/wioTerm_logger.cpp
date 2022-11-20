@@ -66,10 +66,11 @@ const char password[] = "Arthur8166";//"your-passowrd"; // add your own netywork
 #endif // RADIO_WIFI
 
 RTC_SAMD51 rtcPhy; // Wio Terminal 
+DateTime now_dt, bootTime_dt ; // time object
 
 millisDelay updateDelay; //ntp periodic update.
 
-DateTime now_dt, bootTime_dt ; // time object
+
 
 
 // localtime
@@ -190,6 +191,7 @@ bool firstPass=true;
 void loop() {
     //#define TMPBUF_SZ 37
     //char tmpBuf[TMPBUF_SZ];
+    String timeNow;
 
     if (updateDelay.justFinished() || firstPass) { // delay loop
         Serial.println();
@@ -218,12 +220,15 @@ void loop() {
             now_dt = zero_sleep_rtc.getEpoch();
 #endif //RADIO_WIFI
             Serial.print(" time is: ");
-            Serial.print(now_dt.timestamp(DateTime::TIMESTAMP_FULL));
+            timeNow = now_dt.timestamp(DateTime::TIMESTAMP_FULL) + "-08:00";
+            Serial.print(timeNow);
+            Serial.print(" ");
+            Serial.print(ntph.formatDateTime_ISO8601(now_dt));
             readData();
 
             ui_display.update3(now_dt.timestamp(DateTime::TIMESTAMP_FULL).c_str(),temperature_reading,humidity_reading,light_reading_raw );
         }
-        ntph.sendDataTuple(readings_cnt);
+        ntph.sendDataTuple(readings_cnt,timeNow);
         if (firstPass) {
             firstPass = false;
         } else {
