@@ -112,33 +112,13 @@ int HTTPClientMmw::sendRequestMmw(const char * type, uint8_t * payload, size_t s
 
         // send Payload if needed
         if(payload && size_payload > 0) {
-            // Send in chunks of HTTP_TCP_BUFFER_SIZE bytes            
-            String post_all(_headers.length()+size_payload+4);
-            post_all = _headers;
-           // log_d("Headers %d >>%s<<end",post_all.length(), post_all.c_str());
-            post_all.concat((const char *)payload);
-            post_all.concat("\r\n");
-            //log_d("post_all %d >>%s<<end",post_all.length(), post_all.c_str());
-
-            size_t resp_wr = _client->write((const uint8_t *) post_all.c_str(), post_all.length()) ;
-            if (post_all.length() != resp_wr ) {
-                log_d("failed to POST all buffer %d/%d\n",resp_wr, post_all.length());
-            } /* */
-
-            #if 0
+            // Send in chunks of HTTP_TCP_BUFFER_SIZE bytes  
             for (size_t pos = 0; pos < size_payload; pos += HTTP_TCP_BUFFER_SIZE) {
                 size_t to_write = min(HTTP_TCP_BUFFER_SIZE, size_payload - pos);
                 if(_client->write(&payload[pos], to_write) != to_write) {
                     return returnError(HTTPC_ERROR_SEND_PAYLOAD_FAILED);
                 }
-            }
-            #endif //0
-            
-            //limit log_d size
-            /*if ( (post_all.length()<499)) {
-                //log_d limitations
-                log_d("post_all %d >>%s<<end",post_all.length(), post_all.c_str());
-            }/**/
+            }         
         }
 
         code = handleHeaderResponse();
@@ -397,8 +377,5 @@ bool HTTPClientMmw::sendHeaderMmw(const char * type)
 */
     header1 += _headers;
     _headers = header1;
-    // This may be too big for log_d
-    //log_d("Header%d>>\n\r%s\n\r<<end",header1.length(), header1.c_str());
-    //return (_client->write((const uint8_t *) header1.c_str(), header1.length()) == header1.length());
-    return (true);
+    return (_client->write((const uint8_t *) header1.c_str(), header1.length()) == header1.length());
 }

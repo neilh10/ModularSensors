@@ -157,16 +157,8 @@ bool ntpHelper::sendDataTuple(size_t seq_cnt) {
         // configure traged server and url
         String dest_http;
         dest_http = "monitormywatershed.org"; //Connects to server with no http://
-        //dest_http = "10.66.66.185"; //test01u
-        //dest_http = "test01u";
         http.begin(dest_http,80,"/api/data-stream/"); //HTTP
-        //http.begin(dest_http+":1880"); //HTTP
-#if 0
-const char* remotePostIp =  "10.66.66.185";
-const uint16_t remotePostPort =  1880;
-const char* remotePostUri =  "/api/data-stream/";
-        http.begin(remotePostIp,remotePostPort,remotePostUri); //HTTP
-#endif //10.66.66.185
+
         String mmwTest;
 
         //test08
