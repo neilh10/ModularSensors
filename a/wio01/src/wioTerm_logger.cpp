@@ -185,6 +185,12 @@ void setup() {
     Serial.println(UPDATE_MINUTES);
     updateDelay.start(UPDATE_MINUTES*60* 1000); // Firstupdate time via ntp
 
+    Serial.print(" https://monitormywatershed.org/sites/tu_rc_test08/ begin...\n");
+    ntph.addToken("0cf7c40a-232e-457d-87d6-cea5c0757fec"); //Test08
+    ntph.addSamplingFeature("236c674b-69b9-43af-b0d6-33d67b870ecc");//Test08
+         
+    //ntph.addToken("8a297ae4-995e-47e5-af03-3faa6a89d79e",false,false); //Test03
+    //ntph.addSamplingFeature("12a82902-e312-445a-b607-328a6d4aaa87"); //test03
 }
 
 bool firstPass=true;
