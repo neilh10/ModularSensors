@@ -179,18 +179,19 @@ void setup() {
 
     // start millisdelays timers as required, adjust to suit requirements
     //updateDelay.start(12 * 60 * 60 * 1000); // update time via ntp every 12 hrs
-    #define UPDATE_MINUTES 0.1
+    #define UPDATE_MINUTES 0.5
     Serial.print("Update every mins: ");
     Serial.println(UPDATE_MINUTES);
     updateDelay.start(UPDATE_MINUTES*60* 1000); // Firstupdate time via ntp
 
 }
 
+bool firstPass=true;
 void loop() {
     //#define TMPBUF_SZ 37
     //char tmpBuf[TMPBUF_SZ];
 
-    if (updateDelay.justFinished()) { // delay loop
+    if (updateDelay.justFinished() || firstPass) { // delay loop
         Serial.println();
         Serial.print(++readings_cnt);
         Serial.print(":");
@@ -222,8 +223,12 @@ void loop() {
 
             ui_display.update3(now_dt.timestamp(DateTime::TIMESTAMP_FULL).c_str(),temperature_reading,humidity_reading,light_reading_raw );
         }
-        ntph.sendDataTuple();
+        ntph.sendDataTuple(readings_cnt);
+        if (firstPass) {
+            firstPass = false;
+        } else {
         updateDelay.repeat(); // timer
+        }
     }
 }
 

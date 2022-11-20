@@ -139,7 +139,7 @@ unsigned long ntpHelper::sendNTPpacket(const char* address) {
 
 #include "HTTPClientMmw.h"
 #define USE_SERIAL Serial
-bool ntpHelper::sendDataTuple() {
+bool ntpHelper::sendDataTuple(size_t seq_cnt) {
     bool retStatus=false;
 
     if((WiFi.status() == WL_CONNECTED)) {
@@ -170,7 +170,7 @@ const char* remotePostUri =  "/api/data-stream/";
         String mmwTest;
 
         //test08
-        mmwTest = "{\"sampling_feature\":\"236c674b-69b9-43af-b0d6-33d67b870ecc\",\"timestamp\":\"2022-11-11T10:10:10-08:00\",\"8c57835f-a32f-4d62-82dc-0ba09f04cf52\":1,\"3bebd4a3-8b54-4f92-ba55-5fd2fd021358\":3.987,\"03e7b375-97a7-4423-a3f0-1d822d8b19b9\":17.37,\"43bcda9b-2973-4639-af2c-f0b6bb3fa44b\":0.2358,\"08646cc3-c5de-414c-af65-c795b2dcac24\":50.04,\"8849814d-1603-4a2f-861f-f31ae68cccf3\":19.88,\"7182846e-46e0-4a10-b110-9bc32de4aca9\":-25}";
+        mmwTest = "{\"sampling_feature\":\"236c674b-69b9-43af-b0d6-33d67b870ecc\",\"timestamp\":\"2022-11-19T10:10:10-08:00\",\"8c57835f-a32f-4d62-82dc-0ba09f04cf52\":1,\"3bebd4a3-8b54-4f92-ba55-5fd2fd021358\":3.987,\"03e7b375-97a7-4423-a3f0-1d822d8b19b9\":17.37,\"43bcda9b-2973-4639-af2c-f0b6bb3fa44b\":0.2358,\"08646cc3-c5de-414c-af65-c795b2dcac24\":50.04,\"8849814d-1603-4a2f-861f-f31ae68cccf3\":19.88,\"7182846e-46e0-4a10-b110-9bc32de4aca9\":-25}";
  
 
         //test03

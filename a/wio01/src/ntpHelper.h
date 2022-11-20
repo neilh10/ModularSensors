@@ -17,7 +17,7 @@ public:
      bool connectToWiFi(const char* ssid, const char* pwd);
      void printWifiStatus();
      unsigned long getNTPtime();
-     bool sendDataTuple();
+     bool sendDataTuple(size_t seq_cnt=1);
          //WiFiClient& getStream(void);
 
 //#define byte char

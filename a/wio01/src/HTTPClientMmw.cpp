@@ -95,10 +95,10 @@ int HTTPClientMmw::sendRequestMmw(const char * type, uint8_t * payload, size_t s
 
 
         if(payload && size_payload > 0) {
-            //addHeader(F("\n\rTOKEN"), "8a297ae4-995e-47e5-af03-3faa6a89d79e",false,false); //Test03
-            addHeader(F("\n\rTOKEN"), "0cf7c40a-232e-457d-87d6-cea5c0757fec",false,false); //Test08
+            //addHeader(F("\r\nTOKEN"), "8a297ae4-995e-47e5-af03-3faa6a89d79e",false,false); //Test03
+            addHeader(F("\r\nTOKEN"), "0cf7c40a-232e-457d-87d6-cea5c0757fec",false,false); //Test08
             addHeader(F("Content-Length"), String(size_payload),false,false);
-            addHeader(F("Content-Type"), "application/json",false,false);
+            addHeader(F("Content-Type"), "application/json\r\n",false,false);
             log_d("created header\n");
         } else {
             Serial.println("payload invalid");
@@ -106,22 +106,38 @@ int HTTPClientMmw::sendRequestMmw(const char * type, uint8_t * payload, size_t s
 
         // send Header
         if(!sendHeaderMmw(type)) {
+            log_d("sendHeaderMMw failed\n");
             return returnError(HTTPC_ERROR_SEND_HEADER_FAILED);
         }
 
         // send Payload if needed
         if(payload && size_payload > 0) {
             // Send in chunks of HTTP_TCP_BUFFER_SIZE bytes            
+            String post_all(_headers.length()+size_payload+4);
+            post_all = _headers;
+           // log_d("Headers %d >>%s<<end",post_all.length(), post_all.c_str());
+            post_all.concat((const char *)payload);
+            post_all.concat("\r\n");
+            //log_d("post_all %d >>%s<<end",post_all.length(), post_all.c_str());
+
+            size_t resp_wr = _client->write((const uint8_t *) post_all.c_str(), post_all.length()) ;
+            if (post_all.length() != resp_wr ) {
+                log_d("failed to POST all buffer %d/%d\n",resp_wr, post_all.length());
+            } /* */
+
+            #if 0
             for (size_t pos = 0; pos < size_payload; pos += HTTP_TCP_BUFFER_SIZE) {
                 size_t to_write = min(HTTP_TCP_BUFFER_SIZE, size_payload - pos);
                 if(_client->write(&payload[pos], to_write) != to_write) {
                     return returnError(HTTPC_ERROR_SEND_PAYLOAD_FAILED);
                 }
             }
-            log_d(">>\n\r%s", _headers.c_str() );
-            if ( (size_payload<499)) {
+            #endif //0
+            
+            //limit log_d size
+            /*if ( (post_all.length()<499)) {
                 //log_d limitations
-                log_d("\n\r%s\n\r<<",payload);
+                log_d("post_all %d >>%s<<end",post_all.length(), post_all.c_str());
             }/**/
         }
 
@@ -380,7 +396,9 @@ bool HTTPClientMmw::sendHeaderMmw(const char * type)
     }
 */
     header1 += _headers;
+    _headers = header1;
     // This may be too big for log_d
     //log_d("Header%d>>\n\r%s\n\r<<end",header1.length(), header1.c_str());
-    return (_client->write((const uint8_t *) header1.c_str(), header1.length()) == header1.length());
+    //return (_client->write((const uint8_t *) header1.c_str(), header1.length()) == header1.length());
+    return (true);
 }
