@@ -376,6 +376,5 @@ bool HTTPClientMmw::sendHeaderMmw(const char * type)
     }
 */
     header1 += _headers;
-    _headers = header1;
     return (_client->write((const uint8_t *) header1.c_str(), header1.length()) == header1.length());
 }

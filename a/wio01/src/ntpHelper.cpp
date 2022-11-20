@@ -146,35 +146,33 @@ bool ntpHelper::sendDataTuple(size_t seq_cnt,String timeNow) {
 
         HTTPClientMmw  http;
         int httpCode;
-#define TCP_CONNECT_TIMEOUT_MS   5000
-#define TCP_RESPONSE_TIMEOUT_MS 10000
-        USE_SERIAL.print("Timeouts connect/response ");
-        USE_SERIAL.print(TCP_CONNECT_TIMEOUT_MS);
-        USE_SERIAL.println(TCP_RESPONSE_TIMEOUT_MS);
-        http.setConnectTimeout(TCP_CONNECT_TIMEOUT_MS); //default 2000mSIn seconds tv.tv_usec = timeout * 1000;
-        http.setTimeout(TCP_RESPONSE_TIMEOUT_MS);      //mS _client->setTimeout((_tcpTimeout + 500) / 1000);
-        USE_SERIAL.print(" tu_rcru_test03 [HTTP] begin...\n");
-        // configure traged server and url
-        String dest_http;
-        dest_http = "monitormywatershed.org"; //Connects to server with no http://
-        http.begin(dest_http,80,"/api/data-stream/"); //HTTP
-
         String mmwTest;
         char intStr[10];
         itoa(seq_cnt,intStr,10);
         String seq_num_str = String(intStr);
 
+        USE_SERIAL.print(" https://monitormywatershed.org/sites/tu_rc_test08/ begin...\n");
         //test08
         //mmwTest = "{\"sampling_feature\":\"236c674b-69b9-43af-b0d6-33d67b870ecc\",\"timestamp\":\"2022-11-19T10:10:10-08:00\",\"8c57835f-a32f-4d62-82dc-0ba09f04cf52\":1,\"3bebd4a3-8b54-4f92-ba55-5fd2fd021358\":3.987,\"03e7b375-97a7-4423-a3f0-1d822d8b19b9\":17.37,\"43bcda9b-2973-4639-af2c-f0b6bb3fa44b\":0.2358,\"08646cc3-c5de-414c-af65-c795b2dcac24\":50.04,\"8849814d-1603-4a2f-861f-f31ae68cccf3\":19.88,\"7182846e-46e0-4a10-b110-9bc32de4aca9\":-25}";
         mmwTest = "{\"sampling_feature\":\"236c674b-69b9-43af-b0d6-33d67b870ecc\",\"timestamp\":\""+timeNow+"\",\"8c57835f-a32f-4d62-82dc-0ba09f04cf52\":"+seq_num_str+",\"3bebd4a3-8b54-4f92-ba55-5fd2fd021358\":3.987,\"03e7b375-97a7-4423-a3f0-1d822d8b19b9\":17.37,\"43bcda9b-2973-4639-af2c-f0b6bb3fa44b\":0.2358,\"08646cc3-c5de-414c-af65-c795b2dcac24\":50.04,\"8849814d-1603-4a2f-861f-f31ae68cccf3\":19.88,\"7182846e-46e0-4a10-b110-9bc32de4aca9\":-25}";
  
- 
-
-        //test03
+         //test03
         //mmwTest = "{\"sampling_feature\":\"12a82902-e312-445a-b607-328a6d4aaa87\",\"timestamp\":\"2022-10-19T03:04:00-08:00\",\"f9f90ef7-745a-44e8-9525-a373b59c28e0\":516,\"c2c6407b-03db-45c4-a736-2cfd0b212b22\":4.063,\"8267249c-614d-4bdf-b161-257ef69b2ee9\":10.54,\"84ce98bc-8a6d-48f0-9d8c-e53c00874dae\":0.0504,\"78a6da23-53d1-48d3-b286-f038fcf94572\":56.39,\"f964780d-87f0-443e-abbc-6089b6deafaf\":10.80,\"c467201d-6abe-4b5a-bde7-9551e0b34bd1\":-69}";
         //USE_SERIAL.print("[HTTP] POST=");
 
+#define TCP_CONNECT_TIMEOUT_MS   5000
+#define TCP_RESPONSE_TIMEOUT_MS 10000
+        USE_SERIAL.print("Timeouts connect/response ");
+        USE_SERIAL.print(TCP_CONNECT_TIMEOUT_MS);
+        USE_SERIAL.print(" / ");
+        USE_SERIAL.println(TCP_RESPONSE_TIMEOUT_MS);
+        http.setConnectTimeout(TCP_CONNECT_TIMEOUT_MS); //default 2000mSIn seconds tv.tv_usec = timeout * 1000;
+        http.setTimeout(TCP_RESPONSE_TIMEOUT_MS);      //mS _client->setTimeout((_tcpTimeout + 500) / 1000);
 
+        // configure traged server and url
+        String dest_http;
+        dest_http = "monitormywatershed.org"; //Connects to server with no http://
+        http.begin(dest_http,80,"/api/data-stream/"); //HTTP
 
         httpCode = http.POSTmmw(mmwTest);
         if(httpCode > 0) {
@@ -214,38 +212,3 @@ void  ntpHelper::printWifiStatus() {
     Serial.println("");
 }
 
-// This converts a date-time object into a ISO8601 formatted string
-// It assumes the supplied date/time is in the LOGGER's timezone and adds
-// the LOGGER's offset as the time zone offset in the string.
-String ntpHelper::formatDateTime_ISO8601(DateTime& dt) {
-    // Set up an inital string
-    String dateTimeStr;
-    // Convert the DateTime object to a String
-    dt.addToString(dateTimeStr);
-    dateTimeStr.replace(" ", "T");
-    auto tzString = String(_loggerTimeZone);
-    if (-24 <= _loggerTimeZone && _loggerTimeZone <= -10) {
-        tzString += F(":00");
-    } else if (-10 < _loggerTimeZone && _loggerTimeZone < 0) {
-        tzString = tzString.substring(0, 1) + '0' + tzString.substring(1, 2) +
-            F(":00");
-    } else if (_loggerTimeZone == 0) {
-        tzString = 'Z';
-    } else if (0 < _loggerTimeZone && _loggerTimeZone < 10) {
-        tzString = "+0" + tzString + F(":00");
-    } else if (10 <= _loggerTimeZone && _loggerTimeZone <= 24) {
-        tzString = "+" + tzString + F(":00");
-    }
-    dateTimeStr += tzString;
-    return dateTimeStr;
-}
-
-//SAMD variant
-#define DateTimeClass(varNam, epochTime) DateTime varNam(epochTime);
-// This converts an epoch time (unix time) into a ISO8601 formatted string
-// It assumes the supplied date/time is in the LOGGER's timezone
-String ntpHelper::formatDateTime_ISO8601(uint32_t epochTimeTz) {
-    // Create a DateTime object from the epochTime
-    DateTimeClass(dtTz, epochTimeTz);
-    return formatDateTime_ISO8601(dtTz);
-}

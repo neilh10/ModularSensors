@@ -20,9 +20,7 @@ public:
      unsigned long getNTPtime();
      bool sendDataTuple(size_t seq_cnt,String timeNow="none" );
          //WiFiClient& getStream(void);
-    String formatDateTime_ISO8601(DateTime& dt);
-    String formatDateTime_ISO8601(uint32_t epochTimeTz);
-//#define byte char
+
 uint8_t packetBuffer[NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing packets
 int8_t _loggerTimeZone = -8;
 

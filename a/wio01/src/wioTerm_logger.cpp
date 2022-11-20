@@ -221,9 +221,7 @@ void loop() {
 #endif //RADIO_WIFI
             Serial.print(" time is: ");
             timeNow = now_dt.timestamp(DateTime::TIMESTAMP_FULL) + "-08:00";
-            Serial.print(timeNow);
-            Serial.print(" ");
-            Serial.print(ntph.formatDateTime_ISO8601(now_dt));
+            Serial.println(timeNow);
             readData();
 
             ui_display.update3(now_dt.timestamp(DateTime::TIMESTAMP_FULL).c_str(),temperature_reading,humidity_reading,light_reading_raw );
