@@ -473,7 +473,7 @@ uint32_t loggerModem::parseNISTBytes(byte nistBytes[4]) {
         MS_DBG(F("Invalid Time less than :"), EPOCH_LOWER_RANGE_SEC);
         return 0;
     } else if (unixTimeStamp > EPOCH_UPPER_RANGE_SEC) {
-        MS_DBG(F("Invalid Time greater than :"), EPOCH_UPPER_RANGE_SEC);
+        MS_DBG(F("Invalid Time greater than :"), (uint32_t) EPOCH_UPPER_RANGE_SEC);
         return 0;
     } else {
         return unixTimeStamp;

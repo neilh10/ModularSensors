@@ -190,6 +190,15 @@
 #include <StreamDebugger.h>
 #endif
 
+
+const unsigned int localPort = 2390;      // local port to listen for UDP packets
+#ifdef USELOCALNTP
+    char timeServer[] = "n.n.n.n"; // local NTP server 
+#else
+    const char timeServer[] = "time.nist.gov"; // extenral NTP server e.g. time.nist.gov
+#endif
+const int NTP_PACKET_SIZE = 48; // NTP time stamp is in the first 48 bytes of the message
+
 /**
  * @brief The loggerModem subclass for any breakout of the
  * [Espressif rpcWifiRTL8720](@ref modem_rpcWifiRTL8720) wifi chip or ESP32 wifi/bluetooth
@@ -240,10 +249,12 @@ class WioTerminal_rpcwifi : public loggerModem {
     bool modemWake(void) override;
 
     bool connectInternet(uint32_t maxConnectionTime = 50000L) override;
+    void printStatus(); 
     void disconnectInternet(void) override;
 
     uint32_t getNISTTime(void) override;
-
+    unsigned long sendNTPpacket(const char* address);
+    uint8_t packetBuffer[NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing packets
     bool  getModemSignalQuality(int16_t& rssi, int16_t& percent) override;
     bool  getModemBatteryStats(uint8_t& chargeState, int8_t& percent,
                                uint16_t& milliVolts) override;

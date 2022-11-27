@@ -119,8 +119,8 @@ const int8_t modemSleepRqPin = -1;//modemSleepRqPin_DEF;    // MCU pin for modem
 const int8_t espSleepRqPin = -1;  // ESP8266 light sleep request
 const int8_t espStatusPin = -1;   // ESP8266 light sleep status
 // Network connection information
-const char* wifi_ssid  = "xxxxx";  // The WiFi access point
-const char* wifi_pwd = "xxxxx";  // The password for connecting to WiFi
+const char* wifi_ssid  = "ArthurGuestSsid";  // The WiFi access point
+const char* wifi_pwd = "Arthur8166";  // The password for connecting to WiFi
 
 // Create the loggerModem object
 
@@ -355,6 +355,8 @@ void setup() {
 
     // Start the primary serial connection
     Serial.begin(serialBaud);
+    while (!Serial); // debug wait for serial port to connect. Needed for native USB
+
 
     // Print a start-up note to the first serial port
     Serial.print(F("\n---Boot("));
@@ -403,7 +405,7 @@ void setup() {
     Logger::setRTCTimeZone(0);
 
     // Attach the modem and information pins to the logger
-    // nh dataLogger.attachModem(modemPhy);
+    dataLogger.attachModem(modemPhy);
     //modemPhy.setModemLED(modemLEDPin);
     dataLogger.setLoggerPins(wakePin, sdCardSSPin, sdCardPwrPin, buttonPin,
                              greenLED);
@@ -423,10 +425,11 @@ void setup() {
     }
 
     // Sync the clock if it isn't valid or we have battery to spare
-    if (/*getBatteryVoltage() > 3.55 ||*/ !dataLogger.isRTCSane()) 
+    if (1)///*getBatteryVoltage() > 3.55 ||*/ !dataLogger.isRTCSane()) 
     {
         // Synchronize the RTC with NIST
         // This will also set up the modem
+        Serial.println(F("Synchronize the RTC with NIST"));
         dataLogger.syncRTC();
     }
 
