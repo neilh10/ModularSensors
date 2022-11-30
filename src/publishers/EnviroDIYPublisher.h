@@ -138,7 +138,7 @@ class EnviroDIYPublisher : public dataPublisher {
 
     // Returns the data destination
     String getEndpoint(void) override {
-        return String(_enviroDIYHost);
+        return String(_enviroDIYHost)+':'+String(enviroDIYPort);
     }
 
     // Adds the site registration token
@@ -247,7 +247,7 @@ class EnviroDIYPublisher : public dataPublisher {
  private:
     // Tokens and UUID's for EnviroDIY
     const char* _registrationToken = nullptr;
-    const char* _enviroDIYHost     = nullptr;
+    const char* _enviroDIYHost     = enviroDIYHostDef;
     //FUT: int   _enviroDIYPort;
 
  public:

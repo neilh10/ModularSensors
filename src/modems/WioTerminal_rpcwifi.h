@@ -183,7 +183,7 @@
 // Included Dependencies
 #include "ModSensorDebugger.h"
 #undef MS_DEBUGGING_STD
-//#include "TinyGsmClient.h"
+#include "WiFiClient.h"
 #include "LoggerModem.h"
 
 #ifdef MS_WIOTERMINAL_RPCWIFI_DEBUG_DEEP
@@ -265,13 +265,13 @@ class WioTerminal_rpcwifi : public loggerModem {
 #endif
 
     /**
-     * @brief Public reference to the TinyGSM modem.
+     * @brief Public reference to the modem
      */
-    //TinyGsm gsmModem;
+    //WiFiClient endClient;
     /**
-     * @brief Public reference to the TinyGSM Client.
+     * @brief Public reference to the embedded modem WiFi Client.
      */
-    //TinyGsmClient gsmClient;
+    WiFiClient endClient;
 
     /**
      * @brief A pointer to the Arduino serial Stream used for communication

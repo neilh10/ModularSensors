@@ -174,10 +174,12 @@ int16_t EnviroDIYPublisher::publishData(Client* outClient) {
     if (bufferSz < (MS_SEND_BUFFER_SIZE - 50)) printTxBuffer(outClient);
 
     // Open a TCP/IP connection to the Enviro DIY Data Portal (WebSDL)
-    MS_DBG(F("Connecting client. Timer (mS)"));
+const int32_t CONNECT_TIMEOUT_SEC =7;
+    MS_DBG(F("Connecting client. Timer(sec)"), CONNECT_TIMEOUT_SEC);
     MS_START_DEBUG_TIMER;
-    if (outClient->connect(_enviroDIYHost, enviroDIYPort)) {
-        MS_DBG(F("Client connected after"), MS_PRINT_DEBUG_TIMER, F("ms"));
+    outClient->setTimeout(CONNECT_TIMEOUT_SEC);
+    if (outClient->connect(_enviroDIYHost, (uint16_t)enviroDIYPort) ) {
+        MS_DBG(F("Client connected after"), MS_PRINT_DEBUG_TIMER, F("ms to "),_enviroDIYHost,':',enviroDIYPort);
 
         mmwPostHeader(tempBuffer);
         if (useQueDataSource) {

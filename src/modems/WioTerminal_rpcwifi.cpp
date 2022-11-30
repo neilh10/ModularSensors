@@ -12,7 +12,6 @@
 #include "WioTerminal_rpcwifi.h"
 //#include "LoggerModemMacros.h" NOT used, uniquely created in this file 
 #include <rpcWiFi.h>
-#include <HTTPClient.h>
 
 // Constructor
 WioTerminal_rpcwifi::WioTerminal_rpcwifi(/*Stream* modemStream,*/ 
