@@ -14,7 +14,7 @@
 WiFiClient client;
 
 //The udp library class
-WiFiUDP udp;
+WiFiUDP udpTime;
 
 //ntpHelper::ntpHelper() {}
 //ntpHelper::~ntpHelper() {}
@@ -58,18 +58,18 @@ unsigned long ntpHelper::getNTPtime() {
 
     //only send data when connected
     if (WiFi.status() == WL_CONNECTED) {
-        //initializes the UDP state
+        //initializes the udpTime state
         //This initializes the transfer buffer
-        udp.begin(WiFi.localIP(), localPort);
+        udpTime.begin(WiFi.localIP(), localPort);
 
         sendNTPpacket(timeServer); // send an NTP packet to a time server
         // wait to see if a reply is available
         delay(1000);
-        if (udp.parsePacket()) {
+        if (udpTime.parsePacket()) {
             Serial.println("udp packet received");
             Serial.println("");
             // We've received a packet, read the data from it
-            udp.read(packetBuffer, NTP_PACKET_SIZE); // read the packet into the buffer
+            udpTime.read(packetBuffer, NTP_PACKET_SIZE); // read the packet into the buffer
 
             //the timestamp starts at byte 40 of the received packet and is four bytes,
             // or two words, long. First, extract the two words:
@@ -98,13 +98,13 @@ unsigned long ntpHelper::getNTPtime() {
 #endif
         }
         else {
-            // were not able to parse the udp packet successfully
+            // were not able to parse the udpTime packet successfully
             // clear down the udp connection
-            udp.stop();
+            udpTime.stop();
             return 0; // zero indicates a failure
         }
         // not calling ntp time frequently, stop releases resources
-        udp.stop();
+        udpTime.stop();
     }
     else {
         // network not connected
@@ -132,9 +132,9 @@ unsigned long ntpHelper::sendNTPpacket(const char* address) {
 
     // all NTP fields have been given values, now
     // you can send a packet requesting a timestamp:
-    udp.beginPacket(address, 123); //NTP requests are to port 123
-    udp.write(packetBuffer, NTP_PACKET_SIZE);
-    return udp.endPacket();
+    udpTime.beginPacket(address, 123); //NTP requests are to port 123
+    udpTime.write(packetBuffer, NTP_PACKET_SIZE);
+    return udpTime.endPacket();
 }
 
 #include "HTTPClientMmw.h"
