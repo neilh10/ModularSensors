@@ -431,8 +431,9 @@ void setup() {
     EnviroDIYPOST.setQuedState(true);
     EnviroDIYPOST.setTimerPostTimeout_mS(5432); //5.4Sec
     EnviroDIYPOST.setTimerPostPacing_mS(500);
+    dataLogger.setLoggingInterval(1); //Set every minute, default 5min
     //dataLogger.setSendQueSz_num(ps_ram.app.msn.s.sendQueSz_num); 
-    //dataLogger.setSendEveryX(ps_ram.app.msn.s.collectReadings_num);
+    dataLogger.setSendEveryX(1); //Default 2
     //dataLogger.setSendOffset(ps_ram.app.msn.s.sendOffset_min);  // delay Minutes
     //dataLogger.setPostMax_num(ps_ram.app.msn.s.postMax_num); 
 
@@ -446,7 +447,7 @@ void setup() {
     }
 
     // Sync the clock if it isn't valid or we have battery to spare
-    if (1)///*getBatteryVoltage() > 3.55 ||*/ !dataLogger.isRTCSane()) 
+    if (0)///*getBatteryVoltage() > 3.55 ||*/ !dataLogger.isRTCSane()) 
     {
         // Synchronize the RTC with NIST
         // This will also set up the modem
@@ -472,10 +473,10 @@ void setup() {
     //dataLogger.setSendOffset=0;
     dataLogger._sendEveryX_cnt=1;
     //dataLogger.setPostMax_num(100);
-    dataLogger.logDataAndPubReliably(0x3);
+    //dataLogger.logDataAndPubReliably(0x3);
     // Call the processor sleep
     Serial.println(F("Putting processor to sleep\n"));
-    delay(1000);
+    delay(100);
     dataLogger.systemSleep();
 }
 /** End [setup] */
@@ -489,7 +490,7 @@ void setup() {
 void loop() {
     // Note:  primitive but take a guess and set voltages
     // For hardware always take one reading and reference that  can change each time read
-    float battery_V = getBatteryVoltage() ;
+    float battery_V = 4.123;//nh dbg getBatteryVoltage() ;
     // At very low battery, just go back to sleep
     Serial.print(F("BatteryVoltage="));
     Serial.print(battery_V);

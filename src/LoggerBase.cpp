@@ -972,7 +972,6 @@ inline uint16_t dumpFreeRam(uint16_t maxCount)
 inline uint16_t dumpFreeRam(uint16_t maxCount) {return 0;}
 #endif //MS_DUMP_FREE_RAM
 #elif defined(ARDUINO_ARCH_SAMD)
-#define freeRamLb() "nu"
 extern "C" char* sbrk(int i);
 
 int16_t freeRamCalcLb() {
@@ -1040,21 +1039,34 @@ void Logger::systemSleep(uint8_t sleep_min) {
     targetWakeup_secs -= adjust_secs;
     MS_DBG("Setting alarm (", local_secs, "+", timeNow_secs, ") on RTC @",
            targetWakeup_secs, " ", formatDateTime_ISO8601(targetWakeup_secs),
-           " adj=", adjust_secs, " fm now=", timeNow_secs,
+           "\n  adj=", adjust_secs, " fm now=", timeNow_secs,
            " Awake=", timeNow_secs - wakeUpTime_secs);
+    /*MS_DBG("Setting alarm (", local_secs, "+", timeNow_secs, ") on RTC @",
+           targetWakeup_secs, " ", formatDateTime_ISO8601(targetWakeup_secs),
+           " adj=", adjust_secs, " fm now=", timeNow_secs,
+           " Awake=", timeNow_secs - wakeUpTime_secs);   */
+//Enable for SAMD51 - slightly different than SAMD21
+
 #define RTC_ALM_ID 0
-    log_zero_sleep_rtc.setAlarm(RTC_ALM_ID,targetWakeup_secs);
+/*    log_zero_sleep_rtc.setAlarm(RTC_ALM_ID,(targetWakeup_secs));
+    log_zero_sleep_rtc.enableAlarm(RTC_ALM_ID,RTC_SAMD51::MATCH_HHMMSS);
+    log_zero_sleep_rtc.attachInterrupt(alarmMatch);*/
+    DateTime timeNow = log_zero_sleep_rtc.now();   
+    DateTime timeAlm = log_zero_sleep_rtc.alarm(RTC_ALM_ID);   
+    PRINTOUT("  now   DDHHMMSS ",timeNow.day(),timeNow.hour(),timeNow.minute(),timeNow.second());
+    PRINTOUT("  alarm DDHHMMSS ",timeAlm.day(),timeAlm.hour(),timeAlm.minute(),timeAlm.second());
+
 #define zsr log_zero_sleep_rtc
     /*MS_DBG("Alm:", zsr.getAlarmYear(), zsr.getAlarmMonth(), zsr.getAlarmDay(),
            "-", zsr.getAlarmHours(), ":", zsr.getAlarmMinutes(), ":",
            zsr.getAlarmSeconds());*/
     // Assume max is an hour - need to revisit
-    log_zero_sleep_rtc.enableAlarm(RTC_ALM_ID,log_zero_sleep_rtc.MATCH_MMSS);
+    //log_zero_sleep_rtc.enableAlarm(RTC_ALM_ID,log_zero_sleep_rtc.MATCH_MMSS);
 #endif
-
+    delay(100); //Debug output
     // Send one last message before shutting down serial ports
-    PRINTOUT(F("Going to sleep. Ram("),freeRamLb(),F("/"),freeRamCnt(),F(")  ZZzzz..."));
-
+    PRINTOUT(F("Going to sleep. Ram("),freeRamCalcLb(),F("/"),freeRamCnt(),F(")  ZZzzz..."));
+    //delay(200); //Debug output
 // Wait until the serial ports have finished transmitting
 // This does not clear their buffers, it just waits until they are finished
 // TODO(SRGDamia1):  Make sure can find all serial ports
@@ -1064,7 +1076,7 @@ void Logger::systemSleep(uint8_t sleep_min) {
 #if defined DEBUGGING_SERIAL_OUTPUT
     DEBUGGING_SERIAL_OUTPUT.flush();  // for debugging
 #endif
-
+    delay(100); //Debug output
     // Stop any I2C connections
     // This function actually disables the two-wire pin functionality and
     // turns off the internal pull-up resistors.
@@ -1097,12 +1109,22 @@ void Logger::systemSleep(uint8_t sleep_min) {
 #ifndef USE_TINYUSB
     USBDevice.detach();
 #endif
-    restoreUSBDevice = true;
+    //nh dbg restoreUSBDevice = true;
+
+    //debug
+    timeNow_secs = log_zero_sleep_rtc.now().unixtime();
+    PRINTOUT("Wake1 in ",targetWakeup_secs-timeNow_secs);
+    delay(10);
     // }
     // Disable systick interrupt:  See
     // https://www.avrfreaks.net/forum/samd21-samd21e16b-sporadically-locks-and-does-not-wake-standby-sleep-mode
-    SysTick->CTRL &= ~SysTick_CTRL_TICKINT_Msk;
+    //nh dbg keep print going SysTick->CTRL &= ~SysTick_CTRL_TICKINT_Msk;
     // Now go to sleep
+    //However in with USB attached may not truly sleep.
+    //
+    bool sleeping=true;
+    do {
+
 #if defined(MS_LOGGERBASE_DEBUG) || defined(MS_LOGGERBASE_SLEEP_DEBUG)
     // Maintens MS_DEBUGGING_STD output, but current is 13mA/SAMD51
     SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
@@ -1125,6 +1147,18 @@ void Logger::systemSleep(uint8_t sleep_min) {
 #endif
     __DSB();
     __WFI();
+
+        timeNow_secs = log_zero_sleep_rtc.now().unixtime();
+        if (targetWakeup_secs <= timeNow_secs) 
+        {
+            sleeping =false;
+        } else {
+            Serial.print(" X"); //nh print here?
+            Serial.print((int32_t)targetWakeup_secs-(int32_t)timeNow_secs); //count 
+            delay(1000);
+        }
+
+    } while (sleeping);
 
 #elif defined ARDUINO_ARCH_AVR
 
@@ -1258,13 +1292,13 @@ void Logger::systemSleep(uint8_t sleep_min) {
     //disableInterrupt(_mcuWakePin); moved up disable
 
 #elif defined ARDUINO_ARCH_SAMD
-    log_zero_sleep_rtc.disableAlarm(RTC_ALM_ID);
+    // nh dbg log_zero_sleep_rtc.disableAlarm(RTC_ALM_ID);
 #endif
 
     // Wake-up message
     wakeUpTime_secs = getNowLocalEpoch();
-    PRINTOUT(F("\n... zzzZZ Awake @"), formatDateTime_ISO8601(wakeUpTime_secs));
-
+    PRINTOUT(F("\n... zzzZZ Awake @"), formatDateTime_ISO8601(wakeUpTime_secs),targetWakeup_secs, timeNow_secs);
+    delay(100);
     // The logger will now start the next function after the systemSleep
     // function in either the loop or setup
 }
@@ -1704,6 +1738,27 @@ void Logger::begin(VariableArray* inputArray) {
     setVariableArray(inputArray);
     begin();
 }
+
+// nh this needs to be invoked for some reaon
+void alarmMatch(uint32_t flag)
+{
+ 
+    Serial.print("Alarm Match! ");
+    DateTime now = log_zero_sleep_rtc.now();
+    Serial.print(now.year(), DEC);
+    Serial.print('/');
+    Serial.print(now.month(), DEC);
+    Serial.print('/');
+    Serial.print(now.day(), DEC);
+    Serial.print(" ");
+    Serial.print(now.hour(), DEC);
+    Serial.print(':');
+    Serial.print(now.minute(), DEC);
+    Serial.print(':');
+    Serial.print(now.second(), DEC);
+    Serial.println();
+}
+
 void Logger::begin() {
     MS_DBG(F("Logger ID is:"), _loggerID);
     MS_DBG(F("Logger is set to record at"), _loggingIntervalMinutes,
@@ -1862,6 +1917,15 @@ void Logger::begin() {
              formatDateTime_ISO8601(getNowUTCEpoch()));
     PRINTOUT(F("Current localized logger time is:"),
              formatDateTime_ISO8601(getNowLocalEpoch()));
+
+    //set an alarm to go off every 1minute, keeps time accurate.
+    DateTime now = zr.now();
+    DateTime alarm = DateTime(now.year(), now.month(), now.day(), now.hour(), now.minute(), 0 );
+    // The SAMD51 has two hardware alarms
+
+    zr.setAlarm(RTC_ALM_ID,alarm);
+    zr.attachInterrupt(alarmMatch);
+    zr.enableAlarm(RTC_ALM_ID, zr.MATCH_SS); // match Every minute 
 
     // Reset the watchdog
     watchDogTimer.resetWatchDog();
