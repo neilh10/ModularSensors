@@ -1011,7 +1011,7 @@ void Logger::systemSleep(uint8_t sleep_min) {
     // It will float high if not already there, and then be pulled low
     // on next match
     rtcExtPhy.clearINTStatus();
- 
+    PRINTOUT(F("Going to sleep. Ram("),freeRamLb(),F("/"),freeRamCnt(),F(")  ZZzzz..."));
 #elif defined ARDUINO_ARCH_SAMD
 
     // Make sure interrupts are enabled for the clock
@@ -1062,10 +1062,10 @@ void Logger::systemSleep(uint8_t sleep_min) {
            zsr.getAlarmSeconds());*/
     // Assume max is an hour - need to revisit
     //log_zero_sleep_rtc.enableAlarm(RTC_ALM_ID,log_zero_sleep_rtc.MATCH_MMSS);
-#endif
     delay(100); //Debug output
     // Send one last message before shutting down serial ports
     PRINTOUT(F("Going to sleep. Ram("),freeRamCalcLb(),F("/"),freeRamCnt(),F(")  ZZzzz..."));
+#endif
     //delay(200); //Debug output
 // Wait until the serial ports have finished transmitting
 // This does not clear their buffers, it just waits until they are finished
@@ -1297,7 +1297,11 @@ void Logger::systemSleep(uint8_t sleep_min) {
 
     // Wake-up message
     wakeUpTime_secs = getNowLocalEpoch();
-    PRINTOUT(F("\n... zzzZZ Awake @"), formatDateTime_ISO8601(wakeUpTime_secs),targetWakeup_secs, timeNow_secs);
+    PRINTOUT(F("\n... zzzZZ Awake @"), formatDateTime_ISO8601(wakeUpTime_secs)
+ #if defined ARDUINO_ARCH_SAMD   
+    ,targetWakeup_secs, timeNow_secs
+#endif
+    );
     delay(100);
     // The logger will now start the next function after the systemSleep
     // function in either the loop or setup
@@ -1739,6 +1743,7 @@ void Logger::begin(VariableArray* inputArray) {
     begin();
 }
 
+#if defined ARDUINO_ARCH_SAMD
 // nh this needs to be invoked for some reaon
 void alarmMatch(uint32_t flag)
 {
@@ -1758,6 +1763,7 @@ void alarmMatch(uint32_t flag)
     Serial.print(now.second(), DEC);
     Serial.println();
 }
+#endif // ARDUINO_ARCH_SAMD
 
 void Logger::begin() {
     MS_DBG(F("Logger ID is:"), _loggerID);
@@ -1918,6 +1924,7 @@ void Logger::begin() {
     PRINTOUT(F("Current localized logger time is:"),
              formatDateTime_ISO8601(getNowLocalEpoch()));
 
+#if defined ARDUINO_ARCH_SAMD
     //set an alarm to go off every 1minute, keeps time accurate.
     DateTime now = zr.now();
     DateTime alarm = DateTime(now.year(), now.month(), now.day(), now.hour(), now.minute(), 0 );
@@ -1926,6 +1933,7 @@ void Logger::begin() {
     zr.setAlarm(RTC_ALM_ID,alarm);
     zr.attachInterrupt(alarmMatch);
     zr.enableAlarm(RTC_ALM_ID, zr.MATCH_SS); // match Every minute 
+#endif // ARDUINO_ARCH_SAMD
 
     // Reset the watchdog
     watchDogTimer.resetWatchDog();
