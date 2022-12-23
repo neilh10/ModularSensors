@@ -398,5 +398,7 @@ class dataPublisher {
 #define HTTPSTATUS_NC_902 902
 // internal error, value dumped
 #define HTTPSTATUS_NC_903 903
+// internal error, value queued
+#define HTTPSTATUS_NC_904 904
 
 #endif  // SRC_DATAPUBLISHERBASE_H_
