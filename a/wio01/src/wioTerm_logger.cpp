@@ -1,5 +1,5 @@
 
-/* Status: Basic compile in ModularSensors directory - not callin MS
+/* Status: Basic compile in ModularSensors directory - not calling MS
 
  Name:		wioTerm_logger.cpp  from wioTerm_ntp.ino
  Sensors:
@@ -55,20 +55,22 @@ ntpHelper ntph;
 #endif //
 #include "uiHelper.h"
 
+extern const String build_ref = "a\\" __FILE__ " " __DATE__ " " __TIME__ " ";
 
 uiHelper ui_display;
 
 
 #if defined RADIO_WIFI
-const char ssid[] = "ArthurGuestSsid"; // add your required ssid
+const char ssid[] = "ArthurTest"; // add your required ssid
 const char password[] = "Arthur8166";//"your-passowrd"; // add your own netywork password
 #endif // RADIO_WIFI
 
 RTC_SAMD51 rtcPhy; // Wio Terminal 
+DateTime now_dt, bootTime_dt ; // time object
 
 millisDelay updateDelay; //ntp periodic update.
 
-DateTime now_dt, bootTime_dt ; // time object
+
 
 
 // localtime
@@ -112,6 +114,10 @@ void setup() {
     printFree();
     ui_display.begin();
     ui_display.fillscreen("Modular Sensors");
+
+    Serial.print(F("\n\n\r---Boot("));
+    Serial.print(F(") Sw Build: "));
+    Serial.println(build_ref);
 
     if (!rtcPhy.begin()) {
         Serial.println("Couldn't find RTC");
@@ -174,18 +180,26 @@ void setup() {
 
     // start millisdelays timers as required, adjust to suit requirements
     //updateDelay.start(12 * 60 * 60 * 1000); // update time via ntp every 12 hrs
-    #define UPDATE_MINUTES 0.1
+    #define UPDATE_MINUTES 0.5
     Serial.print("Update every mins: ");
     Serial.println(UPDATE_MINUTES);
     updateDelay.start(UPDATE_MINUTES*60* 1000); // Firstupdate time via ntp
 
+    Serial.print(" https://monitormywatershed.org/sites/tu_rc_test08/ begin...\n");
+    ntph.addToken("0cf7c40a-232e-457d-87d6-cea5c0757fec"); //Test08
+    ntph.addSamplingFeature("236c674b-69b9-43af-b0d6-33d67b870ecc");//Test08
+         
+    //ntph.addToken("8a297ae4-995e-47e5-af03-3faa6a89d79e",false,false); //Test03
+    //ntph.addSamplingFeature("12a82902-e312-445a-b607-328a6d4aaa87"); //test03
 }
 
+bool firstPass=true;
 void loop() {
     //#define TMPBUF_SZ 37
     //char tmpBuf[TMPBUF_SZ];
+    String timeNow;
 
-    if (updateDelay.justFinished()) { // delay loop
+    if (updateDelay.justFinished() || firstPass) { // delay loop
         Serial.println();
         Serial.print(++readings_cnt);
         Serial.print(":");
@@ -212,13 +226,18 @@ void loop() {
             now_dt = zero_sleep_rtc.getEpoch();
 #endif //RADIO_WIFI
             Serial.print(" time is: ");
-            Serial.print(now_dt.timestamp(DateTime::TIMESTAMP_FULL));
+            timeNow = now_dt.timestamp(DateTime::TIMESTAMP_FULL) + "-08:00";
+            Serial.println(timeNow);
             readData();
 
             ui_display.update3(now_dt.timestamp(DateTime::TIMESTAMP_FULL).c_str(),temperature_reading,humidity_reading,light_reading_raw );
         }
-        ntph.sendDataTuple();
+        ntph.sendDataTuple(readings_cnt,timeNow);
+        if (firstPass) {
+            firstPass = false;
+        } else {
         updateDelay.repeat(); // timer
+        }
     }
 }
 

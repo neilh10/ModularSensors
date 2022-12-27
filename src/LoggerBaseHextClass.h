@@ -170,9 +170,22 @@ void logDataAndPubReliably(uint8_t cia_val_override =0);
  *
  * @param internetPresent  true if an internet connection is present.
  *   For false store the readings for later transmission
- *
- *   Customized per type of sensor configuration
+ *   This reads from stored files
+ *   1) RDELAY.txt
+ *   2) QUE0.txt
+ *   For data in RDELAY.txt, an attempt is made to transmit each line,
+ *   if not sucessful then it is stored at the end of QUE0.txt
+ *   Once RDELAY.txt is complete, 
+ *   any readings in QUE0.txt are attempted,
+ * 
+ *   The format of he readings in the file are dependent on sensor configuration, 
+ *   so they maynot be compatible if the builds sensor configuration changes.
+ * 
+ *   The forwarding of RDELAY.txt to QUE0.txt is only up to specific thresholds
+ *   POST_MAX_NUM
+ *   RDELAY_FAILED_POSTS_THRESHOLD 
  */
+#define RDELAY_FAILED_POSTS_THRESHOLD 7
 void publishDataQuedToRemotes(bool internetPresent);
 
 /**

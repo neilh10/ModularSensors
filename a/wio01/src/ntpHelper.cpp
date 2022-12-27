@@ -14,7 +14,7 @@
 WiFiClient client;
 
 //The udp library class
-WiFiUDP udp;
+WiFiUDP udpTime;
 
 //ntpHelper::ntpHelper() {}
 //ntpHelper::~ntpHelper() {}
@@ -37,7 +37,7 @@ bool ntpHelper::connectToWiFi(const char* ssid, const char* pwd) {
             WiFi.disconnect(true);
             delay(500);
             WiFi.begin(ssid, pwd);
-            Serial.print("R\n\r");
+            Serial.println("Retry");
         } else {
             Serial.print(".");
         }
@@ -58,18 +58,18 @@ unsigned long ntpHelper::getNTPtime() {
 
     //only send data when connected
     if (WiFi.status() == WL_CONNECTED) {
-        //initializes the UDP state
+        //initializes the udpTime state
         //This initializes the transfer buffer
-        udp.begin(WiFi.localIP(), localPort);
+        udpTime.begin(WiFi.localIP(), localPort);
 
         sendNTPpacket(timeServer); // send an NTP packet to a time server
         // wait to see if a reply is available
         delay(1000);
-        if (udp.parsePacket()) {
+        if (udpTime.parsePacket()) {
             Serial.println("udp packet received");
             Serial.println("");
             // We've received a packet, read the data from it
-            udp.read(packetBuffer, NTP_PACKET_SIZE); // read the packet into the buffer
+            udpTime.read(packetBuffer, NTP_PACKET_SIZE); // read the packet into the buffer
 
             //the timestamp starts at byte 40 of the received packet and is four bytes,
             // or two words, long. First, extract the two words:
@@ -98,13 +98,13 @@ unsigned long ntpHelper::getNTPtime() {
 #endif
         }
         else {
-            // were not able to parse the udp packet successfully
+            // were not able to parse the udpTime packet successfully
             // clear down the udp connection
-            udp.stop();
+            udpTime.stop();
             return 0; // zero indicates a failure
         }
         // not calling ntp time frequently, stop releases resources
-        udp.stop();
+        udpTime.stop();
     }
     else {
         // network not connected
@@ -132,39 +132,50 @@ unsigned long ntpHelper::sendNTPpacket(const char* address) {
 
     // all NTP fields have been given values, now
     // you can send a packet requesting a timestamp:
-    udp.beginPacket(address, 123); //NTP requests are to port 123
-    udp.write(packetBuffer, NTP_PACKET_SIZE);
-    return udp.endPacket();
+    udpTime.beginPacket(address, 123); //NTP requests are to port 123
+    udpTime.write(packetBuffer, NTP_PACKET_SIZE);
+    return udpTime.endPacket();
 }
 
 #include "HTTPClientMmw.h"
 #define USE_SERIAL Serial
-bool ntpHelper::sendDataTuple() {
+bool ntpHelper::sendDataTuple(size_t seq_cnt,String timeNow) {
     bool retStatus=false;
 
     if((WiFi.status() == WL_CONNECTED)) {
 
         HTTPClientMmw  http;
         int httpCode;
+        String mmwPayload;
 
-        USE_SERIAL.print("[HTTP] begin...\n");
+
+        char intStr[10];
+        itoa(seq_cnt,intStr,10);
+        String seq_num_str = String(intStr);
+
+        mmwPayload = "{\"sampling_feature\":\""+_mmwSamplingFeature+"\",\"timestamp\":\""+timeNow+"\",\"8c57835f-a32f-4d62-82dc-0ba09f04cf52\":"+seq_num_str+",\"3bebd4a3-8b54-4f92-ba55-5fd2fd021358\":3.987,\"03e7b375-97a7-4423-a3f0-1d822d8b19b9\":17.37,\"43bcda9b-2973-4639-af2c-f0b6bb3fa44b\":0.2358,\"08646cc3-c5de-414c-af65-c795b2dcac24\":50.04,\"8849814d-1603-4a2f-861f-f31ae68cccf3\":19.88,\"7182846e-46e0-4a10-b110-9bc32de4aca9\":-25}";
+
+
+#define TCP_CONNECT_TIMEOUT_MS   5000
+#define TCP_RESPONSE_TIMEOUT_MS 10000
+        USE_SERIAL.print("Timeouts connect/response ");
+        USE_SERIAL.print(TCP_CONNECT_TIMEOUT_MS);
+        USE_SERIAL.print(" / ");
+        USE_SERIAL.println(TCP_RESPONSE_TIMEOUT_MS);
+        http.setConnectTimeout(TCP_CONNECT_TIMEOUT_MS); //default 2000mSIn seconds tv.tv_usec = timeout * 1000;
+        http.setTimeout(TCP_RESPONSE_TIMEOUT_MS);      //mS _client->setTimeout((_tcpTimeout + 500) / 1000);
+
         // configure traged server and url
-        http.begin("monitormywatershed.org",0,"/api/data-stream/"); //HTTP
-        http.begin("monitormywatershed.org"); //HTTP
+        String dest_http;
+        dest_http = "monitormywatershed.org"; //Connects to server with no http://
+        http.begin(dest_http,80,"/api/data-stream/"); //HTTP
 
-
-
-        String mmwTest;
-        mmwTest = "{\"sampling_feature\":\"12a82902-e312-445a-b607-328a6d4aaa87\",\"timestamp\":\"2022-06-19T03:04:00-08:00\",\"f9f90ef7-745a-44e8-9525-a373b59c28e0\":516,\"c2c6407b-03db-45c4-a736-2cfd0b212b22\":4.063,\"8267249c-614d-4bdf-b161-257ef69b2ee9\":10.54,\"84ce98bc-8a6d-48f0-9d8c-e53c00874dae\":0.0504,\"78a6da23-53d1-48d3-b286-f038fcf94572\":56.39,\"f964780d-87f0-443e-abbc-6089b6deafaf\":10.80,\"c467201d-6abe-4b5a-bde7-9551e0b34bd1\":-69}";
-        //USE_SERIAL.print("[HTTP] POST=");
-
-
-
-        httpCode = http.POSTmmw(mmwTest);
+        http.addtoken(_mmwToken);
+        httpCode = http.POSTmmw(mmwPayload);
         if(httpCode > 0) {
             // HTTP header has been send and Server response header has been handled
             USE_SERIAL.printf("[HTTP] POST rsp: Code=%d\n", httpCode);
-            USE_SERIAL.println(mmwTest);
+            USE_SERIAL.println(mmwPayload);
             // file found at server
             if(httpCode == HTTP_CODE_OK) {
                 String payload = http.getString();
@@ -197,3 +208,4 @@ void  ntpHelper::printWifiStatus() {
     Serial.println(" dBm");
     Serial.println("");
 }
+

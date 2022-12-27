@@ -104,8 +104,9 @@ checkActive(byte i) {  // this checks for activity at a particular address
 
 void setup() {
     Serial.begin(SERIAL_BAUD);
-    while (!Serial)
-        ;
+    while (!Serial) {
+        // wait
+    }
 
     // Enable interrupts for the recieve pin
     pinMode(DATA_PIN, INPUT_PULLUP);
@@ -166,8 +167,9 @@ void loop() {
         Serial.println(".");
 
         Serial.println("Enter new address.");  // prompt for a new address
-        while (!Serial.available())
-            ;
+        while (!Serial.available()) {
+            // wait
+        }
         char newAdd = Serial.read();
 
         // wait for valid response
@@ -178,8 +180,9 @@ void loop() {
                 Serial.println("Not a valid address. Please enter '0'-'9', "
                                "'a'-'A', or 'z'-'Z'.");
             }
-            while (!Serial.available())
-                ;
+            while (!Serial.available()) {
+                // wait
+            }
             newAdd = Serial.read();
         }
 

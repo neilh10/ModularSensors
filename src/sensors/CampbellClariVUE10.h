@@ -1,6 +1,6 @@
 /**
  * @file CampbellClariVUE10.h
- * @copyright 2020 Stroud Water Research Center
+ * @copyright 2017-2022 Stroud Water Research Center
  * Part of the EnviroDIY ModularSensors library for Arduino
  * @author Sara Geleskie Damiano <sdamiano@stroudcenter.org>
  *
@@ -8,7 +8,7 @@
  * subclasses CampbellClariVUE10_Temp, CampbellClariVUE10_Turbidity, and
  * CampbellClariVUE10_ErrorCode.
  *
- * These are for theCampbell ClariVUE10 digital dissolved oxygen sensor.
+ * These are for the Campbell ClariVUE10 digital SDI-12 turbidity sensor.
  *
  * This depends on the SDI12Sensors parent class.
  */
@@ -35,11 +35,9 @@
  * The sensor is implemented as a sub-classes of the SDI12Sensors class.
  * It requires a 9.6 to 18 Vdc power supply, which can be turned off between measurements.
  * It draws < 300 µA when inactive and < 35 mA while measuring.
- * You will need a voltage booster or a separate power supply to give the ClariVUE10 sufficient voltage to run.
- * At the Stroud Center, we use [Pololu 12V Step-Up Voltage Regulators](https://www.pololu.com/product/2116).
  *
  * @note While it is supported, you should not average measurements for this sensor.
- * The sensor already takes 8 readings by default and returns the median of those.
+ * The sensor takes a burst of 30 readings and returns the median of those.
  *
  * @section sensor_clarivue_datasheet Sensor Datasheet
  * The specifications and datasheet are available at https://www.campbellsci.com/clarivue10
@@ -72,7 +70,7 @@
 /// @brief Sensor::_numReturnedValues; the ClariVUE10 can report 7 values
 /// (although we only keep 3).
 #define CLARIVUE10_NUM_VARIABLES 7
-/// @brief Sensor::_incCalcValues; The ClariVUE calcualtes averages and other
+/// @brief Sensor::_incCalcValues; The ClariVUE calculates averages and other
 /// stats on board, but we don't calculate any additional values.
 #define CLARIVUE10_INC_CALC_VARIABLES 0
 
@@ -87,21 +85,18 @@
  * This is longer than the expected 250ms for a SDI-12 sensor, but I couldn't
  * get a response from the sensor faster than that.
  */
-#define CLARIVUE10_WARM_UP_TIME_MS 275
+#define CLARIVUE10_WARM_UP_TIME_MS 5500
 /// @brief Sensor::_stabilizationTime_ms; the ClariVUE10 is stable as soon as it
 /// warms up (0ms stabilization).
 #define CLARIVUE10_STABILIZATION_TIME_MS 0
 /**
- * @brief Sensor::_measurementTime_ms; the ClariVUE10 takes ~7200ms to
+ * @brief Sensor::_measurementTime_ms; the ClariVUE10 takes ~9500ms to
  * complete a measurement.
  *
- * Spec sheet says the measurement time is 8s.  When taking concurrent
- * measurements I was consistently getting a result before about 6800ms.
- * When taking a standard measurement I was getting a result after about 7185ms.
- * It seems safest to use round up from the time I was getting for a
- * non-concurrent measurment.  Waiting the full 8s seems excessive.
+ * Spec sheet says the measurement time is 9s.  When taking a standard
+ * measurement I was not getting a result until after about 9335ms.
  */
-#define CLARIVUE10_MEASUREMENT_TIME_MS 7200
+#define CLARIVUE10_MEASUREMENT_TIME_MS 9500
 /// @brief Extra wake time required for an SDI-12 sensor between the "break"
 /// and the time the command is sent.  The ClariVUE requires no extra time.
 #define CLARIVUE10_EXTRA_WAKE_TIME_MS 0

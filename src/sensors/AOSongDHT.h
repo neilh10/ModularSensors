@@ -1,6 +1,6 @@
 /**
  * @file AOSongDHT.cpp
- * @copyright 2020 Stroud Water Research Center
+ * @copyright 2017-2022 Stroud Water Research Center
  * Part of the EnviroDIY ModularSensors library for Arduino
  * @author Sara Geleskie Damiano <sdamiano@stroudcenter.org>
  *
@@ -71,7 +71,7 @@
 #undef MS_DEBUGGING_STD
 #include "VariableBase.h"
 #include "SensorBase.h"
-#include <DHT.h>
+#include "DHT.h"
 
 #ifdef DHT11
 // In older versions of the DHT library, defines were used

@@ -164,9 +164,9 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define APN_CDEF "VZWINTERNET"
 
 // The WiFi access point  never set to real, as should be set by config.
-#define WIFIID_CDEF "WiFiIdDef"
+#define WIFIID_CDEF "ArthurGuestSsid"
 // NULL for none, or  password for connecting to WiFi,
-#define WIFIPWD_CDEF "WiFiPwdDef"
+#define WIFIPWD_CDEF "Arthur8166"
 #define MMW_TIMER_POST_TIMEOUT_MS_DEF 5000L
 //POST PACING ms 0-15000
 #define MMW_TIMER_POST_PACING_MS_DEF 100L
@@ -183,7 +183,9 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 //#define SENSOR_CONFIG_GENERAL 1
 //#define KellerAcculevel_ACT 1
 // Defaults for data.envirodiy.org
-#define registrationToken_UUID "registrationToken_UUID"
-#define samplingFeature_UUID "samplingFeature_UUID"
-
+//Test08
+#define registrationToken_UUID "0cf7c40a-232e-457d-87d6-cea5c0757fec"
+#define samplingFeature_UUID   "236c674b-69b9-43af-b0d6-33d67b870ecc"
+#define SEQUENCE_NUMBER_UUID   "8c57835f-a32f-4d62-82dc-0ba09f04cf52"
+#define BAT_VOLTAGE_UUID       "3bebd4a3-8b54-4f92-ba55-5fd2fd021358"
 #endif  // ms_cfg_h

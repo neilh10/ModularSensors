@@ -1,6 +1,6 @@
 /**
  * @file dataPublisherBase.cpp
- * @copyright 2020 Stroud Water Research Center
+ * @copyright 2017-2022 Stroud Water Research Center
  * Part of the EnviroDIY ModularSensors library for Arduino
  * @author Sara Geleskie Damiano <sdamiano@stroudcenter.org>
  *
@@ -19,30 +19,22 @@ const char* dataPublisher::HTTPtag    = " HTTP/1.1";
 const char* dataPublisher::hostHeader = "\r\nHost: ";
 
 // Constructors
-dataPublisher::dataPublisher() {
-    _baseLogger = NULL;
-    _inClient   = NULL;
-    _sendEveryX = 1;
-    _sendOffset = 0;
-    // MS_DBG(F("dataPublisher object created"));
-}
+dataPublisher::dataPublisher() {}
+
 dataPublisher::dataPublisher(Logger& baseLogger, uint8_t sendEveryX,
-                             uint8_t sendOffset) {
-    _baseLogger = &baseLogger;
+                             uint8_t sendOffset)
+    : _baseLogger(&baseLogger),
+      _sendEveryX(sendEveryX),
+      _sendOffset(sendOffset) {
     _baseLogger->registerDataPublisher(this);  // register self with logger
-    _sendEveryX = sendEveryX;
-    _sendOffset = sendOffset;
-    _inClient   = NULL;
-    // MS_DBG(F("dataPublisher object created"));
 }
 dataPublisher::dataPublisher(Logger& baseLogger, Client* inClient,
-                             uint8_t sendEveryX, uint8_t sendOffset) {
-    _baseLogger = &baseLogger;
+                             uint8_t sendEveryX, uint8_t sendOffset)
+    : _baseLogger(&baseLogger),
+      _inClient(inClient),
+      _sendEveryX(sendEveryX),
+      _sendOffset(sendOffset) {
     _baseLogger->registerDataPublisher(this);  // register self with logger
-    _sendEveryX = sendEveryX;
-    _sendOffset = sendOffset;
-    _inClient   = inClient;
-    // MS_DBG(F("dataPublisher object created"));
 }
 // Destructor
 dataPublisher::~dataPublisher() {}
@@ -154,7 +146,7 @@ dataPublisher::storAndPublish() {  // superseded ~ put in LoggerBaseExtCpp.h
 
 // This sends data on the "default" client of the modem
 int16_t dataPublisher::publishData() {
-    if (_inClient == NULL) {
+    if (_inClient == nullptr) {
         PRINTOUT(F("ERROR! No web client assigned to publish data!"));
         return 0;
     } else {

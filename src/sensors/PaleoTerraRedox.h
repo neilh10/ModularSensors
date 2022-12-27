@@ -1,6 +1,6 @@
 /**
  * @file PaleoTerraRedox.h
- * @copyright 2020 Stroud Water Research Center
+ * @copyright 2017-2022 Stroud Water Research Center
  * Part of the EnviroDIY ModularSensors library for Arduino
  * @author Anthony Aufdenkampe <aaufdenkampe@limno.com> with help from Beth
  * Fisher, Evan Host and Bobby Schulz.
@@ -148,7 +148,7 @@
 /* clang-format on */
 class PaleoTerraRedox : public Sensor {
  public:
-#if defined MS_PALEOTERRA_SOFTWAREWIRE | defined DOXYGEN
+#if defined(MS_PALEOTERRA_SOFTWAREWIRE) || defined(DOXYGEN)
     /**
      * @brief Construct a new PaleoTerra Redox object using a *software* I2C
      * instance.

@@ -1,6 +1,6 @@
 /**
  * @file TIINA219.cpp
- * @copyright 2020 Stroud Water Research Center
+ * @copyright 2017-2022 Stroud Water Research Center
  * Part of the EnviroDIY ModularSensors library for Arduino
  * @author Written By: Neil Hancock
  * Edited by Sara Geleskie Damiano <sdamiano@stroudcenter.org>
@@ -15,18 +15,16 @@ TIINA219::TIINA219(TwoWire* theI2C, int8_t powerPin, uint8_t i2cAddressHex,
                    uint8_t measurementsToAverage)
     : Sensor("TIINA219", INA219_NUM_VARIABLES, INA219_WARM_UP_TIME_MS,
              INA219_STABILIZATION_TIME_MS, INA219_MEASUREMENT_TIME_MS, powerPin,
-             -1, measurementsToAverage) {
-    _i2cAddressHex = i2cAddressHex;
-    _i2c           = theI2C;
-}
+             -1, measurementsToAverage),
+      _i2cAddressHex(i2cAddressHex),
+      _i2c(theI2C) {}
 TIINA219::TIINA219(int8_t powerPin, uint8_t i2cAddressHex,
                    uint8_t measurementsToAverage)
     : Sensor("TIINA219", INA219_NUM_VARIABLES, INA219_WARM_UP_TIME_MS,
              INA219_STABILIZATION_TIME_MS, INA219_MEASUREMENT_TIME_MS, powerPin,
-             -1, measurementsToAverage, INA219_INC_CALC_VARIABLES) {
-    _i2cAddressHex = i2cAddressHex;
-    _i2c           = &Wire;
-}
+             -1, measurementsToAverage, INA219_INC_CALC_VARIABLES),
+      _i2cAddressHex(i2cAddressHex),
+      _i2c(&Wire) {}
 // Destructor
 TIINA219::~TIINA219() {}
 

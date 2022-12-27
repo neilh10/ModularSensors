@@ -105,6 +105,9 @@ const int8_t sensorPowerPin = sensorPowerPin_DEF;  // MCU pin controlling main s
 // Create a reference to the serial port for the modem
 //HardwareSerial& modemSerial = modemSerial_Upstream_DEF;  // Use hardware serial if possible
 //HardwareSerial& modemSerial = NULL;  
+
+//WioTerminal_rpcwifi.cpp rpcWifi.h WiFi.h class client
+
 //const int32_t   modemBaud   = modemBaud_Upstream_DEF ;   // All XBee's use 9600 by default
 
 // Modem Pins - Describe the physical pin connection of your modem to your board
@@ -119,8 +122,8 @@ const int8_t modemSleepRqPin = -1;//modemSleepRqPin_DEF;    // MCU pin for modem
 const int8_t espSleepRqPin = -1;  // ESP8266 light sleep request
 const int8_t espStatusPin = -1;   // ESP8266 light sleep status
 // Network connection information
-const char* wifi_ssid  = "xxxxx";  // The WiFi access point
-const char* wifi_pwd = "xxxxx";  // The password for connecting to WiFi
+const char* wifi_ssid = WIFIID_CDEF;  // The WiFi access point
+const char* wifi_pwd  = WIFIPWD_CDEF;  // The password for connecting to WiFi
 
 // Create the loggerModem object
 
@@ -261,15 +264,13 @@ MaximDS18 ds18(OneWirePower, OneWireBus);
 // ==========================================================================
 /** Start [variable_arrays] */
 Variable* variableList[] = {
-    new ProcessorStats_SampleNumber(&mcuBoard,
-                                    "12345678-abcd-1234-ef00-1234567890ab"),
+    new ProcessorStats_SampleNumber(&mcuBoard, SEQUENCE_NUMBER_UUID),
     //new BoschBME280_Temp(&bme280, "12345678-abcd-1234-ef00-1234567890ab"),
     //new BoschBME280_Humidity(&bme280, "12345678-abcd-1234-ef00-1234567890ab"),
     //new BoschBME280_Pressure(&bme280, "12345678-abcd-1234-ef00-1234567890ab"),
     //new BoschBME280_Altitude(&bme280, "12345678-abcd-1234-ef00-1234567890ab"),
     //debug disable new MaximDS18_Temp(&ds18, "12345678-abcd-1234-ef00-1234567890ab"),
-    new ProcessorStats_Battery(&mcuBoard,
-                               "12345678-abcd-1234-ef00-1234567890ab"),
+    new ProcessorStats_Battery(&mcuBoard,BAT_VOLTAGE_UUID ),
     //new MaximDS3231_Temp(&ds3231, "12345678-abcd-1234-ef00-1234567890ab"),
     #if defined(ARDUINO_AVR_ENVIRODIY_MAYFLY)
     new Modem_RSSI(&modemPhy, "12345678-abcd-1234-ef00-1234567890ab"),
@@ -298,7 +299,6 @@ Logger dataLogger(LoggerID, loggingIntervaldef, &varArray);
 // ==========================================================================
 //  Creating Data Publisher[s]
 // ==========================================================================
-#if defined(ARDUINO_AVR_ENVIRODIY_MAYFLY)
 /** Start [publishers] */
 // A Publisher to Monitor My Watershed / EnviroDIY Data Sharing Portal
 // Device registration and sampling feature information can be obtained after
@@ -308,10 +308,19 @@ const char* samplingFeature =   samplingFeature_UUID;
 
 // Create a data publisher for the Monitor My Watershed/EnviroDIY POST endpoint
 #include <publishers/EnviroDIYPublisher.h>
-EnviroDIYPublisher EnviroDIYPOST(dataLogger, &modemPhy.gsmClient,
-                                 registrationToken, samplingFeature);
+//EnviroDIYPublisher EnviroDIYPOST(dataLogger, &modemPhy.Client, //WiFiClient,
+//                                 registrationToken, samplingFeature);
+
+//Add later EnviroDIYPOST.setClient(&modemPhy.(Class *inClient))
+//An Arduino client instance to use to print data to.
+//     * Allows the use of any type of client and multiple clients tied to a
+//     * single TinyGSM modem instance 
+EnviroDIYPublisher EnviroDIYPOST(dataLogger, 15, 0);
+
+//EnviroDIYPublisher EnviroDIYPOST(dataLogger, registrationToken, samplingFeature);
+
 /** End [publishers] */
-#endif //ARDUINO_AVR_ENVIRODIY_MAYFLY
+
 
 // ==========================================================================
 //  Working Functions
@@ -355,6 +364,8 @@ void setup() {
 
     // Start the primary serial connection
     Serial.begin(serialBaud);
+    while (!Serial); // debug wait for serial port to connect. Needed for native USB
+
 
     // Print a start-up note to the first serial port
     Serial.print(F("\n---Boot("));
@@ -403,7 +414,7 @@ void setup() {
     Logger::setRTCTimeZone(0);
 
     // Attach the modem and information pins to the logger
-    // nh dataLogger.attachModem(modemPhy);
+    dataLogger.attachModem(modemPhy);
     //modemPhy.setModemLED(modemLEDPin);
     dataLogger.setLoggerPins(wakePin, sdCardSSPin, sdCardPwrPin, buttonPin,
                              greenLED);
@@ -412,6 +423,19 @@ void setup() {
     delay(500);
     // Begin the logger
     dataLogger.begin();
+
+    Serial.println(F("Setting up modemPhy as WiFiClient..."));
+    //EnviroDIYPOST.setClient(&modemPhy.endClient);
+    EnviroDIYPOST.begin(dataLogger, &modemPhy.endClient, registrationToken, samplingFeature);
+    //EnviroDIYPOST.setDIYHost("data.envirodiy.org"); //use default & port
+    EnviroDIYPOST.setQuedState(true);
+    EnviroDIYPOST.setTimerPostTimeout_mS(5432); //5.4Sec
+    EnviroDIYPOST.setTimerPostPacing_mS(500);
+    dataLogger.setLoggingInterval(1); //Set every minute, default 5min
+    //dataLogger.setSendQueSz_num(ps_ram.app.msn.s.sendQueSz_num); 
+    dataLogger.setSendEveryX(1); //Default 2
+    //dataLogger.setSendOffset(ps_ram.app.msn.s.sendOffset_min);  // delay Minutes
+    //dataLogger.setPostMax_num(ps_ram.app.msn.s.postMax_num); 
 
     // Note:  Please change these battery voltages to match your battery
     // Set up the sensors, except at lowest battery level
@@ -423,10 +447,11 @@ void setup() {
     }
 
     // Sync the clock if it isn't valid or we have battery to spare
-    if (/*getBatteryVoltage() > 3.55 ||*/ !dataLogger.isRTCSane()) 
+    if (0)///*getBatteryVoltage() > 3.55 ||*/ !dataLogger.isRTCSane()) 
     {
         // Synchronize the RTC with NIST
         // This will also set up the modem
+        Serial.println(F("Synchronize the RTC with NIST"));
         dataLogger.syncRTC();
     }
 
@@ -445,9 +470,13 @@ void setup() {
             true);  // true = wait for internal housekeeping after write
     }
 
+    //dataLogger.setSendOffset=0;
+    dataLogger._sendEveryX_cnt=1;
+    //dataLogger.setPostMax_num(100);
+    //dataLogger.logDataAndPubReliably(0x3);
     // Call the processor sleep
     Serial.println(F("Putting processor to sleep\n"));
-    delay(1000);
+    delay(100);
     dataLogger.systemSleep();
 }
 /** End [setup] */
@@ -461,7 +490,7 @@ void setup() {
 void loop() {
     // Note:  primitive but take a guess and set voltages
     // For hardware always take one reading and reference that  can change each time read
-    float battery_V = getBatteryVoltage() ;
+    float battery_V = 4.123;//nh dbg getBatteryVoltage() ;
     // At very low battery, just go back to sleep
     Serial.print(F("BatteryVoltage="));
     Serial.print(battery_V);
@@ -481,7 +510,7 @@ void loop() {
     else {
         Serial.println(F(" logDataAndPublish"));
         delay(500);
-        dataLogger.logDataAndPublish();
+        dataLogger.logDataAndPubReliably(0);
     }
 }
 /** End [loop] */

@@ -1,6 +1,6 @@
 /**
  * @file AtlasScientificCO2.cpp
- * @copyright 2020 Stroud Water Research Center
+ * @copyright 2017-2022 Stroud Water Research Center
  * Part of the EnviroDIY ModularSensors library for Arduino
  * @author Initial developement for Atlas Sensors was done by Adam Gold
  * Files were edited by Sara Damiano <sdamiano@stroudcenter.org>
@@ -46,8 +46,9 @@ bool AtlasScientificCO2::setup() {
     MS_DBG(F("Asking"), getSensorNameAndLocation(),
            F("to report temperature with CO2"));
     _i2c->beginTransmission(_i2cAddressHex);
-    success &= _i2c->write((const uint8_t*)"O,t,1", 5);  // Enable temperature
-    success &= !_i2c->endTransmission();
+    // Enable temperature
+    success &= static_cast<bool>(_i2c->write((const uint8_t*)"O,t,1", 5));
+    success &= !static_cast<bool>(_i2c->endTransmission());
     // NOTE: The return of 0 from endTransmission indicates success
     success &= waitForProcessing();
 

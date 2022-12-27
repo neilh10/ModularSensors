@@ -1,13 +1,24 @@
 # Sending Data to Monitor My Watershed/EnviroDIY <!-- {#example_mmw} -->
 
-This sketch reduces menu_a_la_carte.ino to provide an example of how to log to https://monitormywatershed.org/ from two sensors, the BME280 and DS18. To complete the set up for logging to the web portal, the UUIDs for the site and each variable would need to be added to the sketch.
+This uses a Wio Terminal to send to  https://monitormywatershed.org/
+The per site UUIDs are added in a ms_cfg.h file .
 
-The settings for other data portals were removed from the example.
+The modem settings are for the onboard Wio Terminal WiFi.
 
-The modem settings were left unchanged because the sketch will test successfully without modem connection (wait patiently, it takes a few minutes).
-
-This is the example you should use to deploy a logger with a modem to stream live data to the Monitor My Watershed data portal.
-
+The Wio Terminal (WioT) uses SAMD51/Cortex M4F processor with program flash of 512K Bytes and ram of 192K Bytes
+(The Mayfly mega1284 has program flash 128KBytes and 16K Bytes) 
+https://www.seeedstudio.com/Wio-Terminal-p-4509.html
+The WioT has following feautures 
+ microSD card Slot - max 16GB
+ onboard 4MB local flash chip
+ WiFi/BlueTooth
+ LCD screen 2.4inches
+ 40 Pin connector, Raspberry Pi Format, 29useable data pins
+ 2 useable UARTS out of 8 SERCOM devices
+ USB OTG Console port
+ 2 Seeed connectors - ADC 12bits.
+ DEBUG 
+ requires external battery unit
 _______
 
 [//]: # ( @tableofcontents )
@@ -45,7 +56,7 @@ _______
     - Delete main.cpp in that folder.
 
 ## Set the logger ID <!-- {#example_mmw_logger_id} -->
-- Change the "XXXX" in this section of code to the loggerID assigned by Stroud:
+- Change the settings in ms_cfg.h <tbd>  :
 
 ```cpp
 // Logger ID, also becomes the prefix for the name of the data file on SD card

@@ -1,6 +1,6 @@
 /**
  * @file EverlightALSPT19.h
- * @copyright 2020 Stroud Water Research Center
+ * @copyright 2017-2022 Stroud Water Research Center
  * Part of the EnviroDIY ModularSensors library for Arduino
  * @author Sara Geleskie Damiano <sdamiano@stroudcenter.org>
  *
@@ -96,7 +96,7 @@
 
 /* clang-format off */
 #if !defined ALSPT19_ADC_REFERENCE_MODE
-#if defined ARDUINO_ARCH_AVR | defined DOXYGEN
+#if defined (ARDUINO_ARCH_AVR) || defined (DOXYGEN)
 /**
  * @brief The voltage reference mode for the processor's ADC.
  *
@@ -118,7 +118,7 @@
  */
 #define ALSPT19_ADC_REFERENCE_MODE DEFAULT
 #endif
-#if defined ARDUINO_ARCH_SAMD | defined DOXYGEN
+#if defined (ARDUINO_ARCH_SAMD) || defined (DOXYGEN)
 /**
  * @brief The voltage reference mode for the processor's ADC.
  *

@@ -1,6 +1,6 @@
 /**
  * @file EnviroDIYPublisher.h
- * @copyright 2020 Stroud Water Research Center
+ * @copyright 2017-2022 Stroud Water Research Center
  * Part of the EnviroDIY ModularSensors library for Arduino
  * @author Sara Geleskie Damiano <sdamiano@stroudcenter.org>
  *
@@ -138,7 +138,7 @@ class EnviroDIYPublisher : public dataPublisher {
 
     // Returns the data destination
     String getEndpoint(void) override {
-        return String(_enviroDIYHost);
+        return String(_enviroDIYHost)+':'+String(enviroDIYPort);
     }
 
     // Adds the site registration token
@@ -246,8 +246,8 @@ class EnviroDIYPublisher : public dataPublisher {
 
  private:
     // Tokens and UUID's for EnviroDIY
-    const char* _registrationToken;
-    const char* _enviroDIYHost;
+    const char* _registrationToken = nullptr;
+    const char* _enviroDIYHost     = enviroDIYHostDef;
     //FUT: int   _enviroDIYPort;
 
  public:

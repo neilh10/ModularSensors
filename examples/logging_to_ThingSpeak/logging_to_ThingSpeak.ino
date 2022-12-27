@@ -15,10 +15,7 @@
  * ======================================================================= */
 
 // ==========================================================================
-//  Defines for the Arduino IDE
-//  NOTE:  These are ONLY needed to compile with the Arduino IDE.
-//         If you use PlatformIO, you should set these build flags in your
-//         platformio.ini
+//  Defines for TinyGSM
 // ==========================================================================
 /** Start [defines] */
 #ifndef TINY_GSM_RX_BUFFER
@@ -57,7 +54,7 @@ const char* sketchName = "logging_to_ThingSpeak.ino";
 // Logger ID, also becomes the prefix for the name of the data file on SD card
 const char* LoggerID = "XXXXX";
 // How frequently (in minutes) to log data
-const uint8_t loggingInterval = 5;
+const uint8_t loggingInterval = 15;
 // Your logger's timezone.
 const int8_t timeZone = -5;  // Eastern Standard Time
 // NOTE:  Daylight savings time will not be applied!  Please use standard time!
@@ -94,28 +91,18 @@ const int32_t   modemBaud   = 115200;   // Communication speed of the modem
 
 // Modem Pins - Describe the physical pin connection of your modem to your board
 // NOTE:  Use -1 for pins that do not apply
-const int8_t modemVccPin     = -2;  // MCU pin controlling modem power
-const int8_t modemStatusPin  = 19;  // MCU pin used to read modem status
-const int8_t modemResetPin   = 20;  // MCU pin connected to modem reset pin
-const int8_t modemSleepRqPin = 23;  // MCU pin for modem sleep/wake request
+const int8_t modemVccPin   = -2;  // MCU pin controlling modem power
+const int8_t modemResetPin = 20;  // MCU pin connected to modem reset pin
 const int8_t modemLEDPin =
     redLED;  // MCU pin connected an LED to show modem status
-
-// Pins for light sleep on the ESP8266. For power savings, I recommend NOT using
-// these if it's possible to use deep sleep.
-const int8_t espSleepRqPin = -1;  // GPIO# ON THE ESP8266 to assign for light
-                                  // sleep request
-const int8_t espStatusPin = -1;   // GPIO# ON THE ESP8266 to assign for light
-                                  // sleep status
 
 // Network connection information
 const char* wifiId  = "xxxxx";  // The WiFi access point
 const char* wifiPwd = "xxxxx";  // The password for connecting to WiFi
 
 // Create the loggerModem object
-EspressifESP8266 modemESP(&modemSerial, modemVccPin, modemStatusPin,
-                          modemResetPin, modemSleepRqPin, wifiId, wifiPwd,
-                          espSleepRqPin, espStatusPin);
+EspressifESP8266 modemESP(&modemSerial, modemVccPin, modemResetPin, wifiId,
+                          wifiPwd);
 // Create an extra reference to the modem by a generic name
 EspressifESP8266 modem = modemESP;
 /** End [espressif_esp8266] */

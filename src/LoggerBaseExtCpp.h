@@ -1001,12 +1001,21 @@ void Logger::publishDataQuedToRemotes(bool internetPresent) {
                 // MS_START_DEBUG_TIMER;
                 tmrGateway_ms = millis();
                 uint32_t tmrThisPublish_ms;
+                bool attemptPostStatus=true;
+                uint16_t attemptPostCnt=0;
+                uint16_t attemptPostFailedCnt=0;
                 while ((dslStatus = deszRdelLine())) {
+                    attemptPostCnt++;
                     tmrThisPublish_ms = millis();
-                    if (internetPresent) {
+                    if (internetPresent && attemptPostStatus) {
                         rspCode = dataPublishers[i]->publishData();
                     } else {
-                        rspCode = HTTPSTATUS_NC_902;
+                        if (internetPresent) {
+                            rspCode = HTTPSTATUS_NC_901;
+                        } else {
+                            //then must be attemptPostStatus==false
+                            rspCode = HTTPSTATUS_NC_904;
+                        }
                     }
 
                     watchDogTimer.resetWatchDog();
@@ -1034,29 +1043,28 @@ void Logger::publishDataQuedToRemotes(bool internetPresent) {
                             if (0 >= retVal) {
                                 PRINTOUT(F("pubDQTR serzQuedFil err"), retVal);
                             }
-                            desz_pending_records++;  // TODO: njh per publisher
+                            desz_pending_records++;  
                         }
-                        /*TODO njh process
-                        if (HTTPSTATUS_NC_901 == rspCode) {
-                            MS_DBG(F("pubDQTR abort this
-                        servers POST " "attempts"));
-
-                        However, will also have to cleanup/copy lines from
-                        serzQuedFile to before deszRdelClose
-
-                        break;
-
-                        }
-
-                        */
                     } else {
                         /*A publish has been sucessfull.
                          * Slow Down sending based on publishers acceptance rate
                          * Each publish creates and tears down a TCP connection */
                         /*TODO njh create intergrate all POSTS to one tcp/ip connection */
                         published_this_pass++;
+                        attemptPostFailedCnt=0;
                         MS_DBG(F("pubDQTR1 delay"),delay_posted_pacing_ms ,F("mS : posted"), published_this_pass);
                         delay(delay_posted_pacing_ms);
+                    }
+
+                    //Check for any limits that might have been exceeded
+                    if ((attemptPostCnt >= _postMax_num) && (0 != _postMax_num)) {
+                        //Exceeded number to attempt, force write to serzQue
+                        attemptPostStatus = false;
+                    }
+
+                    if (++attemptPostFailedCnt > RDELAY_FAILED_POSTS_THRESHOLD ) {
+                        //Exceeded number of consecutive failures, force write to serzQue
+                        attemptPostStatus = false;
                     }
                 }  // while reading line
                 deszRdelClose(true);

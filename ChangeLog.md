@@ -13,14 +13,78 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Added
-- Added support for Sensirion SHT4x sensors.
+
 ### Removed
 
 ### Fixed
 
 ***
 
-## [0.33.0]
+
+## [0.34.0]
+
+### Changed
+- **BREAKING** - Removed support for light sleep on Espressif modules.
+**This changes the order of the constructor for the ESP32 and ESP8266!**
+  - The light sleep mode is non-functional anyway, and confusion over the sleep request pin was putting the board in a position not to sleep at all.
+- Minor tweek to clang-format
+- Moved all variable initialization to default header values and initializer lists
+- Converted all "c-style" casts to static casts
+- Switched cases of strcat and strcpy to snprintf
+- Specify python version 3.x for actions (used by PlatformIO)
+
+### Added
+- Support Campbell RainVUE10 SDI-12 Precipitation Sensor (#416)
+- Support YosemiTech Y700 Pressor Sensor ([#421](https://github.com/EnviroDIY/ModularSensors/issues/421))
+
+### Removed
+
+### Fixed
+- Fixed bug in YosemiTech Y4000 Sonde ([#420](https://github.com/EnviroDIY/ModularSensors/issues/420))
+- Fixed non-concurrent data fetch for SDI-12 when *NOT* using debugging.
+- Fixed internet connection when in "testing mode"
+- Allow a non-zero wait time for SDI-12 sensors
+
+***
+
+
+## [0.33.4]
+
+### Fixed
+- Increased warm-up and measurement time for Campbell ClariVUE-10 to work with the latest version of the sensor.
+***
+
+
+## [0.33.3]
+
+### Fixed
+- Increased measurement time for Hydros21 to work with the latest version of the sensor.
+***
+
+
+## [0.33.2]
+
+### Fixed
+- Fixed script to install and zip libraries for a release
+***
+
+
+## [0.33.1] - 2022-04-11
+
+### Changed
+
+### Added
+- Added a typedef and header for the ESP32
+  - This is just another name to the ESP8266 class to help any who don't know they're identical for our purposes.
+- **Example:**  Created a new DRWI wifi example for workshop.
+
+### Removed
+
+### Fixed
+
+***
+
+## [0.33.0] - 2022-04-01
 
 ### Changed
 - **Breaking:** Renamed the static `markedEpochTime` variable to `markedLocalEpochTime`.
@@ -69,7 +133,7 @@ These are *not* breaking changes at this time; the old class names are still usa
 
 ***
 
-## [0.32.2]
+## [0.32.2] - 2021-11-23
 
 ### Changed
 - Restructured SDI-12 slightly to break out the start measurement functionality into a new function.
@@ -717,7 +781,12 @@ Our first release of the modular sensors library to support easily logging data 
 
 ***
 
-[Unreleased]: https://github.com/EnviroDIY/ModularSensors/compare/v0.32.2...HEAD
+[Unreleased]: https://github.com/EnviroDIY/ModularSensors/compare/v0.33.4...HEAD
+[0.33.4]: https://github.com/EnviroDIY/ModularSensors/releases/tag/v0.33.4
+[0.33.3]: https://github.com/EnviroDIY/ModularSensors/releases/tag/v0.33.3
+[0.33.2]: https://github.com/EnviroDIY/ModularSensors/releases/tag/v0.33.2
+[0.33.1]: https://github.com/EnviroDIY/ModularSensors/releases/tag/v0.33.1
+[0.33.0]: https://github.com/EnviroDIY/ModularSensors/releases/tag/v0.33.0
 [0.32.2]: https://github.com/EnviroDIY/ModularSensors/releases/tag/v0.32.2
 [0.32.0]: https://github.com/EnviroDIY/ModularSensors/releases/tag/v0.32.0
 [0.31.2]: https://github.com/EnviroDIY/ModularSensors/releases/tag/v0.31.2

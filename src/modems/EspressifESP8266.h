@@ -1,6 +1,6 @@
 /**
  * @file EspressifESP8266.h
- * @copyright 2020 Stroud Water Research Center
+ * @copyright 2017-2022 Stroud Water Research Center
  * Part of the EnviroDIY ModularSensors library for Arduino
  * @author Sara Geleskie Damiano <sdamiano@stroudcenter.org>
  *
@@ -193,7 +193,7 @@
  */
 class EspressifESP8266 : public loggerModem {
  public:
-    // Constructor/Destructor
+    // Constructors/Destructor
     /**
      * @brief Construct a new Espressif ESP8266 object.
      *
@@ -204,25 +204,15 @@ class EspressifESP8266 : public loggerModem {
      *
      * @param modemStream The Arduino stream instance for serial communication.
      * @param powerPin @copydoc loggerModem::_powerPin
-     * @param statusPin @copydoc loggerModem::_statusPin
-     * This can be any DIO pin on the esp.  It is only used in light sleep.
      * @param modemResetPin @copydoc loggerModem::_modemResetPin
      * This is the ESP's `RSTB/DIO16` pin.
-     * @param modemSleepRqPin @copydoc loggerModem::_modemSleepRqPin
-     * This can be any DIO pin on the esp.  It is only used in light sleep.
      * @param ssid The wifi network ID.
      * @param pwd The wifi network password, **assuming WPA2**.
-     * @param espSleepRqPin The DIO pin on the ESP8266 assigned to light sleep
-     * wake.  This can be any DIO pin on the esp.
-     * @param espStatusPin The DIO pin on the ESP8566 assigned to status
-     * indication.  This can be any DIO pin on the esp.
      *
      * @see loggerModem::loggerModem
      */
-    EspressifESP8266(Stream* modemStream, int8_t powerPin, int8_t statusPin,
-                     int8_t modemResetPin, int8_t modemSleepRqPin,
-                     const char* ssid, const char* pwd,
-                     int8_t espSleepRqPin = -1, int8_t espStatusPin = -1);
+    EspressifESP8266(Stream* modemStream, int8_t powerPin, int8_t modemResetPin,
+                     const char* ssid, const char* pwd);
     /**
      * @brief Destroy the Espressif ESP8266 object - no action taken
      */
@@ -272,9 +262,12 @@ class EspressifESP8266 : public loggerModem {
     bool        ESPwaitForBoot(void);
     const char* _ssid;
     const char* _pwd;
-
-    int8_t _espSleepRqPin;
-    int8_t _espStatusPin;
 };
+
+/**
+ * @brief typedef to avoid confusion for users
+ */
+typedef EspressifESP8266 EspressifESP32;
+
 /**@}*/
 #endif  // SRC_MODEMS_ESPRESSIFESP8266_H_

@@ -1,6 +1,6 @@
 /**
  * @file ProcessorStats.cpp
- * @copyright 2020 Stroud Water Research Center
+ * @copyright 2017-2022 Stroud Water Research Center
  * Part of the EnviroDIY ModularSensors library for Arduino
  * @author Sara Geleskie Damiano <sdamiano@stroudcenter.org>
  *
@@ -102,10 +102,8 @@
 ProcessorStats::ProcessorStats(const char* version)
     : Sensor(BOARD, PROCESSOR_NUM_VARIABLES, PROCESSOR_WARM_UP_TIME_MS,
              PROCESSOR_STABILIZATION_TIME_MS, PROCESSOR_MEASUREMENT_TIME_MS, -1,
-             -1, 1, PROCESSOR_INC_CALC_VARIABLES) {
-    _version = version;
-    sampNum  = 0;
-
+             -1, 1, PROCESSOR_INC_CALC_VARIABLES),
+      _version(version) {
 #if defined(ARDUINO_AVR_ENVIRODIY_MAYFLY) || defined(ARDUINO_AVR_SODAQ_MBILI)
     _batteryPin = A6;
 #elif defined(ARDUINO_AVR_FEATHER32U4) || defined(ARDUINO_SAMD_FEATHER_M0) || \
@@ -137,7 +135,7 @@ String ProcessorStats::getSensorLocation(void) {
 }
 
 
-#if defined(ARDUINO_ARCH_SAMD)
+#if defined(ARDUINO_ARCH_SAMD) || defined(ARDUINO_SAMD_ZERO)
 extern "C" char* sbrk(int i);
 
 int16_t FreeRam() {
@@ -170,13 +168,13 @@ bool ProcessorStats::addSingleMeasurementResult(void) {
     // Used only for debugging - can be removed
     MS_DBG(F("Getting Free RAM"));
 
-#if defined __AVR__ || defined ARDUINO_ARCH_AVR
+#if defined(__AVR__) || defined(ARDUINO_ARCH_AVR)
     extern int16_t __heap_start, *__brkval;
     int16_t        v;
     float          sensorValue_freeRam = (int)&v -
         (__brkval == 0 ? (int)&__heap_start : (int)__brkval);
 
-#elif defined(ARDUINO_ARCH_SAMD)
+#elif defined(ARDUINO_ARCH_SAMD) || defined(ARDUINO_SAMD_ZERO)
     float sensorValue_freeRam = FreeRam();
 
 #else

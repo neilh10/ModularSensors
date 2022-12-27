@@ -68,7 +68,7 @@ int HTTPClientMmw::sendRequestMmw(const char * type, String payload)
  * @param size size_t           size for the message body if 0 not send
  * @return -1 if no info or > 0 when Content-Length is set by server
  */
-int HTTPClientMmw::sendRequestMmw(const char * type, uint8_t * payload, size_t size)
+int HTTPClientMmw::sendRequestMmw(const char * type, uint8_t * payload, size_t size_payload)
 {
     int code;
     bool redirect = false;
@@ -94,31 +94,30 @@ int HTTPClientMmw::sendRequestMmw(const char * type, uint8_t * payload, size_t s
         }
 
 
-        if(payload && size > 0) {
-        // njh add TOKEN: 8a297ae4-995e-47e5-af03-3faa6a89d79e
-            addHeader(F("\n\rTOKEN:"), "8a297ae4-995e-47e5-af03-3faa6a89d79e");
-            addHeader(F("Content-Length"), String(size));
-            addHeader(F("Content-Type"), "application/json");
+        if(payload && size_payload > 0) {
+            addHeader(F("\r\nTOKEN"), _token_mmw,false,false); 
+            addHeader(F("Content-Length"), String(size_payload),false,false);
+            addHeader(F("Content-Type"), "application/json\r\n",false,false);
+            log_d("created header\n");
+        } else {
+            Serial.println("payload invalid");
         }
 
         // send Header
         if(!sendHeaderMmw(type)) {
+            log_d("sendHeaderMMw failed\n");
             return returnError(HTTPC_ERROR_SEND_HEADER_FAILED);
         }
-        Serial.println("POSTHEADER>>");
-        Serial.print(header1);
-        //Serial.println(_headers);
-        Serial.println("<<<");
 
         // send Payload if needed
-        if(payload && size > 0) {
-            // Send in chunks of HTTP_TCP_BUFFER_SIZE bytes            
-            for (size_t pos = 0; pos < size; pos += HTTP_TCP_BUFFER_SIZE) {
-                size_t to_write = min(HTTP_TCP_BUFFER_SIZE, size - pos);
+        if(payload && size_payload > 0) {
+            // Send in chunks of HTTP_TCP_BUFFER_SIZE bytes  
+            for (size_t pos = 0; pos < size_payload; pos += HTTP_TCP_BUFFER_SIZE) {
+                size_t to_write = min(HTTP_TCP_BUFFER_SIZE, size_payload - pos);
                 if(_client->write(&payload[pos], to_write) != to_write) {
                     return returnError(HTTPC_ERROR_SEND_PAYLOAD_FAILED);
                 }
-            }
+            }         
         }
 
         code = handleHeaderResponse();
@@ -174,7 +173,7 @@ int HTTPClientMmw::sendRequestMmw(const char * type, uint8_t * payload, size_t s
                     // redirect after changing method to GET/HEAD and dropping payload
                     type = "GET";
                     payload = nullptr;
-                    size = 0;
+                    size_payload = 0;
                     redirect = true;
                     break;
                 }
@@ -375,7 +374,6 @@ bool HTTPClientMmw::sendHeaderMmw(const char * type)
         header1 += "\r\n";
     }
 */
-    header1 += _headers + "\r\n";
-
+    header1 += _headers;
     return (_client->write((const uint8_t *) header1.c_str(), header1.length()) == header1.length());
 }

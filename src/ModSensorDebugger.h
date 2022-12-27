@@ -1,6 +1,6 @@
 /**
  * @file       ModSensorDebugger.h
- * @copyright 2020 Stroud Water Research Center
+ * @copyright 2017-2022 Stroud Water Research Center
  * Part of the EnviroDIY ModularSensors library for Arduino
  * @author Sara Geleskie Damiano <sdamiano@stroudcenter.org> *
  * @author Volodymyr Shymanskyy
@@ -72,7 +72,7 @@ static void PRINTOUT(T head, Args... tail) {
 #endif
 #endif  // ifndef DEBUGGING_SERIAL_OUTPUT
 
-#if defined DEBUGGING_SERIAL_OUTPUT && defined MS_DEBUGGING_STD
+#if defined(DEBUGGING_SERIAL_OUTPUT) && defined(MS_DEBUGGING_STD)
 // namespace {
 /**
  * @brief Prints text to the "debugging" serial port.  This is intended for
@@ -170,7 +170,7 @@ static void MS_DBG(T head, Args... tail) {
 #endif
 #endif  // ifndef DEEP_DEBUGGING_SERIAL_OUTPUT
 
-#if defined DEEP_DEBUGGING_SERIAL_OUTPUT && defined MS_DEBUGGING_DEEP
+#if defined(DEEP_DEBUGGING_SERIAL_OUTPUT) && defined(MS_DEBUGGING_DEEP)
 // namespace {
 /**
  * @brief Prints text to the "debugging" serial port.  This is intended for
@@ -220,7 +220,7 @@ static void MS_DEEP_DBG(T head, Args... tail) {
 
 
 /***
-#if defined __AVR__ || defined ARDUINO_ARCH_AVR
+#if defined (__AVR__) || defined (ARDUINO_ARCH_AVR)
   typedef const __FlashStringHelper* GsmConstStr;
   #define GFP(x) (reinterpret_cast<GsmConstStr>(x))
   #define GF(x)  F(x)

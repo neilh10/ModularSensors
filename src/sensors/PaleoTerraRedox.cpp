@@ -43,18 +43,16 @@ PaleoTerraRedox::PaleoTerraRedox(TwoWire* theI2C, int8_t powerPin,
                                  uint8_t measurementsToAverage)
     : Sensor("PaleoTerraRedox", PTR_NUM_VARIABLES, PTR_WARM_UP_TIME_MS,
              PTR_STABILIZATION_TIME_MS, PTR_MEASUREMENT_TIME_MS, powerPin, -1,
-             measurementsToAverage) {
-    _i2cAddressHex = i2cAddressHex;
-    _i2c           = theI2C;
-}
+             measurementsToAverage),
+      _i2cAddressHex(i2cAddressHex),
+      _i2c(theI2C) {}
 PaleoTerraRedox::PaleoTerraRedox(int8_t powerPin, uint8_t i2cAddressHex,
                                  uint8_t measurementsToAverage)
     : Sensor("PaleoTerraRedox", PTR_NUM_VARIABLES, PTR_WARM_UP_TIME_MS,
              PTR_STABILIZATION_TIME_MS, PTR_MEASUREMENT_TIME_MS, powerPin,
-             measurementsToAverage, PTR_INC_CALC_VARIABLES) {
-    _i2cAddressHex = i2cAddressHex;
-    _i2c           = &Wire;
-}
+             measurementsToAverage, PTR_INC_CALC_VARIABLES),
+      _i2cAddressHex(i2cAddressHex),
+      _i2c(&Wire) {}
 #endif
 
 
@@ -108,8 +106,8 @@ bool PaleoTerraRedox::addSingleMeasurementResult(void) {
     byte i2c_status = -1;
     if (_millisMeasurementRequested > 0) {
         _i2c->beginTransmission(_i2cAddressHex);
-        _i2c->write(B10001100);  // initiate conversion, One-Shot mode, 18
-                                 // bits, PGA x1
+        _i2c->write(0b10001100);  // initiate conversion, One-Shot mode, 18
+                                  // bits, PGA x1
         i2c_status = _i2c->endTransmission();
 
         delay(300);
