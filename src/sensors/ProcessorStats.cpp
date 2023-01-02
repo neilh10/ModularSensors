@@ -186,6 +186,8 @@ bool ProcessorStats::addSingleMeasurementResult(void) {
 
     // bump up the sample number
     sampNum += 1;
+    #define SAMPNUM_ROLLOVER 0x7FFD
+    if (sampNum> SAMPNUM_ROLLOVER ) {sampNum =5;} //Indicate roll over, not reset 
     MS_DBG(F("SampNum="), (unsigned int)sampNum);
 
     verifyAndAddMeasurementResult(PROCESSOR_SAMPNUM_VAR_NUM, sampNum);
