@@ -64,21 +64,21 @@ MS_MODEM_GET_MODEM_TEMPERATURE_DATA(DigiXBeeCellularTransparent);
 // We turn off airplane mode in the wake.
 bool DigiXBeeCellularTransparent::modemWakeFxn(void) {
     if (_modemSleepRqPin >= 0) {
-        // Don't go to sleep if there's not a wake pin!
         MS_DBG(F("Setting pin"), _modemSleepRqPin,
                _wakeLevel ? F("HIGH") : F("LOW"), F("to wake"), _modemName);
         digitalWrite(_modemSleepRqPin, _wakeLevel);
+        return true;
+    } else {
+        // no wake pin, use airplane mode command 
         MS_DBG(F("Turning off airplane mode..."));
         if (gsmModem.commandMode()) {
             gsmModem.sendAT(GF("AM"), 0);
             gsmModem.waitResponse(TGWRIDT+0x01);
-            // Write changes to flash and apply them
-            gsmModem.writeChanges();
-            // Exit command mode
+            // apply change
+            gsmModem.sendAT(GF("AC"));
+            gsmModem.waitResponse(TGWRIDT+0x01);
             gsmModem.exitCommand();
         }
-        return true;
-    } else {
         return true;
     }
 }
@@ -87,21 +87,19 @@ bool DigiXBeeCellularTransparent::modemWakeFxn(void) {
 // We turn on airplane mode in before sleep
 bool DigiXBeeCellularTransparent::modemSleepFxn(void) {
     if (_modemSleepRqPin >= 0) {
-        MS_DBG(F("Turning on airplane mode..."));
-        if (gsmModem.commandMode()) {
-            gsmModem.sendAT(GF("AM"), 0);
-            gsmModem.waitResponse(TGWRIDT+0x00);
-            // Write changes to flash and apply them
-            gsmModem.writeChanges();
-            // Exit command mode
-            gsmModem.exitCommand();
-        }
         MS_DBG(F("Setting pin"), _modemSleepRqPin,
                !_wakeLevel ? F("HIGH") : F("LOW"), F("to put"), _modemName,
                F("to sleep"));
         digitalWrite(_modemSleepRqPin, !_wakeLevel);
         return true;
     } else {
+        // no wake pin, use airplane mode command 
+        MS_DBG(F("Turning on airplane mode..."));
+        if (gsmModem.commandMode()) {
+            gsmModem.sendAT(GF("AM"), 1);
+            gsmModem.waitResponse(TGWRIDT+0x00);
+            gsmModem.exitCommand();
+        }
         return true;
     }
 }
@@ -203,7 +201,8 @@ bool DigiXBeeCellularTransparent::extraModemSetup(void) {
         // gsmModem.sendAT(GF("N#"),0);
         // gsmModem.waitResponse(TGWRIDT+0x00);  // Don't check for success - only works on
         // LTE
-        MS_DBG(F("Setting the APN..."));
+        MS_DBG(F("Setting the APN..."),_apn,_user?"u:!0":"",_pwd?"p!0":"");
+
         /** Save the network connection parameters. */
         success &= gsmModem.gprsConnect(_apn, _user, _pwd);
         MS_DBG(F("Ensuring XBee is in transparent mode..."));
@@ -230,7 +229,7 @@ bool DigiXBeeCellularTransparent::extraModemSetup(void) {
         MS_DBG(F("Version "), ui_vers);
 #endif
         uint16_t loops = 0;
-        int16_t  ui_db;
+        int16_t  ui_db=0;
         uint8_t  status;
         String   ui_op;
         bool     cellRegistered = false;
@@ -239,7 +238,10 @@ bool DigiXBeeCellularTransparent::extraModemSetup(void) {
         uint8_t reg_count = 1;
         for (unsigned long start = millis(); millis() - start < 300000;
              ++loops) {
-            ui_db = 0;  // gsmModem.getSignalQuality();
+            //ui_db =  gsmModem.getSignalQuality();
+            //Read the uncached cell tower signal strength in hex
+            //gsmModem.sendAT(GF("DB"), 0);
+            //ui_db = gsmModem.readResponseInt(10000L);
             gsmModem.sendAT(GF("AI"));
             status = gsmModem.readResponseInt(10000L);
             ui_op  = String(loops) + "=" + String((float)millis() / 1000) +
@@ -263,10 +265,11 @@ bool DigiXBeeCellularTransparent::extraModemSetup(void) {
                     registering, However throwing this in, might do something or
                     maybe just coincedence that it started working after this
                     */
-                    gsmModem.sendAT(GF("+CREG"));
+//                    PRINTOUT(F("Try +CREG '"));
+//                    gsmModem.sendAT(GF("+CREG"));
+//                    status = gsmModem.readResponseInt(10000L);
                     // String ui_creg=gsmModem.readResponseInt(10000L);
                     // PRINTOUT(F("UseRandom +CREG '"), ui_creg,"'");
-                    PRINTOUT(F("Try +CREG '"));
                 }
             }
             delay(1000);
@@ -297,7 +300,7 @@ bool DigiXBeeCellularTransparent::extraModemSetup(void) {
             bool   AllocatedIpSuccess = false;
 // Checkfor IP allocation
 #define MDM_IP_STR_MIN_LEN 7
-#define MDM_LP_IPMAX 16
+#define MDM_LP_IPMAX 24
             gsmModem.sendAT(F("MY"));  // Request IP #
             gsmModem.waitResponse(TGWRIDT+0x11,1000, xbeeRsp);
             MS_DBG(F("Flush rsp "), xbeeRsp);
@@ -503,7 +506,7 @@ bool DigiXBeeCellularTransparent::updateModemMetadata(void) {
     if (!loggerModem::_pollModemMetaData) return false;
 
     // Enter command mode only once
-    MS_DBG(F("Entering Command Mode:"));
+    MS_DBG(F("updateModemMetadata:"));
     gsmModem.commandMode();
 
     // Try for up to 15 seconds to get a valid signal quality
