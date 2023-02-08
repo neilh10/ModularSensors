@@ -1596,7 +1596,7 @@ bool Logger::postLogOpen(const char* postLogNam_str) {
             PRINTOUT(F("logPLO err opening"), charFileName);
 
         } else {
-            setFileTimestampTz(postsLogHndl, T_CREATE);
+            setFileTimestamp(postsLogHndl, T_CREATE,true);
             MS_DBG(F("logPLO new file"), charFileName);
         }
     }
@@ -1613,7 +1613,7 @@ bool Logger::postLogOpen() {
 void        Logger::postLogClose() {
 #if defined MS_LOGGERBASE_POSTS
 
-    setFileTimestampTz(postsLogHndl, (T_WRITE));  //| T_ACCESS
+    setFileTimestamp(postsLogHndl, (T_WRITE),true);  //| T_ACCESS
     postsLogHndl.close();
 
 

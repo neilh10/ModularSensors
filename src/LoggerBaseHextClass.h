@@ -280,6 +280,7 @@ bool postLogOpen();
 bool postLogOpen(const char* postsLogNm_str);
 void postLogLine(uint32_t tmr_ms, int16_t rspParam);
 void postLogLine(const char *logMsg,bool addCR=true);
+// Macro to print to TTY and log on uSD 
 #define PRINT_LOGLINE_P(msg_parm) \
     char tttbuf[sizeof(msg_parm)+1]; \
     strcpy_P(tttbuf,msg_parm);\

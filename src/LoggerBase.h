@@ -1112,13 +1112,13 @@ class Logger {
     void generateAutoFileName(void);
 
     /**
-     * @brief Set a UTC time timestamp on a file. Depreciated 0.27.5
+     * @brief Set a time timestamp on a file. Depreciated 0.27.5
      *
      * @param fileToStamp The filename to change the timestamp of
      * @param stampFlag The "flag" of the timestamp to change - should be
      * T_CREATE, T_WRITE, or T_ACCESS
      */
-    void setFileTimestamp(File fileToStamp, uint8_t stampFlag);
+    void setFileTimestamp(File fileToStamp, uint8_t stampFlag, bool localTime=false);
 
     /**
      * @brief Set a local time timestamp on a file 
@@ -1126,8 +1126,10 @@ class Logger {
      * @param fileToStamp The filename to change the timestamp of
      * @param stampFlag The "flag" of the timestamp to change - should be
      * T_CREATE, T_WRITE, or T_ACCESS
+     * @param localTime - true or false for UTC
      */
-    void setFileTimestampTz(File fileToStamp, uint8_t stampFlag);
+     //void setFileTimestamp(File fileToStamp, uint8_t stampFlag, bool localTime);
+
 
     /**
      * @brief Open or creates a file, converting a string file name to a

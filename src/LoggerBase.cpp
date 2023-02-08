@@ -7,7 +7,7 @@
  * @brief Implements the Logger class.
  */
 
-#include <ModularSensors.h>   // Include the main header for ModularSensors
+#include <ModularSensors.h>   // Needed for the version number
 #include "dataPublisherBase.h"
 
 /**
@@ -20,6 +20,7 @@
 #include <EnableInterrupt.h>
 // For all i2c communication, including with the real time clock
 #include <Wire.h>
+
 
 #if defined BOARD_SDQ_QSPI_FLASH
 // This works as a static instance and allows initializer for
@@ -55,15 +56,19 @@ volatile bool Logger::isLoggingNow = false;
 volatile bool Logger::isTestingNow = false;
 volatile bool Logger::startTesting = false;
 
+// For SAMD or processors with internal RTC, there may also be an external RTC
+// that keeps time through power off. 
+// The internal RTC is zero_sleep_rtc  name traceable to SAMD21/Arduino ZERO
+// Any external RTC is named as rtcExtPhy. The Mayfly only has the external RTC
 // Initialize the RTC for the SAMD boards
-#if defined(ARDUINO_ARCH_SAMD)  || defined(ARDUINO_SAMD_ZERO)
+#if defined(ARDUINO_ARCH_SAMD) || defined(ARDUINO_SAMD_ZERO)
 // RTCZero internal registers based on year 2000/20yk
 // "Epoch19yk" seconds from 1900, using  "struct tm", mktime, gmtime
 RTC_INT_CLASS zero_sleep_rtc;
-#define log_zero_sleep_rtc zero_sleep_rtc
-#define zr log_zero_sleep_rtc
+#define zr zero_sleep_rtc
 //For time being assume ony internal RTC - zero_sleep_rtc  name to be changed later
-#define rtcExtPhy log_zero_sleep_rtc
+#define rtcExtPhy zero_sleep_rtc
+//SAMD51 has two Alarms and requires an ID, SAMD21 had one Alarm
 #define RTC_ALM_ID 0
 #endif
 
@@ -330,6 +335,7 @@ void Logger::attachModem(loggerModem* modem) {
     _logModem = modem;
 }
 
+
 // Takes advantage of the modem to synchronize the clock
 bool Logger::syncRTC() {
     bool success = false;
@@ -405,7 +411,7 @@ void Logger::publishDataToRemotes(void) {
     MS_DBG(F("Sending out remote data."));
 
     for (uint8_t i = 0; i < MAX_NUMBER_SENDERS; i++) {
-        if (dataPublishers[i] != NULL) {
+        if (dataPublishers[i] != nullptr) {
             _dataPubInstance = i;
             PRINTOUT(F("\nSending data to ["), i, F("]"),
                      dataPublishers[i]->getEndpoint());
@@ -532,7 +538,7 @@ void Logger::setNowUTCEpoch(uint32_t ts) {
 #elif defined ARDUINO_ARCH_SAMD
 
 uint32_t Logger::getNowUTCEpoch(void) {
-    uint32_t currentEpochTime = log_zero_sleep_rtc.now().unixtime();
+    uint32_t currentEpochTime = zero_sleep_rtc.now().unixtime();
     if (!isRTCSane(currentEpochTime)) {
         PRINTOUT(F("Bad time, resetting clock."), currentEpochTime, " ",
                  formatDateTime_ISO8601(currentEpochTime), " Setting to ",
@@ -543,7 +549,7 @@ uint32_t Logger::getNowUTCEpoch(void) {
     return currentEpochTime;
 }
 void Logger::setNowUTCEpoch(uint32_t ts) {
-    log_zero_sleep_rtc.adjust(DateTime(ts));
+    zero_sleep_rtc.adjust(DateTime(ts));
 }
 uint32_t Logger::getNowLocalEpoch(void) {
     return (uint32_t)(getNowUTCEpoch() + (_loggerRTCOffset * HOURS_TO_SECS));
@@ -598,8 +604,7 @@ String Logger::formatDateTime_ISO8601(DateTime& dt) {
     return dateTimeStr;
 }
 
-
-// This converts an epoch time (unix time) into a ISO8601 formatted string
+// This converts an epoch time (unix time) into a ISO8601 formatted string.
 // It assumes the supplied date/time is in the LOGGER's timezone
 String Logger::formatDateTime_ISO8601(uint32_t epochTimeTz) {
     // Create a DateTime object from the epochTime
@@ -1132,11 +1137,11 @@ void Logger::systemSleep(uint8_t sleep_min) {
 //Enable for SAMD51 - slightly different than SAMD21
 
     #if defined ARCH_SAMD_SET_RTC_EACH_ALARM
-/*    log_zero_sleep_rtc.setAlarm(RTC_ALM_ID,(targetWakeup_secs));
-    log_zero_sleep_rtc.enableAlarm(RTC_ALM_ID,RTC_SAMD51::MATCH_HHMMSS);
-    log_zero_sleep_rtc.attachInterrupt(alarmMatch);*/
-    DateTime timeNow = log_zero_sleep_rtc.now();   
-    DateTime timeAlm = log_zero_sleep_rtc.alarm(RTC_ALM_ID);   
+/*    zero_sleep_rtc.setAlarm(RTC_ALM_ID,(targetWakeup_secs));
+    zero_sleep_rtc.enableAlarm(RTC_ALM_ID,RTC_SAMD51::MATCH_HHMMSS);
+    zero_sleep_rtc.attachInterrupt(alarmMatch);*/
+    DateTime timeNow = zero_sleep_rtc.now();   
+    DateTime timeAlm = zero_sleep_rtc.alarm(RTC_ALM_ID);   
     PRINTOUT("  now   DDHHMMSS ",timeNow.day(),timeNow.hour(),timeNow.minute(),timeNow.second());
     PRINTOUT("  alarm DDHHMMSS ",timeAlm.day(),timeAlm.hour(),timeAlm.minute(),timeAlm.second());
 
@@ -1145,7 +1150,7 @@ void Logger::systemSleep(uint8_t sleep_min) {
            "-", zr.getAlarmHours(), ":", zr.getAlarmMinutes(), ":",
            zr.getAlarmSeconds());*/
     // Assume max is an hour - need to revisit
-    //log_zero_sleep_rtc.enableAlarm(RTC_ALM_ID,log_zero_sleep_rtc.MATCH_MMSS);
+    //zero_sleep_rtc.enableAlarm(RTC_ALM_ID,zero_sleep_rtc.MATCH_MMSS);
     #endif //ARCH_SAMD_SET_RTC_EACH_ALARM
     delay(100); //Debug output
     // Send one last message before shutting down serial ports
@@ -1198,13 +1203,13 @@ void Logger::systemSleep(uint8_t sleep_min) {
 
     //debug
     #if defined ARCH_SAMD_SET_RTC_EACH_ALARM
-    timeNow_secs = log_zero_sleep_rtc.now().unixtime();
+    timeNow_secs = zero_sleep_rtc.now().unixtime();
     PRINTOUT("Wake1 in ",targetWakeup_secs-timeNow_secs);
     delay(10);
     #endif // ARCH_SAMD_SET_RTC_EACH_ALARM
     // }
     print_act_status();
-    //log_zero_sleep_rtc.enableAlarm(RTC_ALM_ID,log_zero_sleep_rtc.MATCH_SS );
+    //zero_sleep_rtc.enableAlarm(RTC_ALM_ID,zero_sleep_rtc.MATCH_SS );
     //zr.enableAlarm(RTC_ALM_ID, zr.MATCH_SS); // match Every minute 
     lowpower_disable_ints();
     // Now go to sleep
@@ -1240,10 +1245,10 @@ void Logger::systemSleep(uint8_t sleep_min) {
     __DSB();
     __WFI();
 
-#if 0
+#if defined DBG_LOGGERBASE_CONTINUOS_SLEEP
     //Dbg simulate continuos sleep until time expires
     {
-        timeNow_secs = log_zero_sleep_rtc.now().unixtime();
+        timeNow_secs = zero_sleep_rtc.now().unixtime();
         if (targetWakeup_secs <= timeNow_secs) 
         {
             sleeping =false;
@@ -1255,7 +1260,7 @@ void Logger::systemSleep(uint8_t sleep_min) {
     }
     #else 
     sleeping=false;
-#endif 
+#endif //DBG_LOGGERBASE_CONTINUOS_SLEEP
 
     } while (sleeping);
 
@@ -1392,7 +1397,7 @@ void Logger::systemSleep(uint8_t sleep_min) {
     //disableInterrupt(_mcuWakePin); moved up disable
 
 #elif defined ARDUINO_ARCH_SAMD
-    // nh dbg log_zero_sleep_rtc.disableAlarm(RTC_ALM_ID);
+    // nh dbg zero_sleep_rtc.disableAlarm(RTC_ALM_ID);
 #endif
 
     // Wake-up message
@@ -1536,32 +1541,32 @@ bool Logger::initializeSDCard(void) {
     return SDextendedInit(retVal);
 }
 
-void Logger::setFileTimestampTz(File fileToStamp, uint8_t stampFlag) {
-    //DateTime markedDt(Logger::markedEpochTime - EPOCH_TIME_OFF);
-    DateTime markedDtTz(getNowLocalEpoch()- EPOCH_TIME_DTCLASS );
-
-    MS_DEEP_DBG(F("setFTTz"),markedDtTz.year(),markedDtTz.month(), markedDtTz.date(),
-        markedDtTz.hour(), markedDtTz.minute(), markedDtTz.second());
-    bool crStat = fileToStamp.timestamp(
-        stampFlag, markedDtTz.year(), markedDtTz.month(), markedDtTz.date(),
-        markedDtTz.hour(), markedDtTz.minute(), markedDtTz.second());
-    if (!crStat) {
-        PRINTOUT(F("setFTTz err for "), markedDtTz.year(), markedDtTz.month(),
-                 markedDtTz.date(), markedDtTz.hour(), markedDtTz.minute(),
-                 markedDtTz.second());
-    }
-}
 
 // Protected helper function - This sets a timestamp on a file
-void Logger::setFileTimestamp(File fileToStamp, uint8_t stampFlag) {
-    fileToStamp.timestamp(stampFlag, dtFromEpoch(getNowLocalEpoch()).year(),
-                          dtFromEpoch(getNowLocalEpoch()).month(),
-                          dtFromEpoch(getNowLocalEpoch()).date(),
-                          dtFromEpoch(getNowLocalEpoch()).hour(),
-                          dtFromEpoch(getNowLocalEpoch()).minute(),
-                          dtFromEpoch(getNowLocalEpoch()).second());
-}
+void Logger::setFileTimestamp(File fileToStamp, uint8_t stampFlag, bool localTime) {
+    if (false == localTime) {
+        fileToStamp.timestamp(stampFlag, dtFromEpoch(getNowLocalEpoch()).year(),
+                            dtFromEpoch(getNowLocalEpoch()).month(),
+                            dtFromEpoch(getNowLocalEpoch()).date(),
+                            dtFromEpoch(getNowLocalEpoch()).hour(),
+                            dtFromEpoch(getNowLocalEpoch()).minute(),
+                            dtFromEpoch(getNowLocalEpoch()).second());
+    }else {
 
+        DateTime markedDtTz(getNowLocalEpoch()- EPOCH_TIME_DTCLASS );
+
+        MS_DEEP_DBG(F("setFTTz"),markedDtTz.year(),markedDtTz.month(), markedDtTz.date(),
+            markedDtTz.hour(), markedDtTz.minute(), markedDtTz.second());
+        bool crStat = fileToStamp.timestamp(
+            stampFlag, markedDtTz.year(), markedDtTz.month(), markedDtTz.date(),
+            markedDtTz.hour(), markedDtTz.minute(), markedDtTz.second());
+        if (!crStat) {
+            PRINTOUT(F("setFTTz err for "), markedDtTz.year(), markedDtTz.month(),
+                    markedDtTz.date(), markedDtTz.hour(), markedDtTz.minute(),
+                    markedDtTz.second());
+        }
+    }
+}
 
 // Protected helper function - This opens or creates a file, converting a string
 // file name to a character file name
@@ -1583,14 +1588,14 @@ bool Logger::openFile(String& filename, bool createFile,
     if (logFile.open(charFileName, O_WRITE | O_AT_END)) {
         MS_DBG(F("Opened existing file:"), filename);
         // Set access date time
-        setFileTimestampTz(logFile, T_ACCESS);
+        setFileTimestamp(logFile, T_ACCESS, true);
         return true;
     } else if (createFile) {
         // Create and then open the file in write mode
         if (logFile.open(charFileName, O_CREAT | O_WRITE | O_AT_END)) {
             MS_DBG(F("Created new file:"), filename);
             // Set creation date time
-            setFileTimestampTz(logFile, T_CREATE);
+            setFileTimestamp(logFile, T_CREATE, true);
             // Write out a header, if requested
             if (writeDefaultHeader) {
                 // Add header information
@@ -1602,10 +1607,10 @@ bool Logger::openFile(String& filename, bool createFile,
                 MS_DBG('\n');
 #endif
                 // Set write/modification date time
-                setFileTimestampTz(logFile, T_WRITE);
+                setFileTimestamp(logFile, T_WRITE, true);
             }
             // Set access date time
-            setFileTimestampTz(logFile, T_ACCESS);
+            setFileTimestamp(logFile, T_ACCESS, true);
             return true;
         } else {
             // Return false if we couldn't create the file
@@ -1672,9 +1677,9 @@ bool Logger::logToSD(String& filename, String& rec) {
     PRINTOUT(rec);
 
     // Set write/modification date time
-    setFileTimestampTz(logFile, T_WRITE);
+    setFileTimestamp(logFile, T_WRITE, true);
     // Set access date time
-    setFileTimestampTz(logFile, T_ACCESS);
+    setFileTimestamp(logFile, T_ACCESS, true);
     // Close the file to save it
     logFile.close();
     return true;
@@ -1712,9 +1717,9 @@ bool Logger::logToSD(void) {
 #endif
 
     // Set write/modification date time
-    setFileTimestampTz(logFile, T_WRITE);
+    setFileTimestamp(logFile, T_WRITE, true);
     // Set access date time
-    setFileTimestampTz(logFile, T_ACCESS);
+    setFileTimestamp(logFile, T_ACCESS, true);
     // Close the file to save it
     logFile.close();
     return true;
@@ -1844,15 +1849,16 @@ void Logger::begin(VariableArray* inputArray) {
 }
 
 #if defined ARDUINO_ARCH_SAMD
-// nh this needs to be invoked for some reaon
+// This needs to be invoked to enable interrupt processing
 bool alarmUpdate_sema=false;
 void alarmMatch(uint32_t flag)
 {
     //Need the handler for RTC_SAMD51 interrupt handling
     alarmUpdate_sema= true;
-    /*
+    // This is intterrupt level, so becautious
+#if defined DBG_LOGGERBASE_ALARM_MATCH_PRINT
     Serial.print("Alarm Match! ");
-    DateTime now = log_zero_sleep_rtc.now();
+    DateTime now = zero_sleep_rtc.now();
     Serial.print(now.year(), DEC);
     Serial.print('/');
     Serial.print(now.month(), DEC);
@@ -1865,7 +1871,7 @@ void alarmMatch(uint32_t flag)
     Serial.print(':');
     Serial.print(now.second(), DEC);
     Serial.println();
-    */
+ #endif // DBG_LOGGERBASE_ALARM_MATCH_PRINT
 }
 #endif // ARDUINO_ARCH_SAMD
 
@@ -1883,7 +1889,7 @@ void Logger::begin() {
 
 #if defined ARDUINO_ARCH_SAMD
     MS_DBG(F("Beginning internal real time clock"));
-    log_zero_sleep_rtc.begin(); //Soft start, preserve good time
+    zero_sleep_rtc.begin(); //Soft start, preserve good time
 #endif
     watchDogTimer.resetWatchDog();
 
