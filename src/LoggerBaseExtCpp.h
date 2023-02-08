@@ -908,6 +908,7 @@ void Logger::logDataAndPubReliably(uint8_t cia_val_override) {
 
         // Unset flag
         Logger::isLoggingNow = false;
+        Logger::startTesting = false; //Interrupt going off
         dumpFreeRam(8256); //large Number
     }
 

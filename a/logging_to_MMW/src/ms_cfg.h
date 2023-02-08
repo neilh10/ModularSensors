@@ -119,8 +119,6 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 
 #endif //Board
 
-#define LOGGERID_DEF_STR "msLog01"
-#define NEW_LOGGERID_MAX_SIZE 40
 #define configIniID_DEF_STR "ms_cfg.ini"
 #define CONFIG_TIME_ZONE_DEF -8
 
@@ -183,7 +181,9 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 //#define SENSOR_CONFIG_GENERAL 1
 //#define KellerAcculevel_ACT 1
 // Defaults for data.envirodiy.org
-//Test08
+//Test08 https://monitormywatershed.org/sites/tu_rc_test08/
+#define LOGGERID_DEF_STR "test08"
+#define NEW_LOGGERID_MAX_SIZE 40
 #define registrationToken_UUID "0cf7c40a-232e-457d-87d6-cea5c0757fec"
 #define samplingFeature_UUID   "236c674b-69b9-43af-b0d6-33d67b870ecc"
 #define SEQUENCE_NUMBER_UUID   "8c57835f-a32f-4d62-82dc-0ba09f04cf52"

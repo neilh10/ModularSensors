@@ -9,7 +9,20 @@
  *            This example is published under the BSD-3 license.
  *
  * Build Environment: Visual Studios Code with PlatformIO
- * Hardware Platform: EnviroDIY Mayfly Arduino Datalogger
+ * Hardware Platform: default_envs =seeed_wio_terminal
+ * Tasks: 
+ * * temperature logger and soak test
+ * * use ms_cfg.ini
+ * * toggle USB port for low power and debug UART instead of USB
+ * * sleep low power and wake
+ * * Sleep and wake ~ 
+ *    import from a\PlatformIO\Projects\afM4\lowPower\src\standbyExternalInterruptSAMD51.cpp
+ * * WiFi subsystem, post to MMW - complete
+ * * WiFi subystem, ntp/udp - complete
+ * 
+ * 2023Jan2 Power Measured USB Stick on USB-C
+ * ??Sleeping 50mA
+ * WiFi running 64mA, startup is 100mA
  *
  * DISCLAIMER:
  * THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
@@ -82,7 +95,8 @@ const int32_t serialBaud = serialBaudDebugDef;  // Baud rate for debugging
 const int8_t  greenLED   = greenLEDPinDef;
 const int8_t  redLED     = redLEDPinDef; 
 const int8_t  buttonPin  = buttonPinDef; // Pin for debugging mode (ie, button pin)
-const int8_t  wakePin    = wakePinDef ;  // MCU interrupt/alarm pin to wake from sleep
+//const int8_t  buttonWakePin  = -1; // Pin for debugging mode (ie, button pin)
+const int8_t  wakePin    = -1;//wakePinDef ;  // MCU interrupt/alarm pin to wake from sleep also used for setting TestMode
 // Mayfly 0.x D31 = A7
 // Set the wake pin to -1 if you do not want the main processor to sleep.
 // In a SAMD system where you are using the built-in rtc, set wakePin to 1
@@ -416,7 +430,7 @@ void setup() {
     // Attach the modem and information pins to the logger
     dataLogger.attachModem(modemPhy);
     //modemPhy.setModemLED(modemLEDPin);
-    dataLogger.setLoggerPins(wakePin, sdCardSSPin, sdCardPwrPin, buttonPin,
+    dataLogger.setLoggerPins(wakePin, sdCardSSPin, sdCardPwrPin, wakePin,
                              greenLED);
     dataLogger.setLoggerID("logdef");
     dataLogger.setLoggingInterval(2);
@@ -447,7 +461,7 @@ void setup() {
     }
 
     // Sync the clock if it isn't valid or we have battery to spare
-    if (0)///*getBatteryVoltage() > 3.55 ||*/ !dataLogger.isRTCSane()) 
+    if (1)///*getBatteryVoltage() > 3.55 ||*/ !dataLogger.isRTCSane()) 
     {
         // Synchronize the RTC with NIST
         // This will also set up the modem
