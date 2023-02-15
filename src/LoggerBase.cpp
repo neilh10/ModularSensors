@@ -820,7 +820,7 @@ uint8_t Logger::checkInterval(void) {
         delay(25);
     }
 #else  // ARDUINO_ARCH_SAMD
-       // Assume that have slept for the right amount of time
+    // Assume that have slept for the right amount of time
     markTime();
     DateTime rtcExtNowDt = rtcExtPhy.now();
     // const char *DateFmt = "YYMMDD:hhmmss";- caused reboot
@@ -828,8 +828,8 @@ uint8_t Logger::checkInterval(void) {
     // "YY-MM-DD:hhmmss"; uint32_t rtcExtNowTzSec = rtcExtNowDt.unixtime()+
     // ((int32_t)getTZOffset()*HOURS_TO_SECS);
     MS_DBG(F("Logging epoch time marked:"), Logger::markedLocalEpochTime, " ",
-           Logger::formatDateTime_ISO8601(Logger::markedLocalEpochTime), "extRtc",
-           rtcExtNowDt.timestamp(DateTime::TIMESTAMP_FULL));
+        Logger::formatDateTime_ISO8601(Logger::markedLocalEpochTime), "extRtc",
+        rtcExtNowDt.timestamp(DateTime::TIMESTAMP_FULL));
     //  - caused reboot
     retval = true;
 #endif
@@ -974,7 +974,7 @@ inline uint16_t dumpFreeRam(uint16_t maxCount)
     }
     PRINTOUT(F("\nFree ram never allocated between (bytes dec)"),nu_cnt,F("and"),fr_cnt);
     return fr_cnt;
-} //dumpFreeRam(
+} //dumpFreeRam
 #else 
 inline uint16_t dumpFreeRam(uint16_t maxCount) {return 0;}
 #endif //MS_DUMP_FREE_RAM
@@ -1119,14 +1119,17 @@ void Logger::systemSleep(uint8_t sleep_min) {
 #elif defined ARDUINO_ARCH_SAMD
 
     // Make sure interrupts are enabled for the clock
-    //NVIC_EnableIRQ(RTC_IRQn);       // enable RTC interrupt
-    //NVIC_SetPriority(RTC_IRQn, 0);  // highest priority
+    NVIC_EnableIRQ(RTC_IRQn);       // enable RTC interrupt
+    NVIC_SetPriority(RTC_IRQn, 0);  // highest priority
 
-    // Alarms on the RTC built into the SAMD21 appear to be identical to
-    // those in the DS3231.  See more notes below. We're setting the alarm
-    // seconds to 59 and then seting it to go off whenever the seconds match
-    // the 59.  I'm using 59 instead of 00 because there seems to be a bit
-    // of a wake-up delay
+    // Alarms on the RTC built into the SAMD21 appear to be identical to those
+    // in the DS3231.  See more notes below.
+    // We're setting the alarm seconds to 59 and then seting it to go off
+    // whenever the seconds match the 59.  I'm using 59 instead of 00
+    // because there seems to be a bit of a wake-up delay
+    // The setting of the internal RTC alarm time that wakes up the processor
+    // is set an intialization. 
+    // An option is ARCH_SAMD_SET_RTC_EACH_ALARM but hasn't found to work
     uint16_t local_secs;
     uint32_t targetWakeup_secs;
     uint32_t timeNow_secs;
@@ -1136,7 +1139,7 @@ void Logger::systemSleep(uint8_t sleep_min) {
     } else {
         local_secs = (sleep_min * 60);
     }
-    // zero_sleep_rtc.setAlarmSeconds(local_secs);
+
     timeNow_secs      = getNowUTCEpoch();
     targetWakeup_secs = timeNow_secs + local_secs;
     adjust_secs       = targetWakeup_secs % 60;
@@ -1145,21 +1148,12 @@ void Logger::systemSleep(uint8_t sleep_min) {
            targetWakeup_secs, " ", formatDateTime_ISO8601(targetWakeup_secs),
            "\n  adj=", adjust_secs, " fm now=", timeNow_secs,
            " Awake=", timeNow_secs - wakeUpTime_secs);
-    /*MS_DBG("Setting alarm (", local_secs, "+", timeNow_secs, ") on RTC @",
-           targetWakeup_secs, " ", formatDateTime_ISO8601(targetWakeup_secs),
-           " adj=", adjust_secs, " fm now=", timeNow_secs,
-           " Awake=", timeNow_secs - wakeUpTime_secs);   */
-//Enable for SAMD51 - slightly different than SAMD21
 
     #if defined ARCH_SAMD_SET_RTC_EACH_ALARM
-/*    zero_sleep_rtc.setAlarm(RTC_ALM_ID,(targetWakeup_secs));
-    zero_sleep_rtc.enableAlarm(RTC_ALM_ID,RTC_SAMD51::MATCH_HHMMSS);
-    zero_sleep_rtc.attachInterrupt(alarmMatch);*/
     DateTime timeNow = zero_sleep_rtc.now();   
     DateTime timeAlm = zero_sleep_rtc.alarm(RTC_ALM_ID);   
     PRINTOUT("  now   DDHHMMSS ",timeNow.day(),timeNow.hour(),timeNow.minute(),timeNow.second());
     PRINTOUT("  alarm DDHHMMSS ",timeAlm.day(),timeAlm.hour(),timeAlm.minute(),timeAlm.second());
-
 
     /*MS_DBG("Alm:", zr.getAlarmYear(), zr.getAlarmMonth(), zr.getAlarmDay(),
            "-", zr.getAlarmHours(), ":", zr.getAlarmMinutes(), ":",
@@ -1172,19 +1166,17 @@ void Logger::systemSleep(uint8_t sleep_min) {
     PRINTOUT(F("Going to sleep. Ram("),freeRamCalcLb(),F("/"),freeRamCnt(),F(")  ZZzzz..."));
     print_act_status();
 #endif
-    //delay(200); //Debug output
+
 // Wait until the serial ports have finished transmitting
 // This does not clear their buffers, it just waits until they are finished
 // TODO(SRGDamia1):  Make sure can find all serial ports
-#if 0
 #if defined(STANDARD_SERIAL_OUTPUT)
     STANDARD_SERIAL_OUTPUT.flush();  // for debugging
 #endif
 #if defined DEBUGGING_SERIAL_OUTPUT
     DEBUGGING_SERIAL_OUTPUT.flush();  // for debugging
 #endif
-#endif 
-    delay(100); //Debug output
+
     // Stop any I2C connections
     // This function actually disables the two-wire pin functionality and
     // turns off the internal pull-up resistors.
@@ -1214,14 +1206,9 @@ void Logger::systemSleep(uint8_t sleep_min) {
     PRINTOUT("Wake1 in ",targetWakeup_secs-timeNow_secs);
     delay(10);
     #endif // ARCH_SAMD_SET_RTC_EACH_ALARM
-    // }
 
-    //zero_sleep_rtc.enableAlarm(RTC_ALM_ID,zero_sleep_rtc.MATCH_SS );
-    //zr.enableAlarm(RTC_ALM_ID, zr.MATCH_SS); // match Every minute 
 
-#if defined RUN_WITH_USB 
-#warning Using USB
-     false;
+#if defined RUN_WITH_USB
     Serial.flush();
     Serial.end(); //Adafruit_USBD_CDC.end();
     USBDevice.detach(); // USB is usally busy, detach so can sleep with no interrupts
@@ -1230,7 +1217,6 @@ void Logger::systemSleep(uint8_t sleep_min) {
     lowpower_disable_ints();
     // Now go to sleep
     //However in with USB attached may not truly sleep.
-    //
     bool sleeping=true;
     do {
     uint8_t rd_delay = 50;
@@ -1441,7 +1427,7 @@ void Logger::systemSleep(uint8_t sleep_min) {
     //disableInterrupt(_mcuWakePin); moved up disable
 
 #elif defined ARDUINO_ARCH_SAMD
-    // nh dbg zero_sleep_rtc.disableAlarm(RTC_ALM_ID);
+    // not needed zero_sleep_rtc.disableAlarm(RTC_ALM_ID);
 #endif
 
     // Wake-up message
@@ -1449,9 +1435,9 @@ void Logger::systemSleep(uint8_t sleep_min) {
     PRINTOUT(F("\n... zzzZZ Awake @"), formatDateTime_ISO8601(wakeUpTime_secs)
  #if defined ARDUINO_ARCH_SAMD  & defined ARCH_SAMD_SET_RTC_EACH_ALARM
     ,targetWakeup_secs, timeNow_secs
-#endif
+#endif //ARDUINO_ARCH_SAMD
     );
-    delay(100);
+
     // The logger will now start the next function after the systemSleep
     // function in either the loop or setup
 }
@@ -1926,7 +1912,6 @@ void Logger::begin() {
 
     MS_DBG(F(
         "Setting up a watch-dog timer to fire after 5minutes after loggingInterval"),_loggingIntervalMinutes);
-    //This setup is really about how long subsystems could take to initialize.
     watchDogTimer.setupWatchDog(((uint32_t)_loggingIntervalMinutes+5)*60);
     // Enable the watchdog
     watchDogTimer.enableWatchDog();
