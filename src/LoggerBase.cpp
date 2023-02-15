@@ -990,8 +990,12 @@ inline uint16_t dumpFreeRam(uint16_t maxCount) {return 0;}
 #endif // __AVR__
 
 #if defined ARDUINO_ARCH_SAMD
+#define serialBaudDebugDef 115200 
+#define SerialStd STANDARD_SERIAL_OUTPUT
 // https://www.avrfreaks.net/forum/samd21-samd21e16b-sporadically-locks-and-does-not-wake-standby-sleep-mode
 void lowpower_disable_ints(void) {
+    SerialStd.flush();
+    SerialStd.end();
   SysTick->CTRL &= ~(SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_ENABLE_Msk);
 
   // wiring.c turn off un-needed peripherals
@@ -1008,14 +1012,15 @@ void lowpower_disable_ints(void) {
   MCLK->APBDMASK.reg &= ~(MCLK_APBDMASK_DAC | MCLK_APBDMASK_SERCOM4 | MCLK_APBDMASK_SERCOM5 | MCLK_APBDMASK_ADC0 | MCLK_APBDMASK_ADC1 | MCLK_APBDMASK_TCC4
 		  | MCLK_APBDMASK_TC6 | MCLK_APBDMASK_TC7 | MCLK_APBDMASK_SERCOM6 | MCLK_APBDMASK_SERCOM7);
 */
-
+  //Assumes turned off DWT->CTRL &= ~DWT_CTRL_CYCCNTENA_Msk;
 }
 
 void lowpower_enable_ints(void) {
   SysTick_Config( SystemCoreClock / 1000 );
 }  
-
+#if ! defined SERIAL1_EN  
 #define RUN_WITH_USB 1
+#endif 
  void print_rtc_time_field(uint32_t time_value) {
     //Serial.print("Time ");
     Serial.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.bit.YEAR );
@@ -1050,8 +1055,6 @@ void lowpower_enable_ints(void) {
   Serial.println(nvicPriority);
   #endif // RUN_WITH_USB
 
-  //How to turn off on WioT? DWT->CTRL &= ~DWT_CTRL_CYCCNTENA_Msk;
-
 #if defined RUN_WITH_USB
   Serial.print("Check actIRQ:");
   int intlp;
@@ -1070,6 +1073,18 @@ void lowpower_enable_ints(void) {
 }
 
 #endif // ARDUINO_ARCH_SAMD
+
+void flash_builtinLed(int count, int space_ms)
+{
+  for (int lpcnt = count; lpcnt > 0; lpcnt--)
+  {
+    digitalWrite(LED_BUILTIN, HIGH); // Show we're awake again
+    delay(space_ms);
+    digitalWrite(LED_BUILTIN, LOW);
+    delay(space_ms);
+  }
+} // flash_redLed
+
 // Puts the system to sleep to conserve battery life.
 // This DOES NOT sleep or wake the sensors!!
 void Logger::systemSleep(uint8_t sleep_min) {
@@ -1155,17 +1170,20 @@ void Logger::systemSleep(uint8_t sleep_min) {
     delay(100); //Debug output
     // Send one last message before shutting down serial ports
     PRINTOUT(F("Going to sleep. Ram("),freeRamCalcLb(),F("/"),freeRamCnt(),F(")  ZZzzz..."));
+    print_act_status();
 #endif
     //delay(200); //Debug output
 // Wait until the serial ports have finished transmitting
 // This does not clear their buffers, it just waits until they are finished
 // TODO(SRGDamia1):  Make sure can find all serial ports
+#if 0
 #if defined(STANDARD_SERIAL_OUTPUT)
     STANDARD_SERIAL_OUTPUT.flush();  // for debugging
 #endif
 #if defined DEBUGGING_SERIAL_OUTPUT
     DEBUGGING_SERIAL_OUTPUT.flush();  // for debugging
 #endif
+#endif 
     delay(100); //Debug output
     // Stop any I2C connections
     // This function actually disables the two-wire pin functionality and
@@ -1189,17 +1207,6 @@ void Logger::systemSleep(uint8_t sleep_min) {
     watchDogTimer.disableWatchDog();
 
     // Sleep code from ArduinoLowPowerClass::sleep()
-    bool restoreUSBDevice = false;
-    // if (SERIAL_PORT_USBVIRTUAL)
-    // {
-    //     USBDevice.standby();
-    // }
-    // else
-    // {
-#ifndef USE_TINYUSB
-    USBDevice.detach();
-#endif
-    //nh dbg restoreUSBDevice = true;
 
     //debug
     #if defined ARCH_SAMD_SET_RTC_EACH_ALARM
@@ -1208,35 +1215,57 @@ void Logger::systemSleep(uint8_t sleep_min) {
     delay(10);
     #endif // ARCH_SAMD_SET_RTC_EACH_ALARM
     // }
-    print_act_status();
+
     //zero_sleep_rtc.enableAlarm(RTC_ALM_ID,zero_sleep_rtc.MATCH_SS );
     //zr.enableAlarm(RTC_ALM_ID, zr.MATCH_SS); // match Every minute 
+
+#if defined RUN_WITH_USB 
+#warning Using USB
+     false;
+    Serial.flush();
+    Serial.end(); //Adafruit_USBD_CDC.end();
+    USBDevice.detach(); // USB is usally busy, detach so can sleep with no interrupts
+#endif //RUN_WITH_USB
+
     lowpower_disable_ints();
     // Now go to sleep
     //However in with USB attached may not truly sleep.
     //
     bool sleeping=true;
     do {
-
-#if 1// defined(MS_LOGGERBASE_DEBUG) || defined(MS_LOGGERBASE_SLEEP_DEBUG)
+    uint8_t rd_delay = 50;
+#if 0// defined(MS_LOGGERBASE_DEBUG) || defined(MS_LOGGERBASE_SLEEP_DEBUG)
     // Maintens MS_DEBUGGING_STD output, but current is 13mA/SAMD51
     SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
 #else 
     SCB->SCR &= ~SCB_SCR_SLEEPDEEP_Msk;
 #endif
+
 	#if defined(__SAMD51__) 
-	PM->SLEEPCFG.reg = (PM_SLEEPCFG_SLEEPMODE_STANDBY & PM_SLEEPCFG_MASK );
+
+    #if defined WIO_TERMINAL
+    // This works - Serial1 gets messed up in _STANDBY lower power mode
+    #define MS_SLEEPCFG_MODE PM_SLEEPCFG_SLEEPMODE_IDLE2 
+    //#define MS_SLEEPCFG_MODE PM_SLEEPCFG_SLEEPMODE_STANDBY
+    #else
+    // Adafruit Express M4
+    #define MS_SLEEPCFG_MODE PM_SLEEPCFG_SLEEPMODE_STANDBY
+    #endif //WIO_TERMINAL
+    PM->SLEEPCFG.reg = (MS_SLEEPCFG_MODE & PM_SLEEPCFG_MASK );
+    do {
+        if (PM->SLEEPCFG.reg == (MS_SLEEPCFG_MODE & PM_SLEEPCFG_MASK )) break;
+    } while (--rd_delay);  // Wait for it to take
 	#else
-    uint8_t rd_delay = 10;
-    /* Sleep Posibilities
+
+    /* SAMD21 Slightly different 
     PM_SLEEPCFG_SLEEPMODE_STANDBY 3.3mA Can wake and run
     PM_SLEEPCFG_SLEEPMODE_HIBERNATE 3.1mA reset on int.watchdig
     PM_SLEEPCFG_SLEEPMODE_BACKUP 3.1mA requires recovery
     PM_SLEEPCFG_SLEEPMODE_OFF  2.9mA requires reset from ? watchdog*/
-    uint8_t sleepMode_req = PM_SLEEPCFG_SLEEPMODE_STANDBY;
-    // uint8_t sleepMode_req  = PM_SLEEPCFG_SLEEPMODE_HIBERNATE;
+    #define MS_SLEEPCFG_MODE  PM_SLEEPCFG_SLEEPMODE_STANDBY
+    // #define MS_SLEEPCFG_MODE PM_SLEEPCFG_SLEEPMODE_HIBERNATE
     // PM->STDBYCFG.FASTWKUP =0; default
-    PM->SLEEPCFG.bit.SLEEPMODE = sleepMode_req;
+    PM->SLEEPCFG.bit.SLEEPMODE = MS_SLEEPCFG_MODE;
     do {
         if (PM->SLEEPCFG.bit.SLEEPMODE != sleepMode_req) break;
     } while (--rd_delay);  // Wait for it to take
@@ -1326,20 +1355,35 @@ void Logger::systemSleep(uint8_t sleep_min) {
     // -- The portion below this happens on wake up, after any wake ISR's --
 
 #if defined ARDUINO_ARCH_SAMD
-    // Reattach the USB after waking
-    // Enable systick interrupt
-    //SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk;
     lowpower_enable_ints();
-    if (restoreUSBDevice) {
-#ifndef USE_TINYUSB
+#if defined RUN_WITH_USB 
+    // Reattach the USB after waking - doest work
+    //if (restoreUSBDevice) 
+    {
+
+#if defined(USE_TINYUSB)
+        //Adafruit_TinyUSB_Core_init();
+        //tinyusb_task();
+        USBDevice.attach();
+#elif defined(USBCON)
+        USBDevice.init();
         USBDevice.attach();
 #endif
         uint32_t startTimer = millis();
         while (!SERIAL_PORT_USBVIRTUAL && ((millis() - startTimer) < 1000L)) {
             // wait
         }
+
+#define serialBaudDebugDef 115200 
+        SerialStd.begin(serialBaudDebugDef);
+        flash_builtinLed(10,500);
+
     }
-#endif
+#else 
+
+    SerialStd.begin(serialBaudDebugDef);
+#endif // RUN_WITH_USB 
+#endif //ARDUINO_ARCH_SAMD
 
 #if defined ARDUINO_ARCH_AVR
 
@@ -2045,6 +2089,12 @@ void Logger::begin() {
     zr.attachInterrupt(alarmMatch); //Need for internal RTC_SAMD51 processing
     zr.enableAlarm(RTC_ALM_ID, zr.MATCH_SS); // match Every minute 
     PRINTOUT(F("Set RTC Alarm Every Miunute")); 
+    //Data Watchpoint and Trace Unit - 
+    // Seperate core arm_cortexm4_processor_trm_100166_0001_00_en Technical Ref Manual.pdf
+    // Turn off free running Cycle Count Register in DWT_CTRL
+    // May be a problem for some debug   
+    DWT->CTRL &= ~DWT_CTRL_CYCCNTENA_Msk;
+
 #endif // ARDUINO_ARCH_SAMD
 
     // Reset the watchdog

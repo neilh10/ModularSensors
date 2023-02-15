@@ -89,6 +89,13 @@ const uint8_t loggingIntervaldef = loggingInterval_CDEF_MIN;
 const int8_t timeZone = CONFIG_TIME_ZONE_DEF;  
 // NOTE:  Daylight savings time will not be applied!  Please use standard time!
 
+// STANDARD_SERIAL_OUTPUT defined on the command line (or .ini), 
+// generally
+// if STANDARD_SERIAL_OUTPUT is Serial then its USB
+// for USB requires special handling for USBDevice Driver
+// else could be Serial1 - com1 etc
+#define SerialStd STANDARD_SERIAL_OUTPUT
+
 // Set the input and output pins for the logger
 // NOTE:  Use -1 for pins that do not apply
 const int32_t serialBaud = serialBaudDebugDef;  // Baud rate for debugging
@@ -369,36 +376,52 @@ float getBatteryVoltage() {
 // ==========================================================================
 /** Start [setup] */
 void setup() {
-// Wait for USB connection to be established by PC
+// SerialDb could be Serial1 or USB connection established by PC
 // NOTE:  Only use this when debugging - if not connected to a PC, this
 // could prevent the script from starting
-#if defined SERIAL_PORT_USBVIRTUAL
-    while (!SERIAL_PORT_USBVIRTUAL && (millis() < 10000)) {}
+#if !defined SERIAL1_EN  
+#define RUN_WITH_USB 1
+#pragma message "Output to USB "
+    while (!SerialStd && (millis() < 10000)) {}
+#else
+#warning Not using USB
+#pragma message "Output to UART " 
+    bool statusUsb=false;
+    statusUsb = USBDevice.ready();
+    USBDevice.detach();
+    //Serial.end();
+    //statusUsb &= USBDevice.end(); !not uspported 
 #endif
 
     // Start the primary serial connection
-    Serial.begin(serialBaud);
-    while (!Serial); // debug wait for serial port to connect. Needed for native USB
+    SerialStd.begin(serialBaud);
+    //while (!SerialStd); // debug wait for serial port to connect. Needed for native USB
 
 
     // Print a start-up note to the first serial port
-    Serial.print(F("\n---Boot("));
-    //Serial.print(mcu_status,HEX);
-    Serial.print(F(") Sw Build: "));
-    Serial.print(build_ref);
-    Serial.print(" ");
-    Serial.println(git_usr);
-    Serial.print(" ");
-    Serial.println(git_branch);
+    SerialStd.print(F("\n---Boot("));
+    //SerialStd.print(mcu_status,HEX);
+    SerialStd.print(F(") Sw Build: "));
+    SerialStd.print(build_ref);
+    SerialStd.print(" ");
+    SerialStd.println(git_usr);
+    SerialStd.print(" ");
+    SerialStd.println(git_branch);
 
-    Serial.print(F("Sw Name: "));
-    Serial.println(configDescription);
+    SerialStd.print(F("Sw Name: "));
+    SerialStd.println(configDescription);
 
-    Serial.print(F("Using ModularSensors Library version "));
-    Serial.println(MODULAR_SENSORS_VERSION);
-    //Serial.print(F("TinyGSM Library version "));
-    //Serial.println(TINYGSM_VERSION);
-    Serial.println();
+    SerialStd.print(F("Using ModularSensors Library version "));
+    SerialStd.println(MODULAR_SENSORS_VERSION);
+    //SerialStd.print(F("TinyGSM Library version "));
+    //SerialStd.println(TINYGSM_VERSION);
+#if defined RUN_WITH_USB
+    SerialStd.print(" USB");
+#else
+    SerialStd.print(" UART UsbStat=");
+    SerialStd.print(statusUsb);
+#endif // RUN_WITH_USB
+    SerialStd.println();
 
 // Allow interrupts for software serial
 #if defined SoftwareSerial_ExtInts_h
@@ -438,7 +461,7 @@ void setup() {
     // Begin the logger
     dataLogger.begin();
 
-    Serial.println(F("Setting up modemPhy as WiFiClient..."));
+    SerialStd.println(F("Setting up modemPhy as WiFiClient..."));
     //EnviroDIYPOST.setClient(&modemPhy.endClient);
     EnviroDIYPOST.begin(dataLogger, &modemPhy.endClient, registrationToken, samplingFeature);
     //EnviroDIYPOST.setDIYHost("data.envirodiy.org"); //use default & port
@@ -455,7 +478,7 @@ void setup() {
     // Set up the sensors, except at lowest battery level
     //if (getBatteryVoltage() > 3.4) 
     {
-        Serial.println(F("Setting up sensors..."));
+        SerialStd.println(F("Setting up sensors..."));
         delay(1000);
         varArray.setupSensors();
     }
@@ -465,7 +488,7 @@ void setup() {
     {
         // Synchronize the RTC with NIST
         // This will also set up the modem
-        Serial.println(F("Synchronize the RTC with NIST"));
+        SerialStd.println(F("Synchronize the RTC with NIST"));
         dataLogger.syncRTC();
     }
 
@@ -476,7 +499,7 @@ void setup() {
     // the sensor setup we'll skip this too.
     //if (getBatteryVoltage() > 3.4) 
     {
-        Serial.println(F("Setting up file on SD card"));
+        SerialStd.println(F("Setting up file on SD card"));
         dataLogger.turnOnSDcard(
             true);  // true = wait for card to settle after power up
         dataLogger.createLogFile(true);  // true = write a new header
@@ -489,7 +512,7 @@ void setup() {
     //dataLogger.setPostMax_num(100);
     //dataLogger.logDataAndPubReliably(0x3);
     // Call the processor sleep
-    Serial.println(F("Putting processor to sleep\n"));
+    SerialStd.println(F("Putting processor to sleep\n"));
     delay(100);
     dataLogger.systemSleep();
 }
@@ -506,23 +529,23 @@ void loop() {
     // For hardware always take one reading and reference that  can change each time read
     float battery_V = 4.123;//nh dbg getBatteryVoltage() ;
     // At very low battery, just go back to sleep
-    Serial.print(F("BatteryVoltage="));
-    Serial.print(battery_V);
+    SerialStd.print(F("BatteryVoltage="));
+    SerialStd.print(battery_V);
     if (battery_V < 3.4) 
     {
-        Serial.println(F(" systemSleep"));
+        SerialStd.println(F(" systemSleep"));
         delay(500);
         dataLogger.systemSleep();
     }
     // At moderate voltage, log data but don't send it over the modem
     else if (battery_V  < 3.55)  {
-        Serial.println(F(" logData"));
+        SerialStd.println(F(" logData"));
         delay(500);
         dataLogger.logData();
     }
     // If the battery is good, send the data to the world
     else {
-        Serial.println(F(" logDataAndPublish"));
+        SerialStd.println(F(" logDataAndPublish"));
         delay(500);
         dataLogger.logDataAndPubReliably(0);
     }
