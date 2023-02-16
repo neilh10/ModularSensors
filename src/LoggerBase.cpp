@@ -989,7 +989,250 @@ inline uint16_t freeRamCnt() {return 0;}
 inline uint16_t dumpFreeRam(uint16_t maxCount) {return 0;}
 #endif // __AVR__
 
+// Puts the system to sleep to conserve battery life.
+// This DOES NOT sleep or wake the sensors!!
+#if defined(__AVR__)
+void Logger::systemSleep(uint8_t sleep_min) { //__AVR__
+#if defined MS_SAMD_DS3231 || not defined ARDUINO_ARCH_SAMD
+    // Don't go to sleep unless there's a wake pin!
+    if (_mcuWakePin < 0) {
+        PRINTOUT(F("MCU not Enabled,Use a non-negative wake pin to request sleep!"), _mcuWakePin);
+        return;
+    }
+
+
+    // Unfortunately, because of the way the alarm on the DS3231 is set up, it
+    // cannot interrupt on any frequencies other than every second, minute,
+    // hour, day, or date.  We could set it to alarm hourly every 5 minutes past
+    // the hour, but not every 5 minutes.  This is why we set the alarm for
+    // every minute and use the checkInterval function.  This is a hardware
+    // limitation of the DS3231; it is not due to the libraries or software.
+    MS_DBG(F("Setting alarm on DS3231 RTC for every minute."));
+    setExtRtcSleep();
+
+    // Set up a pin to hear clock interrupt and attach the wake ISR to it
+    noInterrupts(); // make a transaction, ensure no race condition.
+    pinMode(_mcuWakePin, INPUT_PULLUP);
+    enableInterrupt(_mcuWakePin, wakeISR, CHANGE);
+    interrupts(); 
+
+    // Clear the last interrupt flag in the RTC status register
+    // It will float high if not already there, and then be pulled low
+    // on next match
+    rtcExtPhy.clearINTStatus();
+    PRINTOUT(F("Going to sleep. Ram("),freeRamLb(),F("/"),freeRamCnt(),F(")  ZZzzz..."));
+#elif defined ARDUINO_ARCH_SAMD
+
+    // Make sure interrupts are enabled for the clock
+    NVIC_EnableIRQ(RTC_IRQn);       // enable RTC interrupt
+    NVIC_SetPriority(RTC_IRQn, 0);  // highest priority
+
+    // Alarms on the RTC built into the SAMD21 appear to be identical to those
+    // in the DS3231.  See more notes below.
+    // We're setting the alarm seconds to 59 and then seting it to go off
+    // whenever the seconds match the 59.  I'm using 59 instead of 00
+    // because there seems to be a bit of a wake-up delay
+    MS_DBG(F("Setting alarm on SAMD built-in RTC for every minute."));
+    zero_sleep_rtc.attachInterrupt(wakeISR);
+    zero_sleep_rtc.setAlarmSeconds(59);
+    zero_sleep_rtc.enableAlarm(zero_sleep_rtc.MATCH_SS);
+
+#endif
+
+    // Send one last message before shutting down serial ports
+    PRINTOUT(F("Going to sleep. Ram("),freeRamCalcLb(),F("/"),freeRamCnt(),F(")  ZZzzz..."));
+
+// Wait until the serial ports have finished transmitting
+// This does not clear their buffers, it just waits until they are finished
+// TODO(SRGDamia1):  Make sure can find all serial ports
+#if defined(STANDARD_SERIAL_OUTPUT)
+    STANDARD_SERIAL_OUTPUT.flush();  // for debugging
+#endif
+#if defined DEBUGGING_SERIAL_OUTPUT
+    DEBUGGING_SERIAL_OUTPUT.flush();  // for debugging
+#endif
+
+    // Stop any I2C connections
+    // This function actually disables the two-wire pin functionality and
+    // turns off the internal pull-up resistors.
+    Wire.end();
+// Now force the I2C pins to LOW
+// I2C devices have a nasty habit of stealing power from the SCL and SDA pins...
+// This will only work for the "main" I2C/TWI interface
+#ifdef SDA
+    pinMode(SDA, OUTPUT);
+    digitalWrite(SDA, LOW);
+#endif
+#ifdef SCL
+    pinMode(SCL, OUTPUT);
+    digitalWrite(SCL, LOW);
+#endif
+
 #if defined ARDUINO_ARCH_SAMD
+
+    // Disable the watch-dog timer
+    watchDogTimer.disableWatchDog();
+
+    // Sleep code from ArduinoLowPowerClass::sleep()
+    bool restoreUSBDevice = false;
+    // if (SERIAL_PORT_USBVIRTUAL)
+    // {
+    //     USBDevice.standby();
+    // }
+    // else
+    // {
+#ifndef USE_TINYUSB
+    USBDevice.detach();
+#endif
+    restoreUSBDevice = true;
+    // }
+    // Disable systick interrupt:  See
+    // https://www.avrfreaks.net/forum/samd21-samd21e16b-sporadically-locks-and-does-not-wake-standby-sleep-mode
+    SysTick->CTRL &= ~SysTick_CTRL_TICKINT_Msk;
+    // Now go to sleep
+    SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
+    __DSB();
+    __WFI();
+
+#elif defined ARDUINO_ARCH_AVR
+
+    // Set the sleep mode
+    // In the avr/sleep.h file, the call names of these 5 sleep modes are:
+    // SLEEP_MODE_IDLE         -the least power savings
+    // SLEEP_MODE_ADC
+    // SLEEP_MODE_PWR_SAVE
+    // SLEEP_MODE_STANDBY
+    // SLEEP_MODE_PWR_DOWN     -the most power savings
+    set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+
+    // Dont disable watch-dog timer, let the extended watchdog handle real timeout.
+    watchDogTimer.debugQuiet();  // not watchDogTimer.disableWatchDog();
+
+    // Temporarily disables interrupts, so no mistakes are made when writing
+    // to the processor registers
+    noInterrupts();
+
+    // Disable the processor ADC (must be disabled before it will power down)
+    // ADCSRA = ADC Control and Status Register A
+    // ADEN = ADC Enable
+    ADCSRA &= ~_BV(ADEN);
+
+// turn off the brown-out detector, if possible
+// BODS = brown-out detector sleep
+// BODSE = brown-out detector sleep enable
+#if defined(BODS) && defined(BODSE)
+    sleep_bod_disable();
+#endif
+
+    // disable all power-reduction modules (ie, the processor module clocks)
+    // NOTE:  This only shuts down the various clocks on the processor via
+    // the power reduction register!  It does NOT actually disable the
+    // modules themselves or set the pins to any particular state!  This
+    // means that the I2C/Serial/Timer/etc pins will still be active and
+    // powered unless they are turned off prior to calling this function.
+    power_all_disable();
+
+    // Set the sleep enable bit.
+    sleep_enable();
+
+    // Re-enables interrupts so we can wake up again
+    interrupts();
+
+    // Actually put the processor into sleep mode.
+    // This must happen after the SE bit is set.
+    sleep_cpu();
+
+#endif
+    // ---------------------------------------------------------------------
+
+
+    // ---------------------------------------------------------------------
+    // -- The portion below this happens on wake up, after any wake ISR's --
+
+#if defined ARDUINO_ARCH_SAMD
+    // Reattach the USB after waking
+    // Enable systick interrupt
+    SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk;
+    if (restoreUSBDevice) {
+#ifndef USE_TINYUSB
+        USBDevice.attach();
+#endif
+        uint32_t startTimer = millis();
+        while (!SERIAL_PORT_USBVIRTUAL && ((millis() - startTimer) < 1000L)) {
+            // wait
+        }
+    }
+#endif
+
+#if defined ARDUINO_ARCH_AVR
+
+    // Temporarily disables interrupts, so no mistakes are made when writing
+    // to the processor registers
+    noInterrupts();
+
+    // Re-enable all power modules (ie, the processor module clocks)
+    // NOTE:  This only re-enables the various clocks on the processor!
+    // The modules may need to be re-initialized after the clocks re-start.
+    power_all_enable();
+
+    // Clear the SE (sleep enable) bit.
+    sleep_disable();
+
+    // Re-enable the processor ADC
+    ADCSRA |= _BV(ADEN);
+
+    // Detach the from the pin - assumes Mayfly
+    disableInterrupt(_mcuWakePin);
+
+    // Re-enables interrupts
+    interrupts();
+
+#endif
+
+    // Re-enable the watch-dog timer
+    watchDogTimer.enableWatchDog();
+
+// Re-start the I2C interface
+#ifdef SDA
+    pinMode(SDA, INPUT_PULLUP);  // set as input with the pull-up on
+#endif
+#ifdef SCL
+    pinMode(SCL, INPUT_PULLUP);
+#endif
+    Wire.begin();
+    // Eliminate any potential extra waits in the wire library
+    // These waits would be caused by a readBytes or parseX being called
+    // on wire after the Wire buffer has emptied.  The default stream
+    // functions - used by wire - wait a timeout period after reading the
+    // end of the buffer to see if an interrupt puts something into the
+    // buffer.  In the case of the Wire library, that will never happen and
+    // the timeout period is a useless delay.
+    Wire.setTimeout(0);
+
+#if defined(MS_SAMD_DS3231) || not defined(ARDUINO_ARCH_SAMD)
+    // Stop the clock from sending out any interrupts while we're awake.
+    // There's no reason to waste thought on the clock interrupt if it
+    // happens while the processor is awake and doing other things.
+    // nh: this re-initializes the RTC, maybe over driving the RTC - the disableInterrupt is a better way
+    //rtc.disableInterrupts();  after Wire.begin()
+    // Detach the from the pin
+    //disableInterrupt(_mcuWakePin); moved up disable
+
+#elif defined ARDUINO_ARCH_SAMD
+    // not needed zero_sleep_rtc.disableAlarm(RTC_ALM_ID);
+#endif
+
+    // Wake-up message
+    wakeUpTime_secs = getNowLocalEpoch();
+    PRINTOUT(F("\n... zzzZZ Awake @"), formatDateTime_ISO8601(wakeUpTime_secs) );
+
+    // The logger will now start the next function after the systemSleep
+    // function in either the loop or setup
+}
+
+
+// end Logger::systemSleep AVR
+#else 
 #define serialBaudDebugDef 115200 
 #define SerialStd STANDARD_SERIAL_OUTPUT
 // https://www.avrfreaks.net/forum/samd21-samd21e16b-sporadically-locks-and-does-not-wake-standby-sleep-mode
@@ -1073,8 +1316,6 @@ void lowpower_enable_ints(void) {
  
 }
 
-#endif // ARDUINO_ARCH_SAMD
-
 void flash_builtinLed(int count, int space_ms)
 {
   for (int lpcnt = count; lpcnt > 0; lpcnt--)
@@ -1086,9 +1327,8 @@ void flash_builtinLed(int count, int space_ms)
   }
 } // flash_redLed
 
-// Puts the system to sleep to conserve battery life.
-// This DOES NOT sleep or wake the sensors!!
-void Logger::systemSleep(uint8_t sleep_min) {
+
+void Logger::systemSleep(uint8_t sleep_min) { //SAMDx
 #if defined MS_SAMD_DS3231 || not defined ARDUINO_ARCH_SAMD
     // Don't go to sleep unless there's a wake pin!
     if (_mcuWakePin < 0) {
@@ -1446,9 +1686,8 @@ void Logger::systemSleep(uint8_t sleep_min) {
     flash_builtinLed(10,500); //Power measurement
     // The logger will now start the next function after the systemSleep
     // function in either the loop or setup
-}
-
-
+} //Logger::systemSleep SAMD
+#endif //__AVR__
 // ===================================================================== //
 // Public functions for logging data to an SD card
 // ===================================================================== //
