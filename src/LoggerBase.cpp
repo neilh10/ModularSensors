@@ -1019,9 +1019,10 @@ void lowpower_enable_ints(void) {
   SysTick_Config( SystemCoreClock / 1000 );
 }  
 #if ! defined SERIAL1_EN  
-#define RUN_WITH_USB 1
+#define USB_SERIALSTD 1
 #endif 
  void print_rtc_time_field(uint32_t time_value) {
+    #if 0
     //Serial.print("Time ");
     Serial.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.bit.YEAR );
     Serial.print("/");
@@ -1034,11 +1035,11 @@ void lowpower_enable_ints(void) {
     Serial.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.bit.MINUTE );
     Serial.print(":");
     Serial.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.bit.SECOND );        
-
+    #endif //0
  }
  void print_act_status(void) {
 
-  #if defined RUN_WITH_USB
+  #if 0 //defined USB_SERIALSTD
   Serial.print("Alm ");
   //Serial.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.reg,HEX);
   print_rtc_time_field(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.reg);
@@ -1053,9 +1054,9 @@ void lowpower_enable_ints(void) {
   uint32_t nvicPriority= NVIC_GetPriorityGrouping();
   Serial.print(" NVIC ");
   Serial.println(nvicPriority);
-  #endif // RUN_WITH_USB
+  #endif // USB_SERIALSTD
 
-#if defined RUN_WITH_USB
+#if 0 //defined USB_SERIALSTD
   Serial.print("Check actIRQ:");
   int intlp;
   for (intlp=0; intlp< PERIPH_COUNT_IRQn; intlp++)
@@ -1068,7 +1069,7 @@ void lowpower_enable_ints(void) {
   Serial.print(" TotChecked=");
   Serial.println(intlp);
   delay(100);
-#endif //RUN_WITH_USB
+#endif //USB_SERIALSTD
  
 }
 
@@ -1130,9 +1131,12 @@ void Logger::systemSleep(uint8_t sleep_min) {
     // The setting of the internal RTC alarm time that wakes up the processor
     // is set an intialization. 
     // An option is ARCH_SAMD_SET_RTC_EACH_ALARM but hasn't found to work
-    uint16_t local_secs;
+    uint32_t timeNow_secs = getNowUTCEpoch();
     uint32_t targetWakeup_secs;
-    uint32_t timeNow_secs;
+    targetWakeup_secs = timeNow_secs + RTC_ALARM_SEC;
+#if 0
+    uint16_t local_secs;
+
     uint32_t adjust_secs;
     if (0 == sleep_min) {
         local_secs = (_loggingIntervalMinutes * 60);
@@ -1140,7 +1144,6 @@ void Logger::systemSleep(uint8_t sleep_min) {
         local_secs = (sleep_min * 60);
     }
 
-    timeNow_secs      = getNowUTCEpoch();
     targetWakeup_secs = timeNow_secs + local_secs;
     adjust_secs       = targetWakeup_secs % 60;
     targetWakeup_secs -= adjust_secs;
@@ -1148,7 +1151,7 @@ void Logger::systemSleep(uint8_t sleep_min) {
            targetWakeup_secs, " ", formatDateTime_ISO8601(targetWakeup_secs),
            "\n  adj=", adjust_secs, " fm now=", timeNow_secs,
            " Awake=", timeNow_secs - wakeUpTime_secs);
-
+#endif //0
     #if defined ARCH_SAMD_SET_RTC_EACH_ALARM
     DateTime timeNow = zero_sleep_rtc.now();   
     DateTime timeAlm = zero_sleep_rtc.alarm(RTC_ALM_ID);   
@@ -1194,7 +1197,7 @@ void Logger::systemSleep(uint8_t sleep_min) {
 #endif
 
 #if defined ARDUINO_ARCH_SAMD
-
+    bool sleeping=true;
     // Disable the watch-dog timer
     watchDogTimer.disableWatchDog();
 
@@ -1207,18 +1210,18 @@ void Logger::systemSleep(uint8_t sleep_min) {
     delay(10);
     #endif // ARCH_SAMD_SET_RTC_EACH_ALARM
 
-
-#if defined RUN_WITH_USB
+#if !defined USB_NOSLEEP 
+#if defined USB_SERIALSTD 
     Serial.flush();
     Serial.end(); //Adafruit_USBD_CDC.end();
-    USBDevice.detach(); // USB is usally busy, detach so can sleep with no interrupts
-#endif //RUN_WITH_USB
+    //USBDevice.detach(); // USB is usally busy, detach so can sleep with no interrupts
+#endif //USB_SERIALSTD
 
     lowpower_disable_ints();
     // Now go to sleep
     //However in with USB attached may not truly sleep.
-    bool sleeping=true;
-    do {
+
+    //do {
     uint8_t rd_delay = 50;
 #if 0// defined(MS_LOGGERBASE_DEBUG) || defined(MS_LOGGERBASE_SLEEP_DEBUG)
     // Maintens MS_DEBUGGING_STD output, but current is 13mA/SAMD51
@@ -1259,25 +1262,8 @@ void Logger::systemSleep(uint8_t sleep_min) {
 
     __DSB();
     __WFI();
+#endif //USB_NOSLEEP 
 
-#if defined DBG_LOGGERBASE_CONTINUOS_SLEEP
-    //Dbg simulate continuos sleep until time expires
-    {
-        timeNow_secs = zero_sleep_rtc.now().unixtime();
-        if (targetWakeup_secs <= timeNow_secs) 
-        {
-            sleeping =false;
-        } else {
-            Serial.print(" X"); //nh print here?
-            Serial.print((int32_t)targetWakeup_secs-(int32_t)timeNow_secs); //count 
-            delay(1000);
-        }
-    }
-    #else 
-    sleeping=false;
-#endif //DBG_LOGGERBASE_CONTINUOS_SLEEP
-
-    } while (sleeping);
 
 #elif defined ARDUINO_ARCH_AVR
 
@@ -1340,35 +1326,55 @@ void Logger::systemSleep(uint8_t sleep_min) {
     // ---------------------------------------------------------------------
     // -- The portion below this happens on wake up, after any wake ISR's --
 
-#if defined ARDUINO_ARCH_SAMD
+#if defined ARDUINO_ARCH_SAMD 
+#if !defined USB_NOSLEEP
     lowpower_enable_ints();
-#if defined RUN_WITH_USB 
+
+#else // USB_NOSLEEP
+    //Simulate sleep until time expires
+    sleeping=true;
+    do {
+
+        timeNow_secs = zero_sleep_rtc.now().unixtime();
+        if (targetWakeup_secs <= timeNow_secs) 
+        {
+            sleeping =false;
+        }  else {
+            //SerialStd.print(" t="); //nh print here?
+            //SerialStd.print((int32_t)targetWakeup_secs-(int32_t)timeNow_secs); //count 
+            delay(200);
+        }
+
+    } while (sleeping);
+#endif //USB_NOSLEEP
+#if defined USB_SERIALSTD 
     // Reattach the USB after waking - doest work
     //if (restoreUSBDevice) 
     {
 
 #if defined(USE_TINYUSB)
-        //Adafruit_TinyUSB_Core_init();
-        //tinyusb_task();
-        USBDevice.attach();
+        //??Adafruit_TinyUSB_Core_init();
+        //??tinyusb_task();
+        //USBDevice.attach();
 #elif defined(USBCON)
-        USBDevice.init();
-        USBDevice.attach();
-#endif
+        //USBDevice.init();
+        //USBDevice.attach();
+#endif //USE_TINYUSB
+        #if 0
         uint32_t startTimer = millis();
         while (!SERIAL_PORT_USBVIRTUAL && ((millis() - startTimer) < 1000L)) {
             // wait
         }
 
-#define serialBaudDebugDef 115200 
         SerialStd.begin(serialBaudDebugDef);
         flash_builtinLed(10,500);
+        #endif //0
 
     }
-#else 
+#else //USB_SERIALSTD
 
     SerialStd.begin(serialBaudDebugDef);
-#endif // RUN_WITH_USB 
+#endif // USB_SERIALSTD 
 #endif //ARDUINO_ARCH_SAMD
 
 #if defined ARDUINO_ARCH_AVR
@@ -1433,11 +1439,11 @@ void Logger::systemSleep(uint8_t sleep_min) {
     // Wake-up message
     wakeUpTime_secs = getNowLocalEpoch();
     PRINTOUT(F("\n... zzzZZ Awake @"), formatDateTime_ISO8601(wakeUpTime_secs)
- #if defined ARDUINO_ARCH_SAMD  & defined ARCH_SAMD_SET_RTC_EACH_ALARM
+#if defined ARDUINO_ARCH_SAMD  & defined ARCH_SAMD_SET_RTC_EACH_ALARM
     ,targetWakeup_secs, timeNow_secs
 #endif //ARDUINO_ARCH_SAMD
     );
-
+    flash_builtinLed(10,500); //Power measurement
     // The logger will now start the next function after the systemSleep
     // function in either the loop or setup
 }
@@ -2067,7 +2073,7 @@ void Logger::begin() {
 #if defined ARDUINO_ARCH_SAMD & !defined ARCH_SAMD_SET_RTC_EACH_ALARM
     //set an alarm to go off every 1minute, keeps time accurate.
     DateTime now = zr.now();
-    DateTime alarm = DateTime(now.year(), now.month(), now.day(), now.hour(), now.minute(), 0 );
+    DateTime alarm = DateTime(now.year(), now.month(), now.day(), now.hour(), now.minute(), RTC_ALARM_SEC );
     // The SAMD51 has two hardware alarms
 
     zr.setAlarm(RTC_ALM_ID,alarm);

@@ -58,6 +58,8 @@
    #define RTC_INT_CLASS RTC_SAMD21
    #endif //__SAMD51__
    #define EPOCH_TIME_DTCLASS 0
+   //The Seconds Time that causes an Alarm
+   #define RTC_ALARM_SEC 59
 #elif defined(ARDUINO_ARCH_AVR) || defined(__AVR__)
 #include <Sodaq_DS3231.h>
 using namespace sodaq_DS3231_nm;

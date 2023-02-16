@@ -94,6 +94,9 @@ const int8_t timeZone = CONFIG_TIME_ZONE_DEF;
 // if STANDARD_SERIAL_OUTPUT is Serial then its USB
 // for USB requires special handling for USBDevice Driver
 // else could be Serial1 - com1 etc
+#if !defined SERIAL1_EN  
+#define USB_SERIALSTD 1
+#endif 
 #define SerialStd STANDARD_SERIAL_OUTPUT
 
 // Set the input and output pins for the logger
@@ -379,14 +382,20 @@ void setup() {
 // SerialDb could be Serial1 or USB connection established by PC
 // NOTE:  Only use this when debugging - if not connected to a PC, this
 // could prevent the script from starting
-#if !defined SERIAL1_EN  
-#define RUN_WITH_USB 1
+    bool statusUsb=false;
+#if defined USB_SERIALSTD
 #pragma message "Output to USB "
+    //Need to detect if USB plugged in
+    delay(10);
+    statusUsb = USBDevice.ready();
+    uint32_t start_ms=millis();
+    uint32_t startupUsbDelay_ms;
     while (!SerialStd && (millis() < 10000)) {}
+    startupUsbDelay_ms = millis()-start_ms;
+
 #else
 #warning Not using USB
 #pragma message "Output to UART " 
-    bool statusUsb=false;
     statusUsb = USBDevice.ready();
     USBDevice.detach();
     //Serial.end();
@@ -410,17 +419,22 @@ void setup() {
 
     SerialStd.print(F("Sw Name: "));
     SerialStd.println(configDescription);
-
+    SerialStd.print("  ***** Low Power RTC SAMD51 ");
+    SerialStd.print(F_CPU);
+    SerialStd.println("MHz ***** ");
     SerialStd.print(F("Using ModularSensors Library version "));
     SerialStd.println(MODULAR_SENSORS_VERSION);
     //SerialStd.print(F("TinyGSM Library version "));
     //SerialStd.println(TINYGSM_VERSION);
-#if defined RUN_WITH_USB
-    SerialStd.print(" USB");
+#if defined USB_SERIALSTD
+    SerialStd.print(" USB UsbStat=");
+    SerialStd.print(statusUsb);
+    SerialStd.print(" StartDelay=");
+    SerialStd.print(startupUsbDelay_ms);
 #else
     SerialStd.print(" UART UsbStat=");
     SerialStd.print(statusUsb);
-#endif // RUN_WITH_USB
+#endif // USB_SERIALSTD
     SerialStd.println();
 
 // Allow interrupts for software serial
