@@ -1265,10 +1265,10 @@ void lowpower_disable_ints(void) {
 
 void lowpower_enable_ints(void) {
     SysTick_Config( SystemCoreClock / 1000 );
+
+    //tbd also need to look at enable what was disabled 
 }  
-#if ! defined SERIAL1_EN  
-#define USB_SERIALSTD 1
-#endif 
+
 void print_rtc_time_field(uint32_t time_value) {
 #if 0
     //Serial.print("Time ");
@@ -1334,16 +1334,15 @@ void flash_builtinLed(int count, int space_ms)
 
 
 void Logger::systemSleep(uint8_t sleep_min) { //SAMDx
+    //For SAMDx using the built in USB  it simulates sleep. 
+    //   So far haven't figure out how to restore USB after sleep
+    // If it is built to use the Serial1 then it actually sleeps
 
     // Make sure interrupts are enabled for the clock
     NVIC_EnableIRQ(RTC_IRQn);       // enable RTC interrupt
     NVIC_SetPriority(RTC_IRQn, 0);  // highest priority
 
-    // Alarms on the RTC built into the SAMD21 appear to be identical to those
-    // in the DS3231.  See more notes below.
-    // We're setting the alarm seconds to 59 and then seting it to go off
-    // whenever the seconds match the 59.  I'm using 59 instead of 00
-    // because there seems to be a bit of a wake-up delay
+    // Alarms on the RTC built into the SAMD21/51 are set to every minute
     // The setting of the internal RTC alarm time that wakes up the processor
     // is set an intialization. 
     // An option is ARCH_SAMD_SET_RTC_EACH_ALARM but hasn't found to work
@@ -1385,7 +1384,6 @@ void Logger::systemSleep(uint8_t sleep_min) { //SAMDx
     PRINTOUT(F("Going to sleep. Ram("),freeRamCalcLb(),F("/"),freeRamCnt(),F(") SAM ZZzzz..."));
     print_act_status();
 
-
 // Wait until the serial ports have finished transmitting
 // This does not clear their buffers, it just waits until they are finished
 // TODO(SRGDamia1):  Make sure can find all serial ports
@@ -1426,9 +1424,9 @@ void Logger::systemSleep(uint8_t sleep_min) { //SAMDx
     #endif // ARCH_SAMD_SET_RTC_EACH_ALARM
 
 #if !defined USB_NOSLEEP 
+    //SerialStd.flush();
+    //SerialStd.end(); //Adafruit_USBD_CDC.end();
 #if defined USB_SERIALSTD 
-    Serial.flush();
-    Serial.end(); //Adafruit_USBD_CDC.end();
     //USBDevice.detach(); // USB is usally busy, detach so can sleep with no interrupts
 #endif //USB_SERIALSTD
 
@@ -1446,7 +1444,6 @@ void Logger::systemSleep(uint8_t sleep_min) { //SAMDx
 #endif
 
 	#if defined(__SAMD51__) 
-
     #if defined WIO_TERMINAL
     // This works - Serial1 gets messed up in _STANDBY lower power mode
     #define MS_SLEEPCFG_MODE PM_SLEEPCFG_SLEEPMODE_IDLE2 
@@ -1533,31 +1530,6 @@ void Logger::systemSleep(uint8_t sleep_min) { //SAMDx
 
     SerialStd.begin(serialBaudDebugDef);
 #endif // USB_SERIALSTD 
-
-
-#if 0
-        noInterrupts();
-    } 
-
-    // Re-enable all power modules (ie, the processor module clocks)
-    // NOTE:  This only re-enables the various clocks on the processor!
-    // The modules may need to be re-initialized after the clocks re-start.
-    power_all_enable();
-
-    // Clear the SE (sleep enable) bit.
-    sleep_disable();
-
-    // Re-enable the processor ADC
-    ADCSRA |= _BV(ADEN);
-
-    // Detach the from the pin - assumes Mayfly
-    disableInterrupt(_mcuWakePin);
-
-    // Re-enables interrupts
-    interrupts();
-
-#endif //0
-
     // Re-enable the watch-dog timer
     watchDogTimer.enableWatchDog();
 

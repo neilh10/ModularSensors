@@ -94,9 +94,7 @@ const int8_t timeZone = CONFIG_TIME_ZONE_DEF;
 // if STANDARD_SERIAL_OUTPUT is Serial then its USB
 // for USB requires special handling for USBDevice Driver
 // else could be Serial1 - com1 etc
-#if !defined SERIAL1_EN  
-#define USB_SERIALSTD 1
-#endif 
+
 #define SerialStd STANDARD_SERIAL_OUTPUT
 
 // Set the input and output pins for the logger

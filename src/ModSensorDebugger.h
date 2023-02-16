@@ -18,6 +18,18 @@
 
 // Included Dependencies
 #include <Arduino.h>
+#if defined ARDUINO_ARCH_SAMD
+#if defined USE_SERIAL1  
+#define STANDARD_SERIAL_OUTPUT       Serial1
+#define DEBUGGING_SERIAL_OUTPUT      Serial1
+#define DEEP_DEBUGGING_SERIAL_OUTPUT Serial1
+#define SERIAL1_EN  1
+#else 
+//For WIO TERMINAL 
+#define USB_NOSLEEP 
+
+#endif // USB_SERIALSTD
+#endif // ARDUINO_ARCH_SAMD
 
 #ifndef STANDARD_SERIAL_OUTPUT
 // #if defined(ARDUINO_SAMD_ZERO) && defined(SERIAL_PORT_USBVIRTUAL)
