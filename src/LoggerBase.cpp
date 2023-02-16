@@ -1237,8 +1237,144 @@ void Logger::systemSleep(uint8_t sleep_min) { //__AVR__
 #define SerialStd STANDARD_SERIAL_OUTPUT
 // https://www.avrfreaks.net/forum/samd21-samd21e16b-sporadically-locks-and-does-not-wake-standby-sleep-mode
 void lowpower_disable_ints(void) {
-    SerialStd.flush();
-    SerialStd.end();
+// Wio Terminal
+// This is working through the specific schematic to turn off specific parts
+// then turning them back on and verifying they are correctly initialized
+
+
+// Wait until the serial ports have finished transmitting
+// This does not clear their buffers, it just waits until they are finished
+// TODO(SRGDamia1):  Make sure can find all serial ports
+#if defined(STANDARD_SERIAL_OUTPUT)
+    STANDARD_SERIAL_OUTPUT.flush();  // for debugging
+    //STANDARD_SERIAL_OUTPUT.end(); doesn't work
+#endif
+#if defined DEBUGGING_SERIAL_OUTPUT
+    DEBUGGING_SERIAL_OUTPUT.flush();  // for debugging
+#endif
+#if defined USB_SERIALSTD 
+//tbd - need to detect if USB connected, to determine if needed to restor
+#if defined(USE_TINYUSB)
+//??
+        //USBDevice.detach();
+#elif defined(USBCON)
+//??
+        //USBDevice.detach();
+#endif //USE_TINYUSB
+#endif // USB_SERIALSTD 
+
+    // Stop any I2C connections
+    // This function actually disables the two-wire pin functionality and
+    // turns off the internal pull-up resistors.
+    Wire.end();
+
+//Wio Terminal has two I2Cs
+// I2C0  RPI/U3 ID_SD & ID_SC,  internal LIS3DHTR, ATECC608 
+// I2C1  RPI/U3 GPIO2/SDA1 & GPIO3/SCL1
+// I2C0_SCL has pullups 4.7K,R14 & R13. so no interal pullups 
+//#define PIN_WIRE0_SLEEP  
+// Now force the I2C pins to LOW
+// I2C devices have a nasty habit of stealing power from the SCL and SDA pins...
+// This will only work for the "main" I2C/TWI interface
+#if defined PIN_WIRE0_SLEEP
+#ifdef  PIN_WIRE_SDA
+    pinMode(SDA, OUTPUT);
+    digitalWrite(SDA, LOW);
+#endif
+#ifdef PIN_WIRE_SCL
+    pinMode(SCL, OUTPUT);
+    digitalWrite(SCL, LOW);
+#endif
+#endif //PIN_WIRE1_SLEEP
+
+#if defined WIO_TERMINAL
+#pragma message ("Low Power for WIO_TERMINAL") 
+  // in ordfder of variant.h 
+  // LED
+  // TX/RX - can be switched with ROLE
+  // Digital and Analog Arduino pins
+  // RPI BCM Connector - no action
+  // FPC Connector - no action 
+  // RPI Analog Iverlay - no action
+  // USB - PIN_USB_HOST_ENABLE (for power)
+  //Button_1 _2 _3 - cct pullup 4.7K  no action
+  //SWITCH_X _Z _Y  _B _U pulled up 100K - no action
+
+  // IRQ0  PC20 From RTL8720D - 
+  pinMode(IRQ0,  INPUT_PULLUP); //?
+  //Buzzer_CTR - Output control, Q4 driver, pulled down
+  //pinMode(BUZZER_CTR,  INPUT_PULLDOWN);
+
+  //MIC_INPUT - no action
+
+  //GCLK - debug leave
+  //Serial1 sercom2
+  //Serial2 sercon1
+  // I2C WIRE sercom3 - pulled up ext
+  // I2C WIRE1 sercom4 -pulled up?
+  //    GYROSCOPE - no external pull U5 LIS3DHTR PIN_WRE1_SCL _SDA 
+  //  
+  //pinMode(GYROSCOPE_INT1,  INPUT_PULLUP); // Push-Pull - no action 
+
+  // micro SD socket 
+  //SDCARD_SPI/SPI2  _SCK_PIN _SS_PIN _MOSI  _MISO _DET
+  //  SDCARD_DET_PIN is pulled high with 100K
+  pinMode(SDCARD_SS_PIN,  INPUT_PULLUP);
+  pinMode(SDCARD_DET_PIN,  INPUT);
+
+  //LCD
+  //SPI LCD_SCK _CS  _MOSI_ MISOC  
+  //    LCD_D/C 
+  //    LCD_RESET  - Pulled hihg 4.7K
+  //    LCD_BACKLIGHT=LOW  off
+
+  pinMode(LCD_SS_PIN,   INPUT_PULLUP);
+  pinMode(LCD_SCK_PIN,  INPUT_PULLDOWN);
+  pinMode(LCD_MISO_PIN, INPUT_PULLDOWN);
+  pinMode(LCD_MOSI_PIN, INPUT_PULLDOWN);
+  pinMode(LCD_RESET,    INPUT);
+  //Something causes to go from 6.0 to 6.5mA
+  /*pinMode(LCD_DC,       INPUT_PULLDOWN); //??
+  pinMode(LCD_XL,       INPUT_PULLDOWN);  
+  pinMode(LCD_YU,       INPUT_PULLDOWN);  
+  pinMode(LCD_XR,       INPUT_PULLDOWN);  
+  pinMode(LCD_YD,       INPUT_PULLDOWN); */
+
+  pinMode(LCD_BACKLIGHT, OUTPUT);
+  digitalWrite(LCD_BACKLIGHT, LOW);
+
+  //Turn off WiFi RTL8720D_CHIP_PU = LOW
+  pinMode(RTL8720D_CHIP_PU, OUTPUT);
+  
+  digitalWrite(RTL8720D_CHIP_PU, LOW);
+  // For power off, should other pins be low
+  // RTL8720D_TXD _RXD
+  // RTL8720D_SPI  _MISO_PIN _MOSI_PIN _SCK_PIN _SS_PIN  
+  //RTL8720D_GPIO0    //low
+
+  //QSPI  W25Q32JVZPIM
+  // PIN_QSPI_CS _SCK _IO0  _IO1 _IO2 _IO3
+  // PIN_QSPI_CS  should be high, 
+  pinMode(PIN_QSPI_CS,  INPUT_PULLUP);
+  // others are high impedance, so could pulled weakly low to hold them
+  pinMode(PIN_QSPI_SCK, INPUT_PULLDOWN);
+  pinMode(PIN_QSPI_IO0, INPUT_PULLDOWN);
+  pinMode(PIN_QSPI_IO1, INPUT_PULLDOWN);
+  pinMode(PIN_QSPI_IO2, INPUT_PULLDOWN);
+  pinMode(PIN_QSPI_IO3, INPUT_PULLDOWN);
+
+  //I2S sent to RPI - not used
+  //Light sensor - input normally pulled low through 10K
+  //ir sensors - output pulled low 
+
+ //U11 ATECC608/DNP  I2C0_SCL _SDA 
+ 
+//Power SW for RPI IO - outputs pulled low.
+//OUTPUT_CTR_5V 
+//OUTPUT_CTR_3V3
+
+#endif //WIO_TERMINAL
+    //Disable regular SysTick 
     SysTick->CTRL &= ~(SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_ENABLE_Msk);
 
     //some possible further actions
@@ -1261,66 +1397,116 @@ void lowpower_disable_ints(void) {
             | MCLK_APBDMASK_TC6 | MCLK_APBDMASK_TC7 | MCLK_APBDMASK_SERCOM6 | MCLK_APBDMASK_SERCOM7);
     */
     //Assumes turned off DWT->CTRL &= ~DWT_CTRL_CYCCNTENA_Msk;
-}
+
+} // lowpower_disable_ints
 
 void lowpower_enable_ints(void) {
+    //Re-enable clocks in the order that they are needed
     SysTick_Config( SystemCoreClock / 1000 );
 
     //tbd also need to look at enable what was disabled 
-}  
+#if defined PIN_WIRE0_SLEEP
+// Re-start the I2C interface
+#ifdef PIN_WIRE_SDA
+    pinMode(SDA, INPUT_PULLUP);  // set as input with the pull-up on
+#endif
+#ifdef PIN_WIRE_SCL
+    pinMode(SCL, INPUT_PULLUP);
+#endif
+#endif // PIN_WIRE1_SLEEP
+    Wire.begin();
+    // Eliminate any potential extra waits in the wire library
+    // These waits would be caused by a readBytes or parseX being called
+    // on wire after the Wire buffer has emptied.  The default stream
+    // functions - used by wire - wait a timeout period after reading the
+    // end of the buffer to see if an interrupt puts something into the
+    // buffer.  In the case of the Wire library, that will never happen and
+    // the timeout period is a useless delay.
+    Wire.setTimeout(0);    
+
+#if defined USB_SERIALSTD 
+    // Reattach the USB after waking - doest work
+    //if (restoreUSBDevice) 
+    {
+
+#if defined(USE_TINYUSB)
+        //??Adafruit_TinyUSB_Core_init();
+        //??tinyusb_task();
+        //USBDevice.attach();
+#elif defined(USBCON)
+        //USBDevice.init();
+        //USBDevice.attach();
+#endif //USE_TINYUSB
+        #if 0
+        uint32_t startTimer = millis();
+        while (!SERIAL_PORT_USBVIRTUAL && ((millis() - startTimer) < 1000L)) {
+            // wait
+        }
+        SerialStd.begin(serialBaudDebugDef);
+        #endif //0
+    }
+#else  // USB_SERIALSTD 
+    //This ensures that the ports are all setup as well
+    STANDARD_SERIAL_OUTPUT.begin(serialBaudDebugDef);
+#endif // USB_SERIALSTD 
+
+}  // lowpower_enable_ints
+
+#if 0
+#define print_mc_status() print_act_status()
 
 void print_rtc_time_field(uint32_t time_value) {
-#if 0
     //Serial.print("Time ");
-    Serial.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.bit.YEAR );
-    Serial.print("/");
-    Serial.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.bit.MONTH );
-    Serial.print("/");
-    Serial.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.bit.DAY );
-    Serial.print(" ");
-    Serial.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.bit.HOUR );
-    Serial.print(":");
-    Serial.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.bit.MINUTE );
-    Serial.print(":");
-    Serial.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.bit.SECOND );        
-#endif //0
+    SerialStd.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.bit.YEAR );
+    SerialStd.print("/");
+    SerialStd.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.bit.MONTH );
+    SerialStd.print("/");
+    SerialStd.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.bit.DAY );
+    SerialStd.print(" ");
+    SerialStd.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.bit.HOUR );
+    SerialStd.print(":");
+    SerialStd.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.bit.MINUTE );
+    SerialStd.print(":");
+    SerialStd.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.bit.SECOND );        
  }
 void print_act_status(void) {
 
-#if 0 //defined USB_SERIALSTD
-    Serial.print("Alm ");
-    //Serial.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.reg,HEX);
+    SerialStd.print("Alm ");
+    //SerialStd.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.reg,HEX);
     print_rtc_time_field(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.reg);
-    Serial.print(" Match ");
-    //Serial.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.reg,HEX);
-    Serial.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].MASK.bit.SEL ,HEX);
+    SerialStd.print(" Match ");
+    //SerialStd.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.reg,HEX);
+    SerialStd.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].MASK.bit.SEL ,HEX);
 
-    Serial.print(" Ctl ");
-    Serial.print(RTC->MODE2.CTRLA.reg ,HEX);
-    Serial.print(" Mhz=");
-    Serial.print(SystemCoreClock/1000000); 
+    SerialStd.print(" Ctl ");
+    SerialStd.print(RTC->MODE2.CTRLA.reg ,HEX);
+    SerialStd.print(" Mhz=");
+    SerialStd.print(SystemCoreClock/1000000); 
     uint32_t nvicPriority= NVIC_GetPriorityGrouping();
-    Serial.print(" NVIC ");
-    Serial.println(nvicPriority);
-#endif // USB_SERIALSTD
+    SerialStd.print(" NVIC ");
+    SerialStd.println(nvicPriority);
 
 #if 0 //defined USB_SERIALSTD
-    Serial.print("Check actIRQ:");
+    SerialStd.print("Check actIRQ:");
     int intlp;
     for (intlp=0; intlp< PERIPH_COUNT_IRQn; intlp++)
     {
         if (NVIC_GetEnableIRQ((IRQn_Type)intlp)) {
-            Serial.print(" ");
-            SerialUSB.print(intlp);
+            SerialStd.print(" ");
+            SerialStdUSB.print(intlp);
         }
     }
-    Serial.print(" TotChecked=");
-    Serial.println(intlp);
+    SerialStd.print(" TotChecked=");
+    SerialStd.println(intlp);
     delay(100);
 #endif //USB_SERIALSTD
  
 }
+#else 
+#define print_mc_status() 
+#endif 
 
+// Use this to indicate a debug value
 void flash_builtinLed(int count, int space_ms)
 {
     for (int lpcnt = count; lpcnt > 0; lpcnt--)
@@ -1347,9 +1533,10 @@ void Logger::systemSleep(uint8_t sleep_min) { //SAMDx
     // is set an intialization. 
     // An option is ARCH_SAMD_SET_RTC_EACH_ALARM but hasn't found to work
     uint32_t timeNow_secs = getNowUTCEpoch();
+#if 0
     uint32_t targetWakeup_secs;
     targetWakeup_secs = timeNow_secs + RTC_ALARM_SEC;
-#if 0
+
     uint16_t local_secs;
 
     uint32_t adjust_secs;
@@ -1382,33 +1569,7 @@ void Logger::systemSleep(uint8_t sleep_min) { //SAMDx
     delay(100); //Debug output
     // Send one last message before shutting down serial ports
     PRINTOUT(F("Going to sleep. Ram("),freeRamCalcLb(),F("/"),freeRamCnt(),F(") SAM ZZzzz..."));
-    print_act_status();
-
-// Wait until the serial ports have finished transmitting
-// This does not clear their buffers, it just waits until they are finished
-// TODO(SRGDamia1):  Make sure can find all serial ports
-#if defined(STANDARD_SERIAL_OUTPUT)
-    STANDARD_SERIAL_OUTPUT.flush();  // for debugging
-#endif
-#if defined DEBUGGING_SERIAL_OUTPUT
-    DEBUGGING_SERIAL_OUTPUT.flush();  // for debugging
-#endif
-
-    // Stop any I2C connections
-    // This function actually disables the two-wire pin functionality and
-    // turns off the internal pull-up resistors.
-    Wire.end();
-// Now force the I2C pins to LOW
-// I2C devices have a nasty habit of stealing power from the SCL and SDA pins...
-// This will only work for the "main" I2C/TWI interface
-#ifdef SDA
-    pinMode(SDA, OUTPUT);
-    digitalWrite(SDA, LOW);
-#endif
-#ifdef SCL
-    pinMode(SCL, OUTPUT);
-    digitalWrite(SCL, LOW);
-#endif
+    print_mc_status();
 
     bool sleeping=true;
     // Disable the watch-dog timer
@@ -1424,11 +1585,6 @@ void Logger::systemSleep(uint8_t sleep_min) { //SAMDx
     #endif // ARCH_SAMD_SET_RTC_EACH_ALARM
 
 #if !defined USB_NOSLEEP 
-    //SerialStd.flush();
-    //SerialStd.end(); //Adafruit_USBD_CDC.end();
-#if defined USB_SERIALSTD 
-    //USBDevice.detach(); // USB is usally busy, detach so can sleep with no interrupts
-#endif //USB_SERIALSTD
 
     lowpower_disable_ints();
     // Now go to sleep
@@ -1445,7 +1601,7 @@ void Logger::systemSleep(uint8_t sleep_min) { //SAMDx
 
 	#if defined(__SAMD51__) 
     #if defined WIO_TERMINAL
-    // This works - Serial1 gets messed up in _STANDBY lower power mode
+    // This works - with _STANDBY Serial1 doesn't recover
     #define MS_SLEEPCFG_MODE PM_SLEEPCFG_SLEEPMODE_IDLE2 
     //#define MS_SLEEPCFG_MODE PM_SLEEPCFG_SLEEPMODE_STANDBY
     #else
@@ -1474,15 +1630,9 @@ void Logger::systemSleep(uint8_t sleep_min) { //SAMDx
 
     __DSB();
     __WFI();
-#endif //USB_NOSLEEP 
-
-    // ---------------------------------------------------------------------
-
 
     // ---------------------------------------------------------------------
     // -- The portion below this happens on wake up, after any wake ISR's --
-
-#if !defined USB_NOSLEEP
     lowpower_enable_ints();
 
 #else // USB_NOSLEEP
@@ -1502,54 +1652,9 @@ void Logger::systemSleep(uint8_t sleep_min) { //SAMDx
 
     } while (sleeping);
 #endif //USB_NOSLEEP
-#if defined USB_SERIALSTD 
-    // Reattach the USB after waking - doest work
-    //if (restoreUSBDevice) 
-    {
 
-#if defined(USE_TINYUSB)
-        //??Adafruit_TinyUSB_Core_init();
-        //??tinyusb_task();
-        //USBDevice.attach();
-#elif defined(USBCON)
-        //USBDevice.init();
-        //USBDevice.attach();
-#endif //USE_TINYUSB
-        #if 0
-        uint32_t startTimer = millis();
-        while (!SERIAL_PORT_USBVIRTUAL && ((millis() - startTimer) < 1000L)) {
-            // wait
-        }
-
-        SerialStd.begin(serialBaudDebugDef);
-        flash_builtinLed(10,500);
-        #endif //0
-
-    }
-#else //USB_SERIALSTD
-
-    SerialStd.begin(serialBaudDebugDef);
-#endif // USB_SERIALSTD 
     // Re-enable the watch-dog timer
     watchDogTimer.enableWatchDog();
-
-// Re-start the I2C interface
-#ifdef SDA
-    pinMode(SDA, INPUT_PULLUP);  // set as input with the pull-up on
-#endif
-#ifdef SCL
-    pinMode(SCL, INPUT_PULLUP);
-#endif
-    Wire.begin();
-    // Eliminate any potential extra waits in the wire library
-    // These waits would be caused by a readBytes or parseX being called
-    // on wire after the Wire buffer has emptied.  The default stream
-    // functions - used by wire - wait a timeout period after reading the
-    // end of the buffer to see if an interrupt puts something into the
-    // buffer.  In the case of the Wire library, that will never happen and
-    // the timeout period is a useless delay.
-    Wire.setTimeout(0);
-
 
     // Wake-up message
     wakeUpTime_secs = getNowLocalEpoch();

@@ -106,9 +106,13 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define sdCardPwrPinDef   -1  //  MCU SD card power pin
 #define sdCardSSPinDef PIN_SPI2_SS //wioManual SD card chip select/slave select pin
 
-
+#if defined WIO_TERMINAL 
+#define sensorPowerPin_DEF -1 //WioT always on 
+#define OneWireBus_DEF 1  //WioT J4 Pin2 = D1
+#else 
 #define sensorPowerPin_DEF 22 //mayfly 
 #define OneWireBus_DEF 6  //mayfly 
+#endif //WIO_TERMINAL 
 
 #define modemVccPin_DEF -2  // wioT MCU pin controlling modem power
 //#define modemSleepRqPin_DEF 23 //mayfly 
@@ -188,4 +192,5 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define samplingFeature_UUID   "236c674b-69b9-43af-b0d6-33d67b870ecc"
 #define SEQUENCE_NUMBER_UUID   "8c57835f-a32f-4d62-82dc-0ba09f04cf52"
 #define BAT_VOLTAGE_UUID       "3bebd4a3-8b54-4f92-ba55-5fd2fd021358"
+#define TEMPERATURE_UUID       "03e7b375-97a7-4423-a3f0-1d822d8b19b9"
 #endif  // ms_cfg_h

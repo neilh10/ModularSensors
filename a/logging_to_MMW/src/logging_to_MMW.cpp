@@ -11,16 +11,19 @@
  * Build Environment: Visual Studios Code with PlatformIO
  * Hardware Platform: default_envs =seeed_wio_terminal
  * Tasks: 
- * * temperature logger and soak test
+ * * MS soak test  ie reliable
  * * use ms_cfg.ini
- * * toggle USB port for low power and debug UART instead of USB
+ * * DS18 Temperature logger  into J5/D0 d1 3V3 - Seeed SKU 101990578
+ *    J5 D1=PB09
+ * * Noise Level  internal micrcophone 
+ * * Uses USB port for programming/monitoring OR Serial1 UART for low power debug 
  * * sleep low power and wake
  * * Sleep and wake ~ 
  *    import from a\PlatformIO\Projects\afM4\lowPower\src\standbyExternalInterruptSAMD51.cpp
  * * WiFi subsystem, post to MMW - complete
  * * WiFi subystem, ntp/udp - complete
  * 
- * 2023Jan2 Power Measured USB Stick on USB-C
+  * 2023Jan2 Power Measured USB Stick on USB-C
  * ??Sleeping 50mA
  * WiFi running 64mA, startup is 100mA
  *
@@ -117,7 +120,7 @@ const int8_t sensorPowerPin = sensorPowerPin_DEF;  // MCU pin controlling main s
 // ==========================================================================
 //  Wifi/Cellular Modem Options
 // ==========================================================================
-#if 1 //defined WIO_TERMINAL 
+#if defined WIO_TERMINAL 
 /** Start [WIO_TERMINAL_COMMS] */
 // For WIO_TERMINAL that has WiFi and BT
 #include <modems/WioTerminal_rpcwifi.h>
@@ -291,7 +294,7 @@ Variable* variableList[] = {
     //new BoschBME280_Humidity(&bme280, "12345678-abcd-1234-ef00-1234567890ab"),
     //new BoschBME280_Pressure(&bme280, "12345678-abcd-1234-ef00-1234567890ab"),
     //new BoschBME280_Altitude(&bme280, "12345678-abcd-1234-ef00-1234567890ab"),
-    //debug disable new MaximDS18_Temp(&ds18, "12345678-abcd-1234-ef00-1234567890ab"),
+    //new MaximDS18_Temp(&ds18, TEMPERATURE_UUID),
     new ProcessorStats_Battery(&mcuBoard,BAT_VOLTAGE_UUID ),
     //new MaximDS3231_Temp(&ds3231, "12345678-abcd-1234-ef00-1234567890ab"),
     #if defined(ARDUINO_AVR_ENVIRODIY_MAYFLY)
@@ -392,8 +395,8 @@ void setup() {
     startupUsbDelay_ms = millis()-start_ms;
 
 #else
-#warning Not using USB
-#pragma message "Output to UART " 
+
+#pragma message ("Output to UART ") 
     statusUsb = USBDevice.ready();
     USBDevice.detach();
     //Serial.end();
