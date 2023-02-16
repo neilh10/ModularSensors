@@ -1232,40 +1232,45 @@ void Logger::systemSleep(uint8_t sleep_min) { //__AVR__
 
 
 // end Logger::systemSleep AVR
-#else 
+#else // !__AVR__
 #define serialBaudDebugDef 115200 
 #define SerialStd STANDARD_SERIAL_OUTPUT
 // https://www.avrfreaks.net/forum/samd21-samd21e16b-sporadically-locks-and-does-not-wake-standby-sleep-mode
 void lowpower_disable_ints(void) {
     SerialStd.flush();
     SerialStd.end();
-  SysTick->CTRL &= ~(SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_ENABLE_Msk);
+    SysTick->CTRL &= ~(SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_ENABLE_Msk);
 
-  // wiring.c turn off un-needed peripherals
-  // need int CLKS, CLK_APBAMASK_RTC 
-  /* for time being leave on
-  MCLK->APBAMASK.reg &= ~(MCLK_APBAMASK_SERCOM0 | MCLK_APBAMASK_SERCOM1 | MCLK_APBAMASK_TC0 | MCLK_APBAMASK_TC1);
+    //some possible further actions
+    //tbd disable processor ADC
+    //tbd turn off brown out detector
+    //tbd 
+    // wiring.c turn off un-needed peripherals
+    // need int CLKS, CLK_APBAMASK_RTC 
 
-  //Need 
-  MCLK->APBBMASK.reg &= ~(MCLK_APBBMASK_SERCOM2 | MCLK_APBBMASK_SERCOM3 | MCLK_APBBMASK_TCC0 | MCLK_APBBMASK_TCC1 | MCLK_APBBMASK_TC3 | MCLK_APBBMASK_TC2);
+    /* for time being leave on
+    MCLK->APBAMASK.reg &= ~(MCLK_APBAMASK_SERCOM0 | MCLK_APBAMASK_SERCOM1 | MCLK_APBAMASK_TC0 | MCLK_APBAMASK_TC1);
 
-                    // 0x2000 bit appearrs to be always on;
-  MCLK->APBCMASK.reg &=  ~(MCLK_APBCMASK_TCC2 | MCLK_APBCMASK_TCC3 | MCLK_APBCMASK_TC4 | MCLK_APBCMASK_TC5 );
+    //Need 
+    MCLK->APBBMASK.reg &= ~(MCLK_APBBMASK_SERCOM2 | MCLK_APBBMASK_SERCOM3 | MCLK_APBBMASK_TCC0 | MCLK_APBBMASK_TCC1 | MCLK_APBBMASK_TC3 | MCLK_APBBMASK_TC2);
 
-  MCLK->APBDMASK.reg &= ~(MCLK_APBDMASK_DAC | MCLK_APBDMASK_SERCOM4 | MCLK_APBDMASK_SERCOM5 | MCLK_APBDMASK_ADC0 | MCLK_APBDMASK_ADC1 | MCLK_APBDMASK_TCC4
-		  | MCLK_APBDMASK_TC6 | MCLK_APBDMASK_TC7 | MCLK_APBDMASK_SERCOM6 | MCLK_APBDMASK_SERCOM7);
-*/
-  //Assumes turned off DWT->CTRL &= ~DWT_CTRL_CYCCNTENA_Msk;
+                        // 0x2000 bit appearrs to be always on;
+    MCLK->APBCMASK.reg &=  ~(MCLK_APBCMASK_TCC2 | MCLK_APBCMASK_TCC3 | MCLK_APBCMASK_TC4 | MCLK_APBCMASK_TC5 );
+
+    MCLK->APBDMASK.reg &= ~(MCLK_APBDMASK_DAC | MCLK_APBDMASK_SERCOM4 | MCLK_APBDMASK_SERCOM5 | MCLK_APBDMASK_ADC0 | MCLK_APBDMASK_ADC1 | MCLK_APBDMASK_TCC4
+            | MCLK_APBDMASK_TC6 | MCLK_APBDMASK_TC7 | MCLK_APBDMASK_SERCOM6 | MCLK_APBDMASK_SERCOM7);
+    */
+    //Assumes turned off DWT->CTRL &= ~DWT_CTRL_CYCCNTENA_Msk;
 }
 
 void lowpower_enable_ints(void) {
-  SysTick_Config( SystemCoreClock / 1000 );
+    SysTick_Config( SystemCoreClock / 1000 );
 }  
 #if ! defined SERIAL1_EN  
 #define USB_SERIALSTD 1
 #endif 
- void print_rtc_time_field(uint32_t time_value) {
-    #if 0
+void print_rtc_time_field(uint32_t time_value) {
+#if 0
     //Serial.print("Time ");
     Serial.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.bit.YEAR );
     Serial.print("/");
@@ -1278,86 +1283,57 @@ void lowpower_enable_ints(void) {
     Serial.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.bit.MINUTE );
     Serial.print(":");
     Serial.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.bit.SECOND );        
-    #endif //0
+#endif //0
  }
- void print_act_status(void) {
-
-  #if 0 //defined USB_SERIALSTD
-  Serial.print("Alm ");
-  //Serial.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.reg,HEX);
-  print_rtc_time_field(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.reg);
-  Serial.print(" Match ");
-  //Serial.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.reg,HEX);
-  Serial.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].MASK.bit.SEL ,HEX);
-
-  Serial.print(" Ctl ");
-  Serial.print(RTC->MODE2.CTRLA.reg ,HEX);
-  Serial.print(" Mhz=");
-  Serial.print(SystemCoreClock/1000000); 
-  uint32_t nvicPriority= NVIC_GetPriorityGrouping();
-  Serial.print(" NVIC ");
-  Serial.println(nvicPriority);
-  #endif // USB_SERIALSTD
+void print_act_status(void) {
 
 #if 0 //defined USB_SERIALSTD
-  Serial.print("Check actIRQ:");
-  int intlp;
-  for (intlp=0; intlp< PERIPH_COUNT_IRQn; intlp++)
-  {
-    if (NVIC_GetEnableIRQ((IRQn_Type)intlp)) {
-        Serial.print(" ");
-        SerialUSB.print(intlp);
+    Serial.print("Alm ");
+    //Serial.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.reg,HEX);
+    print_rtc_time_field(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.reg);
+    Serial.print(" Match ");
+    //Serial.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.reg,HEX);
+    Serial.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].MASK.bit.SEL ,HEX);
+
+    Serial.print(" Ctl ");
+    Serial.print(RTC->MODE2.CTRLA.reg ,HEX);
+    Serial.print(" Mhz=");
+    Serial.print(SystemCoreClock/1000000); 
+    uint32_t nvicPriority= NVIC_GetPriorityGrouping();
+    Serial.print(" NVIC ");
+    Serial.println(nvicPriority);
+#endif // USB_SERIALSTD
+
+#if 0 //defined USB_SERIALSTD
+    Serial.print("Check actIRQ:");
+    int intlp;
+    for (intlp=0; intlp< PERIPH_COUNT_IRQn; intlp++)
+    {
+        if (NVIC_GetEnableIRQ((IRQn_Type)intlp)) {
+            Serial.print(" ");
+            SerialUSB.print(intlp);
+        }
     }
-  }
-  Serial.print(" TotChecked=");
-  Serial.println(intlp);
-  delay(100);
+    Serial.print(" TotChecked=");
+    Serial.println(intlp);
+    delay(100);
 #endif //USB_SERIALSTD
  
 }
 
 void flash_builtinLed(int count, int space_ms)
 {
-  for (int lpcnt = count; lpcnt > 0; lpcnt--)
-  {
-    digitalWrite(LED_BUILTIN, HIGH); // Show we're awake again
-    delay(space_ms);
-    digitalWrite(LED_BUILTIN, LOW);
-    delay(space_ms);
-  }
+    for (int lpcnt = count; lpcnt > 0; lpcnt--)
+    {
+        digitalWrite(LED_BUILTIN, HIGH); // Show we're awake again
+        delay(space_ms);
+        digitalWrite(LED_BUILTIN, LOW);
+        delay(space_ms);
+    }
 } // flash_redLed
 
 
 void Logger::systemSleep(uint8_t sleep_min) { //SAMDx
-#if defined MS_SAMD_DS3231 || not defined ARDUINO_ARCH_SAMD
-    // Don't go to sleep unless there's a wake pin!
-    if (_mcuWakePin < 0) {
-        PRINTOUT(F("MCU not Enabled,Use a non-negative wake pin to request sleep!"), _mcuWakePin);
-        return;
-    }
-
-
-    // Unfortunately, because of the way the alarm on the DS3231 is set up, it
-    // cannot interrupt on any frequencies other than every second, minute,
-    // hour, day, or date.  We could set it to alarm hourly every 5 minutes past
-    // the hour, but not every 5 minutes.  This is why we set the alarm for
-    // every minute and use the checkInterval function.  This is a hardware
-    // limitation of the DS3231; it is not due to the libraries or software.
-    MS_DBG(F("Setting alarm on DS3231 RTC for every minute."));
-    setExtRtcSleep();
-
-    // Set up a pin to hear clock interrupt and attach the wake ISR to it
-    noInterrupts(); // make a transaction, ensure no race condition.
-    pinMode(_mcuWakePin, INPUT_PULLUP);
-    enableInterrupt(_mcuWakePin, wakeISR, CHANGE);
-    interrupts(); 
-
-    // Clear the last interrupt flag in the RTC status register
-    // It will float high if not already there, and then be pulled low
-    // on next match
-    rtcExtPhy.clearINTStatus();
-    PRINTOUT(F("Going to sleep. Ram("),freeRamLb(),F("/"),freeRamCnt(),F(")  ZZzzz..."));
-#elif defined ARDUINO_ARCH_SAMD
 
     // Make sure interrupts are enabled for the clock
     NVIC_EnableIRQ(RTC_IRQn);       // enable RTC interrupt
@@ -1406,9 +1382,9 @@ void Logger::systemSleep(uint8_t sleep_min) { //SAMDx
     #endif //ARCH_SAMD_SET_RTC_EACH_ALARM
     delay(100); //Debug output
     // Send one last message before shutting down serial ports
-    PRINTOUT(F("Going to sleep. Ram("),freeRamCalcLb(),F("/"),freeRamCnt(),F(")  ZZzzz..."));
+    PRINTOUT(F("Going to sleep. Ram("),freeRamCalcLb(),F("/"),freeRamCnt(),F(") SAM ZZzzz..."));
     print_act_status();
-#endif
+
 
 // Wait until the serial ports have finished transmitting
 // This does not clear their buffers, it just waits until they are finished
@@ -1436,7 +1412,6 @@ void Logger::systemSleep(uint8_t sleep_min) { //SAMDx
     digitalWrite(SCL, LOW);
 #endif
 
-#if defined ARDUINO_ARCH_SAMD
     bool sleeping=true;
     // Disable the watch-dog timer
     watchDogTimer.disableWatchDog();
@@ -1504,69 +1479,12 @@ void Logger::systemSleep(uint8_t sleep_min) { //SAMDx
     __WFI();
 #endif //USB_NOSLEEP 
 
-
-#elif defined ARDUINO_ARCH_AVR
-
-    // Set the sleep mode
-    // In the avr/sleep.h file, the call names of these 5 sleep modes are:
-    // SLEEP_MODE_IDLE         -the least power savings
-    // SLEEP_MODE_ADC
-    // SLEEP_MODE_PWR_SAVE
-    // SLEEP_MODE_STANDBY
-    // SLEEP_MODE_PWR_DOWN     -the most power savings
-    set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-
-    // Dont disable watch-dog timer, let the extended watchdog handle real timeout.
-    watchDogTimer.debugQuiet();  // not watchDogTimer.disableWatchDog();
-
-    // Temporarily disables interrupts, so no mistakes are made when writing
-    // to the processor registers
-    noInterrupts();
-
-    // Disable the processor ADC (must be disabled before it will power down)
-    // ADCSRA = ADC Control and Status Register A
-    // ADEN = ADC Enable
-    ADCSRA &= ~_BV(ADEN);
-
-// turn off the brown-out detector, if possible
-// BODS = brown-out detector sleep
-// BODSE = brown-out detector sleep enable
-#if defined(BODS) && defined(BODSE)
-    sleep_bod_disable();
-#endif
-
-    // disable all power-reduction modules (ie, the processor module clocks)
-    // NOTE:  This only shuts down the various clocks on the processor via
-    // the power reduction register!  It does NOT actually disable the
-    // modules themselves or set the pins to any particular state!  This
-    // means that the I2C/Serial/Timer/etc pins will still be active and
-    // powered unless they are turned off prior to calling this function.
-    power_all_disable();
-
-    // Set the sleep enable bit.
-    sleep_enable();
- 
-#if defined ARDUINO_ARCH_AVR
-    //Assuming an external RTC which activates processor aka Mayfly
-    // There maybe intermediate interrupts eg Watchdog, that are ignored
-    while (digitalRead(_mcuWakePin)) //when low normal processing.
-#endif 
-    { 
-        // Re-enables interrupts so we can wake up again
-        interrupts();
-
-        // Actually put the processor into sleep mode.
-        // This must happen after the SE bit is set.
-        sleep_cpu();
-
-#endif
     // ---------------------------------------------------------------------
 
 
     // ---------------------------------------------------------------------
     // -- The portion below this happens on wake up, after any wake ISR's --
 
-#if defined ARDUINO_ARCH_SAMD 
 #if !defined USB_NOSLEEP
     lowpower_enable_ints();
 
@@ -1615,12 +1533,9 @@ void Logger::systemSleep(uint8_t sleep_min) { //SAMDx
 
     SerialStd.begin(serialBaudDebugDef);
 #endif // USB_SERIALSTD 
-#endif //ARDUINO_ARCH_SAMD
 
-#if defined ARDUINO_ARCH_AVR
 
-        // Temporarily disables interrupts, so no mistakes are made when writing
-        // to the processor registers
+#if 0
         noInterrupts();
     } 
 
@@ -1641,7 +1556,7 @@ void Logger::systemSleep(uint8_t sleep_min) { //SAMDx
     // Re-enables interrupts
     interrupts();
 
-#endif
+#endif //0
 
     // Re-enable the watch-dog timer
     watchDogTimer.enableWatchDog();
@@ -1663,22 +1578,10 @@ void Logger::systemSleep(uint8_t sleep_min) { //SAMDx
     // the timeout period is a useless delay.
     Wire.setTimeout(0);
 
-#if defined(MS_SAMD_DS3231) || not defined(ARDUINO_ARCH_SAMD)
-    // Stop the clock from sending out any interrupts while we're awake.
-    // There's no reason to waste thought on the clock interrupt if it
-    // happens while the processor is awake and doing other things.
-    // nh: this re-initializes the RTC, maybe over driving the RTC - the disableInterrupt is a better way
-    //rtc.disableInterrupts();  after Wire.begin()
-    // Detach the from the pin
-    //disableInterrupt(_mcuWakePin); moved up disable
-
-#elif defined ARDUINO_ARCH_SAMD
-    // not needed zero_sleep_rtc.disableAlarm(RTC_ALM_ID);
-#endif
 
     // Wake-up message
     wakeUpTime_secs = getNowLocalEpoch();
-    PRINTOUT(F("\n... zzzZZ Awake @"), formatDateTime_ISO8601(wakeUpTime_secs)
+    PRINTOUT(F("\n... zzzZZ SAM Awake @"), formatDateTime_ISO8601(wakeUpTime_secs)
 #if defined ARDUINO_ARCH_SAMD  & defined ARCH_SAMD_SET_RTC_EACH_ALARM
     ,targetWakeup_secs, timeNow_secs
 #endif //ARDUINO_ARCH_SAMD
