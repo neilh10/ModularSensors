@@ -1396,13 +1396,18 @@ void lowpower_disable_ints(void) {
     MCLK->APBDMASK.reg &= ~(MCLK_APBDMASK_DAC | MCLK_APBDMASK_SERCOM4 | MCLK_APBDMASK_SERCOM5 | MCLK_APBDMASK_ADC0 | MCLK_APBDMASK_ADC1 | MCLK_APBDMASK_TCC4
             | MCLK_APBDMASK_TC6 | MCLK_APBDMASK_TC7 | MCLK_APBDMASK_SERCOM6 | MCLK_APBDMASK_SERCOM7);
     */
-    //Assumes turned off DWT->CTRL &= ~DWT_CTRL_CYCCNTENA_Msk;
+    // Turn off free running Cycle Count Register in DWT_CTRL
+    DWT->CTRL &= ~DWT_CTRL_CYCCNTENA_Msk;
 
 } // lowpower_disable_ints
 
 void lowpower_enable_ints(void) {
     //Re-enable clocks in the order that they are needed
     SysTick_Config( SystemCoreClock / 1000 );
+    //Data Watchpoint and Trace Unit - 
+    // Seperate core arm_cortexm4_processor_trm_100166_0001_00_en Technical Ref Manual.pdf
+    // This is needed by protocols: OneWire
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 
     //tbd also need to look at enable what was disabled 
 #if defined PIN_WIRE0_SLEEP
@@ -1533,9 +1538,9 @@ void Logger::systemSleep(uint8_t sleep_min) { //SAMDx
     // is set an intialization. 
     // An option is ARCH_SAMD_SET_RTC_EACH_ALARM but hasn't found to work
     uint32_t timeNow_secs = getNowUTCEpoch();
-#if 0
     uint32_t targetWakeup_secs;
     targetWakeup_secs = timeNow_secs + RTC_ALARM_SEC;
+#if 0
 
     uint16_t local_secs;
 
@@ -2299,11 +2304,8 @@ void Logger::begin() {
     zr.attachInterrupt(alarmMatch); //Need for internal RTC_SAMD51 processing
     zr.enableAlarm(RTC_ALM_ID, zr.MATCH_SS); // match Every minute 
     PRINTOUT(F("Set RTC Alarm Every Miunute")); 
-    //Data Watchpoint and Trace Unit - 
-    // Seperate core arm_cortexm4_processor_trm_100166_0001_00_en Technical Ref Manual.pdf
-    // Turn off free running Cycle Count Register in DWT_CTRL
-    // May be a problem for some debug   
-    DWT->CTRL &= ~DWT_CTRL_CYCCNTENA_Msk;
+    // This is needed by protocols: OneWire
+    // DWT->CTRL &= ~DWT_CTRL_CYCCNTENA_Msk;
 
 #endif // ARDUINO_ARCH_SAMD
 

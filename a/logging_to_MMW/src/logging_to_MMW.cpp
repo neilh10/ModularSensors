@@ -272,7 +272,7 @@ BoschBME280 bme280(I2CPower, BMEi2c_addr);
 // If only using a single sensor on the OneWire bus, you may omit the address
 // DeviceAddress OneWireAddress1 = {0x28, 0xFF, 0xBD, 0xBA, 0x81, 0x16, 0x03,
 // 0x0C};
-const int8_t OneWirePower = sensorPowerPin;  // Power pin (-1 if unconnected)
+const int8_t OneWirePower = -1;//sensorPowerPin;  // Power pin (-1 if unconnected)
 const int8_t OneWireBus   = OneWireBus_DEF;  // OneWire Bus Pin (-1 if unconnected)
 
 // Create a Maxim DS18 sensor objects (use this form for a known address)
@@ -280,7 +280,12 @@ const int8_t OneWireBus   = OneWireBus_DEF;  // OneWire Bus Pin (-1 if unconnect
 
 // Create a Maxim DS18 sensor object (use this form for a single sensor on bus
 // with an unknown address)
-MaximDS18 ds18(OneWirePower, OneWireBus);
+// tbd how to do this for a number of same sensors.
+// Could configure in .ini ~ which means 1) determining number of sensors 2) each sensors address
+//Address OneWireSearch: 0x28, 0x8A, 0xAB, 0xD9, 0x06, 0x00, 0x00, 0x3B
+uint8_t Dev1_Ds18Addr[8]= {0x28, 0x8A, 0xAB, 0xD9, 0x06, 0x00, 0x00, 0x3B};
+MaximDS18 ds18(Dev1_Ds18Addr,OneWirePower, OneWireBus);
+
 /** End [ds18] */
 
 
@@ -294,9 +299,9 @@ Variable* variableList[] = {
     //new BoschBME280_Humidity(&bme280, "12345678-abcd-1234-ef00-1234567890ab"),
     //new BoschBME280_Pressure(&bme280, "12345678-abcd-1234-ef00-1234567890ab"),
     //new BoschBME280_Altitude(&bme280, "12345678-abcd-1234-ef00-1234567890ab"),
-    //new MaximDS18_Temp(&ds18, TEMPERATURE_UUID),
-    new ProcessorStats_Battery(&mcuBoard,BAT_VOLTAGE_UUID ),
+    new MaximDS18_Temp(&ds18, TEMPERATURE_UUID),
     //new MaximDS3231_Temp(&ds3231, "12345678-abcd-1234-ef00-1234567890ab"),
+    //new ProcessorStats_Battery(&mcuBoard,BAT_VOLTAGE_UUID ),
     #if defined(ARDUINO_AVR_ENVIRODIY_MAYFLY)
     new Modem_RSSI(&modemPhy, "12345678-abcd-1234-ef00-1234567890ab"),
     //new Modem_SignalPercent(&modem, "12345678-abcd-1234-ef00-1234567890ab"),
