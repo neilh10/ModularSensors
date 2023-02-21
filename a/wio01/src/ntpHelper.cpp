@@ -21,23 +21,30 @@ WiFiUDP udpTime;
 
 //ntpHelper:: {}
 bool ntpHelper::connectToWiFi(const char* ssid, const char* pwd) {
-    Serial.println("Connecting to WiFi network: " + String(ssid)+"/"+String(pwd));
+    _ssid=ssid;
+    _pwd = pwd;
+    return connectToWiFi();
+}
+bool ntpHelper::connectToWiFi() {
+    Serial.println("Connecting to WiFi network: " + String(_ssid)+"/"+String(_pwd));
 
     // delete old config
     WiFi.disconnect(true);
-    Serial.println("Waiting for WIFI connection...");
+    Serial.println("Waiting for WIFI connection");
     delay(500);
     //Initiate connection
-    WiFi.begin(ssid, pwd);
+    WiFi.begin(_ssid, _pwd);
 #define CONNECT_RETRYS 20
-    uint16_t connect_try=CONNECT_RETRYS;
+    uint16_t connect_try=0;
     do {
-        if (++connect_try > 20) {
+        if (++connect_try > CONNECT_RETRYS) {
             connect_try =0;
+             Serial.print("\n\rRetry disconnect");
             WiFi.disconnect(true);
             delay(500);
-            WiFi.begin(ssid, pwd);
-            Serial.println("Retry");
+            Serial.print(" begin ");
+            WiFi.begin(_ssid, _pwd);
+            //Serial.print("\n\rRetry");
         } else {
             Serial.print(".");
         }
@@ -142,7 +149,10 @@ unsigned long ntpHelper::sendNTPpacket(const char* address) {
 bool ntpHelper::sendDataTuple(size_t seq_cnt,String timeNow) {
     bool retStatus=false;
 
-    if((WiFi.status() == WL_CONNECTED)) {
+    if((WiFi.status() != WL_CONNECTED)) {
+        connectToWiFi(); //how to abort if fail
+    }
+    {
 
         HTTPClientMmw  http;
         int httpCode;
@@ -177,7 +187,7 @@ bool ntpHelper::sendDataTuple(size_t seq_cnt,String timeNow) {
             USE_SERIAL.printf("[HTTP] POST rsp: Code=%d\n", httpCode);
             USE_SERIAL.println(mmwPayload);
             // file found at server
-            if(httpCode == HTTP_CODE_OK) {
+            if(httpCode == HTTP_CODE_CREATED) {
                 String payload = http.getString();
                 Serial.println(payload);
                 retStatus=true;

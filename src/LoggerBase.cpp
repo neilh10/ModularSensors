@@ -716,13 +716,13 @@ void Logger::markTime(void) {
 // rate
 uint8_t Logger::checkInterval(void) {
     uint8_t retval = CIA_NOACTION;
-#if defined(ARDUINO_AVR_ENVIRODIY_MAYFLY)
     uint32_t checkTime = getNowLocalEpoch();
+    int modulus_time_sec =checkTime % (_loggingIntervalMinutes * 60);
     MS_DBG(F("Current Epoch local Timestamp:"), checkTime, F("->"),
            formatDateTime_ISO8601(checkTime));
     MS_DBG(F("Logging interval in seconds:"), (_loggingIntervalMinutes * 60));
     MS_DBG(F("Mod of Logging Interval:"),
-           checkTime % (_loggingIntervalMinutes * 60));
+           modulus_time_sec);
 
     if (_sendOffset_act) {
         // A Timer is counting down to perform delayed Post Readings
@@ -736,14 +736,13 @@ uint8_t Logger::checkInterval(void) {
         }
     }
 
-    if (checkTime % (_loggingIntervalMinutes * 60) == 0) {
+    if (modulus_time_sec < 59 ) {
         // Update the time variables with the current time
         markTime();
         MS_DBG(F("Take Sensor readings. Epoch:"), Logger::markedLocalEpochTime);
 
         // Check what actions for this time period
         retval |= CIA_NEW_READING;
-
         if (1 < _sendEveryX_num) {
             _sendEveryX_cnt++;
             if (_sendEveryX_cnt >= _sendEveryX_num) {
@@ -819,20 +818,6 @@ uint8_t Logger::checkInterval(void) {
         alertOff();
         delay(25);
     }
-#else  // ARDUINO_ARCH_SAMD
-    // Assume that have slept for the right amount of time
-    markTime();
-    DateTime rtcExtNowDt = rtcExtPhy.now();
-    // const char *DateFmt = "YYMMDD:hhmmss";- caused reboot
-    // rtcExtNowDt.toString((char *)DateFmt) const char *DateFmt =
-    // "YY-MM-DD:hhmmss"; uint32_t rtcExtNowTzSec = rtcExtNowDt.unixtime()+
-    // ((int32_t)getTZOffset()*HOURS_TO_SECS);
-    MS_DBG(F("Logging epoch time marked:"), Logger::markedLocalEpochTime, " ",
-        Logger::formatDateTime_ISO8601(Logger::markedLocalEpochTime), "extRtc",
-        rtcExtNowDt.timestamp(DateTime::TIMESTAMP_FULL));
-    //  - caused reboot
-    retval = true;
-#endif
     return retval;
 }
 
@@ -1344,9 +1329,8 @@ void lowpower_disable_ints(void) {
   digitalWrite(LCD_BACKLIGHT, LOW);
 
   //Turn off WiFi RTL8720D_CHIP_PU = LOW
-  pinMode(RTL8720D_CHIP_PU, OUTPUT);
-  
-  digitalWrite(RTL8720D_CHIP_PU, LOW);
+ // pinMode(RTL8720D_CHIP_PU, OUTPUT);
+ // digitalWrite(RTL8720D_CHIP_PU, LOW);
   // For power off, should other pins be low
   // RTL8720D_TXD _RXD
   // RTL8720D_SPI  _MISO_PIN _MOSI_PIN _SCK_PIN _SS_PIN  
@@ -1410,6 +1394,7 @@ void lowpower_enable_ints(void) {
     DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 
     //tbd also need to look at enable what was disabled 
+    // \framework-arduino-samd-seeed\cores\arduino\main.cpp init.cpp:init()
 #if defined PIN_WIRE0_SLEEP
 // Re-start the I2C interface
 #ifdef PIN_WIRE_SDA
