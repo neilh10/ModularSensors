@@ -153,14 +153,20 @@ const char* wifi_pwd  = WIFIPWD_CDEF;  // The password for connecting to WiFi
 // Create the loggerModem object
 
 
-#if 0
-WioTerminal_rpcwifi modemWIOT(/*&modemSerial,*/ modemVccPin, 
+#if 1
+/*WioTerminal_rpcwifi modemWIOT( modemVccPin, 
                         modemStatusPin, modemResetPin, modemSleepRqPin,  
                         wifi_ssid, wifi_pwd, 
-                        espSleepRqPin, espStatusPin);*/
-#endif
+                        espSleepRqPin, espStatusPin); */
+WioTerminal_rpcwifi modemWIOT( RTL8720D_CHIP_PU, 
+                        modemStatusPin, modemResetPin, modemSleepRqPin,  
+                        wifi_ssid, wifi_pwd
+                        //,espSleepRqPin, espStatusPin
+                        );
+#else
 WioTerminal_rpcwifi modemWIOT(/*&modemSerial,*/ 
                         wifi_ssid, wifi_pwd);
+#endif
 WioTerminal_rpcwifi modemPhy = modemWIOT;
 /** End [WIO_TERMINAL_COMMS] */
 #elif defined(ARDUINO_AVR_ENVIRODIY_MAYFLY)
@@ -389,7 +395,7 @@ void setup() {
 // NOTE:  Only use this when debugging - if not connected to a PC, this
 // could prevent the script from starting
     bool statusUsb=false;
-#if defined USB_SERIALSTD
+#if !defined USE_SERIAL1  
 #pragma message "Output to USB "
     //Need to detect if USB plugged in
     delay(10);
@@ -488,7 +494,7 @@ void setup() {
     EnviroDIYPOST.setQuedState(true);
     EnviroDIYPOST.setTimerPostTimeout_mS(5432); //5.4Sec
     EnviroDIYPOST.setTimerPostPacing_mS(500);
-    dataLogger.setLoggingInterval(1); //Set every minute, default 5min
+    dataLogger.setLoggingInterval(2); //Set every minute, default 5min
     //dataLogger.setSendQueSz_num(ps_ram.app.msn.s.sendQueSz_num); 
     dataLogger.setSendEveryX(1); //Default 2
     //dataLogger.setSendOffset(ps_ram.app.msn.s.sendOffset_min);  // delay Minutes
@@ -547,8 +553,10 @@ void setup() {
 void loop() {
     // Note:  primitive but take a guess and set voltages
     // For hardware always take one reading and reference that  can change each time read
+    /* Wio_T doesn't support BatteryV - its a seperate unit.
     float battery_V = 4.123;//nh dbg getBatteryVoltage() ;
     // At very low battery, just go back to sleep
+
     SerialStd.print(F("BatteryVoltage="));
     SerialStd.print(battery_V);
     if (battery_V < 3.4) 
@@ -564,10 +572,11 @@ void loop() {
         dataLogger.logData();
     }
     // If the battery is good, send the data to the world
-    else {
-        SerialStd.println(F(" logDataAndPublish"));
-        delay(500);
-        dataLogger.logDataAndPubReliably(0);
+    else 
+    */{
+        //SerialStd.println(F("Start LogDataAndPubReliably"));
+        //delay(500);
+        dataLogger.logDataAndPubReliably();  //TCP / RTL !there
     }
 }
 /** End [loop] */

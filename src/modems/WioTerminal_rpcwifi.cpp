@@ -40,8 +40,9 @@ WioTerminal_rpcwifi::WioTerminal_rpcwifi(/*Stream* modemStream,*/
 }
 WioTerminal_rpcwifi::WioTerminal_rpcwifi(/*Stream* modemStream,*/ int8_t powerPin,
                         int8_t statusPin, int8_t modemResetPin,int8_t modemSleepRqPin, 
-                                   const char* ssid, const char* pwd, 
-                                   int8_t espSleepRqPin, int8_t espStatusPin)
+                                   const char* ssid, const char* pwd
+                                   //,int8_t espSleepRqPin, int8_t espStatusPin
+                                   )
     : loggerModem(powerPin, statusPin, ESP8266update_STATUS_LEVEL, modemResetPin,
                   ESP8266update_RESET_LEVEL, ESP8266update_RESET_PULSE_MS, modemSleepRqPin,
                   ESP8266update_WAKE_LEVEL, ESP8266update_WAKE_PULSE_MS,
@@ -58,10 +59,10 @@ WioTerminal_rpcwifi::WioTerminal_rpcwifi(/*Stream* modemStream,*/ int8_t powerPi
     _ssid = ssid;
     _pwd  = pwd;
 
-    _espSleepRqPin = espSleepRqPin;
-    _espStatusPin  = espStatusPin;
+    //_espSleepRqPin = espSleepRqPin;
+    //_espStatusPin  = espStatusPin;
 
-    //_modemStream = modemStream;
+    //_modemStream = loggerModem; // modemStream .Client Stream;
 }
 
 // Destructor
@@ -93,8 +94,11 @@ bool WioTerminal_rpcwifi::RTLwaitForBoot(void) {
     delay(200);  // It will take at least this long
     uint32_t start   = millis();
     bool     success = false;
-    if (NULL == _modemStream) {return false;}
+    if (NULL == _modemStream) {
+        MS_DBG(F("RTL8720 modem stream not allocated"));
+        return false;}
     while (!_modemStream->available() && ((millis() - start) < 1000) ) {}
+    MS_DBG(F("RTL8720 modem available"));
     if (_modemStream->available()) {
         success = true;
         // Read the boot log to empty it from the serial buffer
@@ -111,12 +115,15 @@ bool WioTerminal_rpcwifi::RTLwaitForBoot(void) {
 // These can be functions of any type and must return a boolean
 bool WioTerminal_rpcwifi::modemWakeFxn(void) {
     bool success = true;
+
+
     if (_powerPin >= 0) {  // Turns on when power is applied
-        digitalWrite(_modemSleepRqPin, !_wakeLevel);
+        //?? digitalWrite(_modemSleepRqPin, !_wakeLevel);
         success &= RTLwaitForBoot();
-        if (_modemSleepRqPin >= 0) {
+        MS_DBG(F("RTL Booted ="),success);
+        /*if (_modemSleepRqPin >= 0) {
             digitalWrite(_modemSleepRqPin, _wakeLevel);
-        }
+        }*/
         return success;
     } else if (_modemResetPin >= 0) {
         MS_DBG(F("Sending a reset pulse to pin"), _modemResetPin,
@@ -159,7 +166,7 @@ bool WioTerminal_rpcwifi::modemSleepFxn(void) {
     // Use this if you have an MCU pin connected to the ESP's reset pin to wake
     // from deep sleep We'll also put it in deep sleep before yanking power
     if (_modemResetPin >= 0 || _powerPin >= 0) {
-        MS_DBG(F("Requesting deep sleep for ESP8266"));
+        MS_DBG(F("Requesting deep sleep for RTL8720 -tbd not implemented"));
        bool retVal = true;// gsmModem.poweroff();
         if (_modemSleepRqPin >= 0) {
             digitalWrite(_modemSleepRqPin, !_wakeLevel);

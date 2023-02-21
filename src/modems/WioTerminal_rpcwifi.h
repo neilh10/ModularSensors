@@ -239,8 +239,9 @@ class WioTerminal_rpcwifi : public loggerModem {
                      const char* ssid, const char* pwd);
     WioTerminal_rpcwifi(/*Stream* modemStream,*/ int8_t powerPin, int8_t statusPin,
                      int8_t modemResetPin, int8_t modemSleepRqPin,
-                     const char* ssid, const char* pwd,
-                     int8_t espSleepRqPin = -1, int8_t espStatusPin = -1);
+                     const char* ssid, const char* pwd
+                     //,int8_t espSleepRqPin = -1, int8_t espStatusPin = -1
+                     );
     /**
      * @brief Destroy the Espressif rpcWifiRTL8720 object - no action taken
      */
@@ -279,7 +280,7 @@ class WioTerminal_rpcwifi : public loggerModem {
      *
      * We need to keep the pointer to the stream for tossing junk on boot.
      */
-    Stream* _modemStream;
+    Stream* _modemStream = nullptr;  // internal
 
  protected:
     bool isInternetAvailable(void) override;
@@ -293,8 +294,8 @@ class WioTerminal_rpcwifi : public loggerModem {
     const char* _ssid;
     const char* _pwd;
 
-    int8_t _espSleepRqPin;
-    int8_t _espStatusPin;
+    //int8_t _espSleepRqPin;
+    //int8_t _espStatusPin;
 };
 /**@}*/
 #endif  // SRC_MODEMS_WIOTERMINAL_RPCWIFI_H_
