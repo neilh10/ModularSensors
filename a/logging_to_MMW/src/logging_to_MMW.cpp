@@ -4,9 +4,9 @@
  *
  * @author Neil Hancock port to Wio Terminal
  * @author Sara Geleskie Damiano <sdamiano@stroudcenter.org>
- * @copyright (c) 2017-2022 Stroud Water Research Center (SWRC)
+ * @copyright (c) 2017-2023 Stroud Water Research Center (SWRC)
  *                          and the EnviroDIY Development Team
- *            This example is published under the BSD-3 license.
+ *            This code is published under the BSD-3 license.
  *
  * Build Environment: Visual Studios Code with PlatformIO
  * Hardware Platform: default_envs =seeed_wio_terminal
@@ -14,18 +14,19 @@
  * * MS soak test  ie reliable
  * * use ms_cfg.ini
  * * DS18 Temperature logger  into J5/D0 d1 3V3 - Seeed SKU 101990578
- *    J5 D1=PB09
- * * Noise Level  internal micrcophone 
- * * Uses USB port for programming/monitoring OR Serial1 UART for low power debug 
- * * sleep low power and wake
- * * Sleep and wake ~ 
- *    import from a\PlatformIO\Projects\afM4\lowPower\src\standbyExternalInterruptSAMD51.cpp
+ *    Right hand J5 D1=PB09
  * * WiFi subsystem, post to MMW - complete
- * * WiFi subystem, ntp/udp - complete
+ * * WiFi subystem, get accurate wall time, ntp/udp - complete
+ * * Uses USB port for programming/monitoring. Option Serial1 UART for low power debug 
+ * * Lower power when using Serial1 UART
  * 
-  * 2023Jan2 Power Measured USB Stick on USB-C
- * ??Sleeping 50mA
- * WiFi running 64mA, startup is 100mA
+ * Future
+ * * Noise Level  internal micrcophone 
+ *
+ * 
+ * 2023 Feb 21 Power Measured USB Stick on USB-C
+ *  USB active with WiFi 54mA, startup is 100mA
+ * with lowpower WiFi/RTL87280 is unreliable
  *
  * DISCLAIMER:
  * THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
@@ -137,6 +138,7 @@ const int8_t sensorPowerPin = sensorPowerPin_DEF;  // MCU pin controlling main s
 
 // Modem Pins - Describe the physical pin connection of your modem to your board
 // NOTE:  Use -1 for pins that do not apply
+//const int8_t modemVccPin    = RTL8720D_CHIP_PU; //future 
 const int8_t modemVccPin    = modemVccPin_DEF;    // MCU pin controlling modem power
 const int8_t modemStatusPin = -1;//modemStatusPin_DEF; // MCU pin used to read modem status
 const bool useCTSforStatus  = false;  // Flag to use the XBee CTS pin for status
@@ -158,7 +160,7 @@ const char* wifi_pwd  = WIFIPWD_CDEF;  // The password for connecting to WiFi
                         modemStatusPin, modemResetPin, modemSleepRqPin,  
                         wifi_ssid, wifi_pwd, 
                         espSleepRqPin, espStatusPin); */
-WioTerminal_rpcwifi modemWIOT( RTL8720D_CHIP_PU, 
+WioTerminal_rpcwifi modemWIOT( modemVccPin, 
                         modemStatusPin, modemResetPin, modemSleepRqPin,  
                         wifi_ssid, wifi_pwd
                         //,espSleepRqPin, espStatusPin
@@ -487,8 +489,9 @@ void setup() {
     // Begin the logger
     dataLogger.begin();
 
-    SerialStd.println(F("Setting up modemPhy as WiFiClient..."));
-    //EnviroDIYPOST.setClient(&modemPhy.endClient);
+    SerialStd.println(F("Setting up modemPhy as RTL8270 WiFiClient..."));
+    EnviroDIYPOST.setClient(&modemPhy.endClient);
+    //EnviroDIYPOST.setClient(&modemPhy.(Class *inClient))
     EnviroDIYPOST.begin(dataLogger, &modemPhy.endClient, registrationToken, samplingFeature);
     //EnviroDIYPOST.setDIYHost("data.envirodiy.org"); //use default & port
     EnviroDIYPOST.setQuedState(true);
@@ -510,6 +513,7 @@ void setup() {
     }
 
     // Sync the clock if it isn't valid or we have battery to spare
+    #if !defined NO_FIRST_SYNC_WITH_NIST
     if (1)///*getBatteryVoltage() > 3.55 ||*/ !dataLogger.isRTCSane()) 
     {
         // Synchronize the RTC with NIST
@@ -517,7 +521,7 @@ void setup() {
         SerialStd.println(F("Synchronize the RTC with NIST"));
         dataLogger.syncRTC();
     }
-
+    #endif //NO_FIRST_SYNC_WITH_NIST
     // Create the log file, adding the default header to it
     // Do this last so we have the best chance of getting the time correct and
     // all sensor names correct
@@ -540,7 +544,7 @@ void setup() {
     // Call the processor sleep
     SerialStd.println(F("Putting processor to sleep\n"));
     delay(100);
-    dataLogger.systemSleep();
+    // do reading & then sleep- dataLogger.systemSleep();
 }
 /** End [setup] */
 

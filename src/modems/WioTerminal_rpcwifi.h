@@ -235,9 +235,10 @@ class WioTerminal_rpcwifi : public loggerModem {
      *
      * @see loggerModem::loggerModem
      */
-    WioTerminal_rpcwifi(/*Stream* modemStream,*/ 
+    WioTerminal_rpcwifi(//Stream* modemStream, 
                      const char* ssid, const char* pwd);
-    WioTerminal_rpcwifi(/*Stream* modemStream,*/ int8_t powerPin, int8_t statusPin,
+    WioTerminal_rpcwifi(//Stream* modemStream, ..created on connection
+                    int8_t powerPin, int8_t statusPin,
                      int8_t modemResetPin, int8_t modemSleepRqPin,
                      const char* ssid, const char* pwd
                      //,int8_t espSleepRqPin = -1, int8_t espStatusPin = -1
