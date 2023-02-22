@@ -192,5 +192,5 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define samplingFeature_UUID   "236c674b-69b9-43af-b0d6-33d67b870ecc"
 #define SEQUENCE_NUMBER_UUID   "8c57835f-a32f-4d62-82dc-0ba09f04cf52"
 #define BAT_VOLTAGE_UUID       "3bebd4a3-8b54-4f92-ba55-5fd2fd021358"
-#define TEMPERATURE_UUID       "03e7b375-97a7-4423-a3f0-1d822d8b19b9"
+#define TEMPERATURE_A_UUID     "03e7b375-97a7-4423-a3f0-1d822d8b19b9"
 #endif  // ms_cfg_h
