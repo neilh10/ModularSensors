@@ -554,6 +554,20 @@ class Sensor {
      */
     virtual String getSensorDetails(void) ;
 
+    /**
+     * @brief Set the WamrUp Time of the sensor instance in mS
+     */
+   virtual void set_warmUpTime_ms(uint32_t warmUpTime_ms) {_warmUpTime_ms =warmUpTime_ms;}
+
+    /**
+     * @brief Set the stabilzation Time of the sensor instance in mS
+     */   
+   virtual void set_stabilizationTime_ms(uint32_t stabilizationTime_ms) {_stabilizationTime_ms =stabilizationTime_ms;} ;
+
+    /**
+     * @brief Set the sensor name for this instance.
+     */      
+   virtual void set_sensorName(const char *sensorName) {_sensorName=sensorName;}
 };
 
 #endif  // SRC_SENSORBASE_H_

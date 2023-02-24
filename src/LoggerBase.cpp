@@ -562,7 +562,12 @@ uint32_t Logger::getNowLocalEpoch(void) {
 // The DateTime object constructor requires the number of seconds from
 // January 1, 2000 (NOT 1970) as input, so we need to subtract.
 DateTime Logger::dtFromEpoch(uint32_t epochTime) {
+    #if defined __AVR__
     DateTime dt(epochTime - EPOCH_TIME_OFF);
+    #else
+    //SeeedArduinoRTC lib assumes Epoch
+    DateTime dt(epochTime);
+    #endif 
     return dt;
 }
 
@@ -1006,26 +1011,7 @@ void Logger::systemSleep(uint8_t sleep_min) { //__AVR__
     // on next match
     rtcExtPhy.clearINTStatus();
     PRINTOUT(F("Going to sleep. Ram("),freeRamLb(),F("/"),freeRamCnt(),F(")  ZZzzz..."));
-#elif defined ARDUINO_ARCH_SAMD
-
-    // Make sure interrupts are enabled for the clock
-    NVIC_EnableIRQ(RTC_IRQn);       // enable RTC interrupt
-    NVIC_SetPriority(RTC_IRQn, 0);  // highest priority
-
-    // Alarms on the RTC built into the SAMD21 appear to be identical to those
-    // in the DS3231.  See more notes below.
-    // We're setting the alarm seconds to 59 and then seting it to go off
-    // whenever the seconds match the 59.  I'm using 59 instead of 00
-    // because there seems to be a bit of a wake-up delay
-    MS_DBG(F("Setting alarm on SAMD built-in RTC for every minute."));
-    zero_sleep_rtc.attachInterrupt(wakeISR);
-    zero_sleep_rtc.setAlarmSeconds(59);
-    zero_sleep_rtc.enableAlarm(zero_sleep_rtc.MATCH_SS);
-
 #endif
-
-    // Send one last message before shutting down serial ports
-    PRINTOUT(F("Going to sleep. Ram("),freeRamCalcLb(),F("/"),freeRamCnt(),F(")  ZZzzz..."));
 
 // Wait until the serial ports have finished transmitting
 // This does not clear their buffers, it just waits until they are finished

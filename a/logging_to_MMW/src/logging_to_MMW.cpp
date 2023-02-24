@@ -272,9 +272,15 @@ const int8_t OneWireBus   = OneWireBus_DEF;  // OneWire Bus Pin (-1 if unconnect
 // tbd how to do this for a number of same sensors.
 // Could configure in .ini ~ which means 1) determining number of sensors 2) each sensors address
 //Address OneWireSearch: 0x28, 0x8A, 0xAB, 0xD9, 0x06, 0x00, 0x00, 0x3B
-uint8_t Dev1_Ds18Addr_a[8]= {0x28, 0x8A, 0xAB, 0xD9, 0x06, 0x00, 0x00, 0x3B};
+uint8_t Dev1_Ds18Addr_a[8]= {0x28, 0x8A, 0xAB, 0xD9, 0x06, 0x00, 0x00, 0x3A};
+uint8_t Dev1_Ds18Addr_b[8]= {0x28, 0x8A, 0xAB, 0xD9, 0x06, 0x00, 0x00, 0x3B};
+uint8_t Dev1_Ds18Addr_c[8]= {0x28, 0x8A, 0xAB, 0xD9, 0x06, 0x00, 0x00, 0x3C};
+uint8_t Dev1_Ds18Addr_d[8]= {0x28, 0x8A, 0xAB, 0xD9, 0x06, 0x00, 0x00, 0x3D};
+//Prototype 4 devices, using same address till new parts arrive
 MaximDS18 ds18phy_a(Dev1_Ds18Addr_a,OneWirePower, OneWireBus);
-
+MaximDS18 ds18phy_b(Dev1_Ds18Addr_b,OneWirePower, OneWireBus);
+MaximDS18 ds18phy_c(Dev1_Ds18Addr_c,OneWirePower, OneWireBus);
+MaximDS18 ds18phy_d(Dev1_Ds18Addr_d,OneWirePower, OneWireBus);
 /** End [ds18] */
 
 
@@ -284,7 +290,10 @@ MaximDS18 ds18phy_a(Dev1_Ds18Addr_a,OneWirePower, OneWireBus);
 /** Start [variable_arrays] */
 Variable* variableList[] = {
     new ProcessorStats_SampleNumber(&mcuBoard, SEQUENCE_NUMBER_UUID),
-    new MaximDS18_Temp(&ds18phy_a, TEMPERATURE_A_UUID),
+    new MaximDS18_Temp(&ds18phy_a, TEMPERATURE_A_UUID,"Ds18Ta"),
+    new MaximDS18_Temp(&ds18phy_b, TEMPERATURE_B_UUID,"Ds18Tb"),
+    new MaximDS18_Temp(&ds18phy_c, TEMPERATURE_C_UUID,"Ds18Tc"),
+    new MaximDS18_Temp(&ds18phy_d, TEMPERATURE_D_UUID,"Ds18Td"),
     #if defined(ARDUINO_AVR_ENVIRODIY_MAYFLY)
     new ProcessorStats_Battery(&mcuBoard,BAT_VOLTAGE_UUID ),
     #endif // ARDUINO_AVR_ENVIRODIY_MAYFLY
@@ -323,8 +332,11 @@ const char* samplingFeature =   samplingFeature_UUID;
 //An Arduino client instance to use to print data to.
 //     * Allows the use of any type of client and multiple clients tied to a
 //     * single modem instance 
-//Add later EnviroDIYPOST.setClient(&modemPhy.(Class *inClient))
-EnviroDIYPublisher EnviroDIYPOST(dataLogger, 15, 0);
+#if ! defined WIO_TERMINAL
+//EnviroDIYPublisher EnviroDIYPOST(dataLogger, 15, 0);
+EnviroDIYPublisher EnviroDIYPOST(dataLogger, &modemPhy.gsmClient,
+                                 registrationToken, samplingFeature);
+#endif //
 /** End [publishers] */
 
 
@@ -366,6 +378,7 @@ void setup() {
 // NOTE:  Only use this when debugging - if not connected to a PC, this
 // could prevent the script from starting
     bool statusUsb=false;
+#if defined WIO_TERMINAL 
 #if !defined USE_SERIAL1 & defined MS_LOGGING_TO_MMW_DEBUG
 #pragma message "WIO TERM Output debug to USB "
     //Be nice to detect if USB is plugged in, but how?
@@ -377,13 +390,14 @@ void setup() {
     #define USB_WAIT_FOR_TERM_MS 10000
     while (!SerialStd && (millis() < USB_WAIT_FOR_TERM_MS )) {}
     startupUsbDelay_ms = millis()-start_ms;
-#elif defined WIO_TERMINAL 
+#else  
 #pragma message ("WIO TERRM Output to UART ") 
     statusUsb = USBDevice.ready();
     USBDevice.detach();
     //Serial.end();
     //statusUsb &= USBDevice.end(); !not uspported 
-#endif
+#endif // USE_SERIAL1
+#endif // WIO_TERMINAL
 
     // Start the primary serial connection
     SerialStd.begin(serialBaud);
@@ -455,16 +469,17 @@ void setup() {
     delay(500);
     // Begin the logger
     dataLogger.begin();
-
+#if defined WIO_TERMINAL 
     SerialStd.println(F("Setting up modemPhy as RTL8270 WiFiClient..."));
     EnviroDIYPOST.setClient(&modemPhy.endClient);
     //EnviroDIYPOST.setClient(&modemPhy.(Class *inClient))
     EnviroDIYPOST.begin(dataLogger, &modemPhy.endClient, registrationToken, samplingFeature);
     //EnviroDIYPOST.setDIYHost("data.envirodiy.org"); //use default & port
     EnviroDIYPOST.setQuedState(true);
-    EnviroDIYPOST.setTimerPostTimeout_mS(5432); //5.4Sec
+    EnviroDIYPOST.setTimerPostTimeout_mS(15432); //15.4Sec
     EnviroDIYPOST.setTimerPostPacing_mS(500);
     dataLogger.setLoggingInterval(2); //Set every minute, default 5min
+    #endif //WIO_TERMINAL 
     //dataLogger.setSendQueSz_num(ps_ram.app.msn.s.sendQueSz_num); 
     dataLogger.setSendEveryX(1); //Default 2
     //dataLogger.setSendOffset(ps_ram.app.msn.s.sendOffset_min);  // delay Minutes
@@ -478,6 +493,25 @@ void setup() {
         delay(1000);
         varArray.setupSensors();
     }
+    // Customize setups as using same OneWire bus
+    const char *ds18Name_a = "DS18a";
+    const char *ds18Name_b = "DS18b";
+    const char *ds18Name_c = "DS18c";
+    const char *ds18Name_d = "DS18d";    
+    ds18phy_a.set_sensorName(ds18Name_a);
+    ds18phy_b.set_sensorName(ds18Name_b);    
+    ds18phy_c.set_sensorName(ds18Name_c);
+    ds18phy_d.set_sensorName(ds18Name_d);
+
+    ds18phy_a.set_warmUpTime_ms(  50); //default 2mS
+    ds18phy_b.set_warmUpTime_ms(1000);
+    ds18phy_c.set_warmUpTime_ms(2000);
+    ds18phy_d.set_warmUpTime_ms(3000); 
+
+    ds18phy_a.set_stabilizationTime_ms(100);
+    ds18phy_b.set_stabilizationTime_ms(100);
+    ds18phy_c.set_stabilizationTime_ms(100);
+    ds18phy_d.set_stabilizationTime_ms(100); //default 0mS
 
     // Sync the clock if it isn't valid or we have battery to spare
     #if !defined NO_FIRST_SYNC_WITH_NIST
@@ -506,10 +540,10 @@ void setup() {
 
     //dataLogger.setSendOffset=0;
     dataLogger._sendEveryX_cnt=1;
-    //dataLogger.setPostMax_num(100);
-    //dataLogger.logDataAndPubReliably(0x3);
+    dataLogger.setPostMax_num(100);
+    dataLogger.logDataAndPubReliably(0x3);
     // Call the processor sleep
-    SerialStd.println(F("Putting processor to sleep\n"));
+    SerialStd.println(F("Starting periodic logging\n"));
     delay(100);
     // do reading & then sleep- dataLogger.systemSleep();
 }
