@@ -64,7 +64,9 @@ volatile bool Logger::startTesting = false;
 #if defined(ARDUINO_ARCH_SAMD) || defined(ARDUINO_SAMD_ZERO)
 // RTCZero internal registers based on year 2000/20yk
 // "Epoch19yk" seconds from 1900, using  "struct tm", mktime, gmtime
-RTC_INT_CLASS zero_sleep_rtc;
+RTC_INT_CLASS Logger::zero_sleep_rtc;
+//RTC_INT_CLASS zero_sleep_rtc;
+//RTCZero Logger::zero_sleep_rtc;
 #define zr zero_sleep_rtc
 //For time being assume ony internal RTC - zero_sleep_rtc  name to be changed later
 #define rtcExtPhy zero_sleep_rtc

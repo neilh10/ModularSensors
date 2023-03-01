@@ -732,7 +732,7 @@ class Logger {
      * *OR* a DS3231
      */
    // nh: static declaration has challanges, not sure value 
-   //static RTC_INT_CLASS  zero_sleep_rtc;
+   static RTC_INT_CLASS  zero_sleep_rtc;
 #endif
 
     /**
@@ -872,6 +872,7 @@ class Logger {
     static const uint8_t CIA_NEW_READING   = 0x01;
     static const uint8_t CIA_POST_READINGS = 0x02;
     static const uint8_t CIA_RLB_READINGS  = 0x04;  // store readings, no pub"
+    static const uint8_t CIA_NO_SLEEP      = 0x08;  // 
 
     /**
      * @brief Check if the MARKED time is an even interval of the logging rate -

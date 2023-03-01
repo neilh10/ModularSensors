@@ -755,6 +755,14 @@ USE_RTCLIB* Logger::rtcExtPhyObj() {
 
 // This is a one-and-done to log data
 void Logger::logDataAndPubReliably(uint8_t cia_val_override) {
+
+    if (cia_val_override & CIA_NO_SLEEP) {
+        cia_val_override &= ~CIA_NO_SLEEP;
+    } else {
+        // Sleep at start of cycle, so data is available for caller at the end
+        systemSleep();
+    }
+
     // Reset the watchdog
     watchDogTimer.resetWatchDog();
 
@@ -916,7 +924,7 @@ void Logger::logDataAndPubReliably(uint8_t cia_val_override) {
     if (Logger::startTesting) testingMode();
 
     // Call the processor sleep
-    systemSleep();
+    //systemSleep();
 }
 
 #if defined(__AVR__)
