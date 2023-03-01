@@ -1,0 +1,332 @@
+[2023-03-01 13:29:39.317] ---Boot() Sw Build: a\src\log_display_to_MMW.cpp Mar  1 2023 13:24:25  b'neilh20'
+[2023-03-01 13:29:39.317]  b'rel1_dvlp1m'
+[2023-03-01 13:29:39.317] Sw Name: WioTerm WiFi 4 Temperature to MMW
+[2023-03-01 13:29:39.317]   ***** Low Power RTC SAMD51 48000000MHz ***** 
+[2023-03-01 13:29:39.317] Using ModularSensors Library version 0.34.1-aba
+[2023-03-01 13:29:39.317]  UART UsbStat=0
+[2023-03-01 13:29:40.208] uiHelperWioT fillscreen txt width 405
+[2023-03-01 13:29:40.229] Logger timezone is set to UTC -8
+[2023-03-01 13:29:40.229] RTC timezone is set to UTC
+[2023-03-01 13:29:40.897] 00:00:00-08:00 between 2040-01-01T00:00:00-08:00
+[2023-03-01 13:29:40.897] Current RTC time is: 2023-03-01T21:24:15-08:00
+[2023-03-01 13:29:40.897] Current localized logger time is: 2023-03-01T13:24:15-08:00
+[2023-03-01 13:29:40.897] Set RTC Alarm Every Miunute
+[2023-03-01 13:29:40.897] All variable UUID's appear to be correctly formed.
+[2023-03-01 13:29:40.897] 
+[2023-03-01 13:29:40.897] 8c57835f-a32f-4d62-82dc-0ba09f04cf52 -> SampNum
+[2023-03-01 13:29:40.897] 08646cc3-c5de-414c-af65-c795b2dcac24 -> AM2315Humidity
+[2023-03-01 13:29:40.897] 8849814d-1603-4a2f-861f-f31ae68cccf3 -> AM2315Temp
+[2023-03-01 13:29:40.897] 03e7b375-97a7-4423-a3f0-1d822d8b19b9 -> Ds18Ta
+[2023-03-01 13:29:40.897] c62fcd8a-406e-4fe1-87d9-ff3dca8e1b90 -> Ds18Tb
+[2023-03-01 13:29:40.897] 43bcda9b-2973-4639-af2c-f0b6bb3fa44b -> Ds18Tc
+[2023-03-01 13:29:40.897] ff4d732d-88d8-4a1b-b499-16417603edfe -> Ds18Td
+[2023-03-01 13:29:40.897]  
+[2023-03-01 13:29:40.897] This logger has a variable array with 7 variables, of which 7 come from 6 sensors and 0 are calculated.
+[2023-03-01 13:29:40.897] Logger portion of setup finished.
+[2023-03-01 13:29:40.897] 
+[2023-03-01 13:29:40.897] Setting up modemPhy as RTL8270 WiFiClient...
+[2023-03-01 13:29:40.897] Setting up sensors...
+[2023-03-01 13:29:42.610] Synchronize the RTC with NIST
+[2023-03-01 13:29:42.610] Attempting to connect to the internet and synchronize RTC with NIST
+[2023-03-01 13:29:42.610] This may take up to two minutes!
+[2023-03-01 13:29:42.610] Waiting for WIFI connection...
+[2023-03-01 13:30:03.617] Retry Connected.
+[2023-03-01 13:30:03.850] 
+[2023-03-01 13:30:03.850] SSID: ArthurGuestSsid
+[2023-03-01 13:30:03.850] IP Address: 192.168.0.130
+[2023-03-01 13:30:03.850] signal strength (RSSI):-41 dBm
+[2023-03-01 13:30:03.850] 
+[2023-03-01 13:30:03.850] Connected to internet for RTC sync with NIST
+[2023-03-01 13:30:03.850] logPLO err opening DBG2303.log
+[2023-03-01 13:30:03.850] postLogLine can't open file
+[2023-03-01 13:30:04.873] udp packet received
+[2023-03-01 13:30:04.873] 
+[2023-03-01 13:30:04.873] Internal Clock set  2023-03-01T21:30:04-08:00
+[2023-03-01 13:30:04.873] Setting up file on SD card
+[2023-03-01 13:30:05.061] Data will be saved as logdef_2023-03-01.csv
+[2023-03-01 13:30:05.380] uiHelperWioT fillscreen txt width 263
+[2023-03-01 13:30:05.411] logDataAndPubReliably - overide with  3
+[2023-03-01 13:30:05.411] ---logDataAndPubReliably (0x3)----
+[2023-03-01 13:30:05.411] Read sensors...
+[2023-03-01 13:30:08.534] 
+[2023-03-01 13:30:08.534]  \/---- Line Saved to logdef_2023-03-01.csv ----\/
+[2023-03-01 13:30:08.534] 2023-03-01 13:30:04,1,-9999.0,-9999.0,17.5000,17.5000,17.6875,17.6875
+[2023-03-01 13:30:08.534] 
+[2023-03-01 13:30:08.534] 
+[2023-03-01 13:30:08.584] Connecting to the Internet with RTL8720D
+[2023-03-01 13:30:08.584] Connected Internet
+[2023-03-01 13:30:08.633] 
+[2023-03-01 13:30:08.633] pubDQTR Sending data to [ 0 ] data.envirodiy.org:80
+[2023-03-01 13:30:09.161] POST /api/data-stream/ HTTP/1.1
+[2023-03-01 13:30:09.161] Host: data.envirodiy.org
+[2023-03-01 13:30:09.161] TOKEN: 0cf7c40a-232e-457d-87d6-cea5c0757fec
+[2023-03-01 13:30:09.161] Content-Length: 422
+[2023-03-01 13:30:09.161] Content-Type: application/json
+[2023-03-01 13:30:09.161] 
+[2023-03-01 13:30:09.161] {"sampling_feature":"236c674b-69b9-43af-b0d6-33d67b870ecc","timestamp":"2023-03-01T13:30:04-08:00","8c57835f-a32f-4d62-82dc-0ba09f04cf52":1,"08646cc3-c5de-414c-af65-c795b2dcac24":-9999.0,"8849814d-1603-4a2f-861f-f31ae68cccf3":-9999.0,"03e7b375-97a7-4423-a3f0-1d822d8b19b9":17.5000,"c62fcd8a-406e-4fe1-87d9-ff3dca8e1b90":17.5000,"43bcda9b-2973-4639-af2c-f0b6bb3fa44b":17.6875,"ff4d732d-88d8-4a1b-b499-16417603edfe":17.6875}
+[2023-03-01 13:30:09.161] 
+[2023-03-01 13:30:09.921] -- Response Code -- 201 waited  677 mS Timeout 15432
+[2023-03-01 13:30:10.427] Sent 1 readings in 1.78 sec. Queued readings= 0
+[2023-03-01 13:30:10.452] SyncTimeCheck  0  modulo_sec 1804  Time 1677677404
+[2023-03-01 13:30:10.469] ---logDataAndPubReliably  Complete----------
+[2023-03-01 13:30:10.469] Starting periodic logging
+[2023-03-01 13:30:10.469] 
+[2023-03-01 13:30:11.301] Going to sleep. Ram( -32309 / 0 ) SAM ZZzzz...
+[2023-03-01 13:31:09.819] 
+[2023-03-01 13:31:09.819] ... zzzZZ SAM Awake @ 2023-03-01T13:31:09-08:00
+[2023-03-01 13:31:20.604] Going to sleep. Ram( -32309 / 0 ) SAM ZZzzz...
+[2023-03-01 13:32:18.904] 
+[2023-03-01 13:32:18.904] ... zzzZZ SAM Awake @ 2023-03-01T13:32:18-08:00
+[2023-03-01 13:32:28.934] ---logDataAndPubReliably (0x3)----
+[2023-03-01 13:32:28.934] Read sensors...
+[2023-03-01 13:32:31.061] 
+[2023-03-01 13:32:31.061]  \/---- Line Saved to logdef_2023-03-01.csv ----\/
+[2023-03-01 13:32:31.061] 2023-03-01 13:32:28,2,49.4,18.0,17.5000,17.5000,17.7500,17.6250
+[2023-03-01 13:32:31.061] 
+[2023-03-01 13:32:31.061] 
+[2023-03-01 13:32:31.123] Connecting to the Internet with RTL8720D
+[2023-03-01 13:32:31.123] Connected Internet
+[2023-03-01 13:32:31.160] 
+[2023-03-01 13:32:31.160] pubDQTR Sending data to [ 0 ] data.envirodiy.org:80
+[2023-03-01 13:32:31.451] POST /api/data-stream/ HTTP/1.1
+[2023-03-01 13:32:31.451] Host: data.envirodiy.org
+[2023-03-01 13:32:31.451] TOKEN: 0cf7c40a-232e-457d-87d6-cea5c0757fec
+[2023-03-01 13:32:31.451] Content-Length: 416
+[2023-03-01 13:32:31.451] Content-Type: application/json
+[2023-03-01 13:32:31.451] 
+[2023-03-01 13:32:31.451] {"sampling_feature":"236c674b-69b9-43af-b0d6-33d67b870ecc","timestamp":"2023-03-01T13:32:28-08:00","8c57835f-a32f-4d62-82dc-0ba09f04cf52":2,"08646cc3-c5de-414c-af65-c795b2dcac24":49.4,"8849814d-1603-4a2f-861f-f31ae68cccf3":18.0,"03e7b375-97a7-4423-a3f0-1d822d8b19b9":17.5000,"c62fcd8a-406e-4fe1-87d9-ff3dca8e1b90":17.5000,"43bcda9b-2973-4639-af2c-f0b6bb3fa44b":17.7500,"ff4d732d-88d8-4a1b-b499-16417603edfe":17.6250}
+[2023-03-01 13:32:31.451] 
+[2023-03-01 13:32:32.171] -- Response Code -- 201 waited  629 mS Timeout 15432
+[2023-03-01 13:32:32.681] Sent 1 readings in 1.52 sec. Queued readings= 0
+[2023-03-01 13:32:32.712] SyncTimeCheck  0  modulo_sec 1948  Time 1677677548
+[2023-03-01 13:32:32.712] ---logDataAndPubReliably  Complete----------
+[2023-03-01 13:32:33.447] Going to sleep. Ram( -32309 / 0 ) SAM ZZzzz...
+[2023-03-01 13:33:31.759] 
+[2023-03-01 13:33:31.759] ... zzzZZ SAM Awake @ 2023-03-01T13:33:31-08:00
+[2023-03-01 13:33:42.531] Going to sleep. Ram( -32309 / 0 ) SAM ZZzzz...
+[2023-03-01 13:34:40.831] 
+[2023-03-01 13:34:40.831] ... zzzZZ SAM Awake @ 2023-03-01T13:34:40-08:00
+[2023-03-01 13:34:50.853] ---logDataAndPubReliably (0x3)----
+[2023-03-01 13:34:50.853] Read sensors...
+[2023-03-01 13:34:52.982] 
+[2023-03-01 13:34:52.982]  \/---- Line Saved to logdef_2023-03-01.csv ----\/
+[2023-03-01 13:34:52.982] 2023-03-01 13:34:50,3,49.4,18.2,17.5000,17.5000,17.6875,17.6250
+[2023-03-01 13:34:52.982] 
+[2023-03-01 13:34:52.982] 
+[2023-03-01 13:34:53.030] Connecting to the Internet with RTL8720D
+[2023-03-01 13:34:53.030] Connected Internet
+[2023-03-01 13:34:53.057] 
+[2023-03-01 13:34:53.057] pubDQTR Sending data to [ 0 ] data.envirodiy.org:80
+[2023-03-01 13:34:53.371] POST /api/data-stream/ HTTP/1.1
+[2023-03-01 13:34:53.371] Host: data.envirodiy.org
+[2023-03-01 13:34:53.371] TOKEN: 0cf7c40a-232e-457d-87d6-cea5c0757fec
+[2023-03-01 13:34:53.371] Content-Length: 416
+[2023-03-01 13:34:53.371] Content-Type: application/json
+[2023-03-01 13:34:53.371] 
+[2023-03-01 13:34:53.371] {"sampling_feature":"236c674b-69b9-43af-b0d6-33d67b870ecc","timestamp":"2023-03-01T13:34:50-08:00","8c57835f-a32f-4d62-82dc-0ba09f04cf52":3,"08646cc3-c5de-414c-af65-c795b2dcac24":49.4,"8849814d-1603-4a2f-861f-f31ae68cccf3":18.2,"03e7b375-97a7-4423-a3f0-1d822d8b19b9":17.5000,"c62fcd8a-406e-4fe1-87d9-ff3dca8e1b90":17.5000,"43bcda9b-2973-4639-af2c-f0b6bb3fa44b":17.6875,"ff4d732d-88d8-4a1b-b499-16417603edfe":17.6250}
+[2023-03-01 13:34:53.371] 
+[2023-03-01 13:34:54.038] -- Response Code -- 201 waited  580 mS Timeout 15432
+[2023-03-01 13:34:54.532] Sent 1 readings in 1.49 sec. Queued readings= 0
+[2023-03-01 13:34:54.579] SyncTimeCheck  0  modulo_sec 2090  Time 1677677690
+[2023-03-01 13:34:54.579] ---logDataAndPubReliably  Complete----------
+[2023-03-01 13:34:55.312] Going to sleep. Ram( -32309 / 0 ) SAM ZZzzz...
+[2023-03-01 13:35:53.818] 
+[2023-03-01 13:35:53.818] ... zzzZZ SAM Awake @ 2023-03-01T13:35:53-08:00
+[2023-03-01 13:36:03.831] ---logDataAndPubReliably (0x3)----
+[2023-03-01 13:36:03.831] Read sensors...
+[2023-03-01 13:36:05.974] 
+[2023-03-01 13:36:05.974]  \/---- Line Saved to logdef_2023-03-01.csv ----\/
+[2023-03-01 13:36:05.974] 2023-03-01 13:36:03,4,49.5,17.6,17.5000,17.5000,17.6250,17.6250
+[2023-03-01 13:36:05.974] 
+[2023-03-01 13:36:05.974] 
+[2023-03-01 13:36:06.025] Connecting to the Internet with RTL8720D
+[2023-03-01 13:36:06.025] Connected Internet
+[2023-03-01 13:36:06.046] 
+[2023-03-01 13:36:06.046] pubDQTR Sending data to [ 0 ] data.envirodiy.org:80
+[2023-03-01 13:36:06.286] POST /api/data-stream/ HTTP/1.1
+[2023-03-01 13:36:06.286] Host: data.envirodiy.org
+[2023-03-01 13:36:06.286] TOKEN: 0cf7c40a-232e-457d-87d6-cea5c0757fec
+[2023-03-01 13:36:06.286] Content-Length: 416
+[2023-03-01 13:36:06.286] Content-Type: application/json
+[2023-03-01 13:36:06.286] 
+[2023-03-01 13:36:06.286] {"sampling_feature":"236c674b-69b9-43af-b0d6-33d67b870ecc","timestamp":"2023-03-01T13:36:03-08:00","8c57835f-a32f-4d62-82dc-0ba09f04cf52":4,"08646cc3-c5de-414c-af65-c795b2dcac24":49.5,"8849814d-1603-4a2f-861f-f31ae68cccf3":17.6,"03e7b375-97a7-4423-a3f0-1d822d8b19b9":17.5000,"c62fcd8a-406e-4fe1-87d9-ff3dca8e1b90":17.5000,"43bcda9b-2973-4639-af2c-f0b6bb3fa44b":17.6250,"ff4d732d-88d8-4a1b-b499-16417603edfe":17.6250}
+[2023-03-01 13:36:06.286] 
+[2023-03-01 13:36:06.998] -- Response Code -- 201 waited  641 mS Timeout 15432
+[2023-03-01 13:36:07.546] Sent 1 readings in 1.50 sec. Queued readings= 0
+[2023-03-01 13:36:07.546] SyncTimeCheck  0  modulo_sec 2163  Time 1677677763
+[2023-03-01 13:36:07.562] ---logDataAndPubReliably  Complete----------
+[2023-03-01 13:36:08.318] Going to sleep. Ram( -32309 / 0 ) SAM ZZzzz...
+[2023-03-01 13:37:06.811] 
+[2023-03-01 13:37:06.811] ... zzzZZ SAM Awake @ 2023-03-01T13:37:06-08:00
+[2023-03-01 13:37:17.583] Going to sleep. Ram( -32309 / 0 ) SAM ZZzzz...
+[2023-03-01 13:38:15.883] 
+[2023-03-01 13:38:15.883] ... zzzZZ SAM Awake @ 2023-03-01T13:38:15-08:00
+[2023-03-01 13:38:25.916] ---logDataAndPubReliably (0x3)----
+[2023-03-01 13:38:25.916] Read sensors...
+[2023-03-01 13:38:28.044] 
+[2023-03-01 13:38:28.044]  \/---- Line Saved to logdef_2023-03-01.csv ----\/
+[2023-03-01 13:38:28.044] 2023-03-01 13:38:25,5,49.5,17.4,17.4375,17.5000,17.6250,17.6250
+[2023-03-01 13:38:28.044] 
+[2023-03-01 13:38:28.044] 
+[2023-03-01 13:38:28.091] Connecting to the Internet with RTL8720D
+[2023-03-01 13:38:28.091] Connected Internet
+[2023-03-01 13:38:28.107] 
+[2023-03-01 13:38:28.107] pubDQTR Sending data to [ 0 ] data.envirodiy.org:80
+[2023-03-01 13:38:28.404] POST /api/data-stream/ HTTP/1.1
+[2023-03-01 13:38:28.404] Host: data.envirodiy.org
+[2023-03-01 13:38:28.404] TOKEN: 0cf7c40a-232e-457d-87d6-cea5c0757fec
+[2023-03-01 13:38:28.404] Content-Length: 416
+[2023-03-01 13:38:28.404] Content-Type: application/json
+[2023-03-01 13:38:28.404] 
+[2023-03-01 13:38:28.404] {"sampling_feature":"236c674b-69b9-43af-b0d6-33d67b870ecc","timestamp":"2023-03-01T13:38:25-08:00","8c57835f-a32f-4d62-82dc-0ba09f04cf52":5,"08646cc3-c5de-414c-af65-c795b2dcac24":49.5,"8849814d-1603-4a2f-861f-f31ae68cccf3":17.4,"03e7b375-97a7-4423-a3f0-1d822d8b19b9":17.4375,"c62fcd8a-406e-4fe1-87d9-ff3dca8e1b90":17.5000,"43bcda9b-2973-4639-af2c-f0b6bb3fa44b":17.6250,"ff4d732d-88d8-4a1b-b499-16417603edfe":17.6250}
+[2023-03-01 13:38:28.404] 
+[2023-03-01 13:38:29.142] -- Response Code -- 201 waited  640 mS Timeout 15432
+[2023-03-01 13:38:29.665] Sent 1 readings in 1.54 sec. Queued readings= 0
+[2023-03-01 13:38:29.684] SyncTimeCheck  0  modulo_sec 2305  Time 1677677905
+[2023-03-01 13:38:29.684] ---logDataAndPubReliably  Complete----------
+[2023-03-01 13:38:30.418] Going to sleep. Ram( -32309 / 0 ) SAM ZZzzz...
+[2023-03-01 13:39:28.922] 
+[2023-03-01 13:39:28.922] ... zzzZZ SAM Awake @ 2023-03-01T13:39:28-08:00
+[2023-03-01 13:39:39.694] Going to sleep. Ram( -32309 / 0 ) SAM ZZzzz...
+[2023-03-01 13:40:37.771] 
+[2023-03-01 13:40:37.771] ... zzzZZ SAM Awake @ 2023-03-01T13:40:37-08:00
+[2023-03-01 13:40:47.800] ---logDataAndPubReliably (0x3)----
+[2023-03-01 13:40:47.800] Read sensors...
+[2023-03-01 13:40:49.933] 
+[2023-03-01 13:40:49.933]  \/---- Line Saved to logdef_2023-03-01.csv ----\/
+[2023-03-01 13:40:49.933] 2023-03-01 13:40:47,6,49.6,17.3,17.5000,17.5000,17.7500,17.5625
+[2023-03-01 13:40:49.933] 
+[2023-03-01 13:40:49.933] 
+[2023-03-01 13:40:49.984] Connecting to the Internet with RTL8720D
+[2023-03-01 13:40:49.984] Connected Internet
+[2023-03-01 13:40:50.003] 
+[2023-03-01 13:40:50.003] pubDQTR Sending data to [ 0 ] data.envirodiy.org:80
+[2023-03-01 13:40:50.234] POST /api/data-stream/ HTTP/1.1
+[2023-03-01 13:40:50.234] Host: data.envirodiy.org
+[2023-03-01 13:40:50.234] TOKEN: 0cf7c40a-232e-457d-87d6-cea5c0757fec
+[2023-03-01 13:40:50.234] Content-Length: 416
+[2023-03-01 13:40:50.234] Content-Type: application/json
+[2023-03-01 13:40:50.234] 
+[2023-03-01 13:40:50.234] {"sampling_feature":"236c674b-69b9-43af-b0d6-33d67b870ecc","timestamp":"2023-03-01T13:40:47-08:00","8c57835f-a32f-4d62-82dc-0ba09f04cf52":6,"08646cc3-c5de-414c-af65-c795b2dcac24":49.6,"8849814d-1603-4a2f-861f-f31ae68cccf3":17.3,"03e7b375-97a7-4423-a3f0-1d822d8b19b9":17.5000,"c62fcd8a-406e-4fe1-87d9-ff3dca8e1b90":17.5000,"43bcda9b-2973-4639-af2c-f0b6bb3fa44b":17.7500,"ff4d732d-88d8-4a1b-b499-16417603edfe":17.5625}
+[2023-03-01 13:40:50.234] 
+[2023-03-01 13:40:50.963] -- Response Code -- 201 waited  642 mS Timeout 15432
+[2023-03-01 13:40:51.478] Sent 1 readings in 1.48 sec. Queued readings= 0
+[2023-03-01 13:40:51.534] SyncTimeCheck  0  modulo_sec 2447  Time 1677678047
+[2023-03-01 13:40:51.534] ---logDataAndPubReliably  Complete----------
+[2023-03-01 13:40:52.276] Going to sleep. Ram( -32309 / 0 ) SAM ZZzzz...
+[2023-03-01 13:41:50.759] 
+[2023-03-01 13:41:50.759] ... zzzZZ SAM Awake @ 2023-03-01T13:41:50-08:00
+[2023-03-01 13:42:00.789] ---logDataAndPubReliably (0x3)----
+[2023-03-01 13:42:00.789] Read sensors...
+[2023-03-01 13:42:02.922] 
+[2023-03-01 13:42:02.922]  \/---- Line Saved to logdef_2023-03-01.csv ----\/
+[2023-03-01 13:42:02.922] 2023-03-01 13:42:00,7,49.9,17.3,17.4375,17.5000,17.6875,17.5625
+[2023-03-01 13:42:02.922] 
+[2023-03-01 13:42:02.922] 
+[2023-03-01 13:42:02.972] Connecting to the Internet with RTL8720D
+[2023-03-01 13:42:02.972] Connected Internet
+[2023-03-01 13:42:02.992] 
+[2023-03-01 13:42:02.992] pubDQTR Sending data to [ 0 ] data.envirodiy.org:80
+[2023-03-01 13:42:03.249] POST /api/data-stream/ HTTP/1.1
+[2023-03-01 13:42:03.249] Host: data.envirodiy.org
+[2023-03-01 13:42:03.249] TOKEN: 0cf7c40a-232e-457d-87d6-cea5c0757fec
+[2023-03-01 13:42:03.249] Content-Length: 416
+[2023-03-01 13:42:03.249] Content-Type: application/json
+[2023-03-01 13:42:03.249] 
+[2023-03-01 13:42:03.249] {"sampling_feature":"236c674b-69b9-43af-b0d6-33d67b870ecc","timestamp":"2023-03-01T13:42:00-08:00","8c57835f-a32f-4d62-82dc-0ba09f04cf52":7,"08646cc3-c5de-414c-af65-c795b2dcac24":49.9,"8849814d-1603-4a2f-861f-f31ae68cccf3":17.3,"03e7b375-97a7-4423-a3f0-1d822d8b19b9":17.4375,"c62fcd8a-406e-4fe1-87d9-ff3dca8e1b90":17.5000,"43bcda9b-2973-4639-af2c-f0b6bb3fa44b":17.6875,"ff4d732d-88d8-4a1b-b499-16417603edfe":17.5625}
+[2023-03-01 13:42:03.249] 
+[2023-03-01 13:42:03.973] -- Response Code -- 201 waited  642 mS Timeout 15432
+[2023-03-01 13:42:04.494] Sent 1 readings in 1.50 sec. Queued readings= 0
+[2023-03-01 13:42:04.514] SyncTimeCheck  0  modulo_sec 2520  Time 1677678120
+[2023-03-01 13:42:04.514] ---logDataAndPubReliably  Complete----------
+[2023-03-01 13:42:05.255] Going to sleep. Ram( -32309 / 0 ) SAM ZZzzz...
+[2023-03-01 13:43:03.745] 
+[2023-03-01 13:43:03.745] ... zzzZZ SAM Awake @ 2023-03-01T13:43:03-08:00
+[2023-03-01 13:43:14.514] Going to sleep. Ram( -32309 / 0 ) SAM ZZzzz...
+[2023-03-01 13:44:12.805] 
+[2023-03-01 13:44:12.805] ... zzzZZ SAM Awake @ 2023-03-01T13:44:12-08:00
+[2023-03-01 13:44:22.824] ---logDataAndPubReliably (0x3)----
+[2023-03-01 13:44:22.824] Read sensors...
+[2023-03-01 13:44:24.951] 
+[2023-03-01 13:44:24.951]  \/---- Line Saved to logdef_2023-03-01.csv ----\/
+[2023-03-01 13:44:24.951] 2023-03-01 13:44:22,8,50.3,17.3,17.5000,17.5000,17.8125,17.5625
+[2023-03-01 13:44:24.951] 
+[2023-03-01 13:44:24.951] 
+[2023-03-01 13:44:24.998] Connecting to the Internet with RTL8720D
+[2023-03-01 13:44:24.998] Connected Internet
+[2023-03-01 13:44:25.013] 
+[2023-03-01 13:44:25.013] pubDQTR Sending data to [ 0 ] data.envirodiy.org:80
+[2023-03-01 13:44:25.264] POST /api/data-stream/ HTTP/1.1
+[2023-03-01 13:44:25.264] Host: data.envirodiy.org
+[2023-03-01 13:44:25.264] TOKEN: 0cf7c40a-232e-457d-87d6-cea5c0757fec
+[2023-03-01 13:44:25.264] Content-Length: 416
+[2023-03-01 13:44:25.264] Content-Type: application/json
+[2023-03-01 13:44:25.264] 
+[2023-03-01 13:44:25.264] {"sampling_feature":"236c674b-69b9-43af-b0d6-33d67b870ecc","timestamp":"2023-03-01T13:44:22-08:00","8c57835f-a32f-4d62-82dc-0ba09f04cf52":8,"08646cc3-c5de-414c-af65-c795b2dcac24":50.3,"8849814d-1603-4a2f-861f-f31ae68cccf3":17.3,"03e7b375-97a7-4423-a3f0-1d822d8b19b9":17.5000,"c62fcd8a-406e-4fe1-87d9-ff3dca8e1b90":17.5000,"43bcda9b-2973-4639-af2c-f0b6bb3fa44b":17.8125,"ff4d732d-88d8-4a1b-b499-16417603edfe":17.5625}
+[2023-03-01 13:44:25.264] 
+[2023-03-01 13:44:25.983] -- Response Code -- 201 waited  641 mS Timeout 15432
+[2023-03-01 13:44:26.516] Sent 1 readings in 1.49 sec. Queued readings= 0
+[2023-03-01 13:44:26.532] SyncTimeCheck  0  modulo_sec 2662  Time 1677678262
+[2023-03-01 13:44:26.532] ---logDataAndPubReliably  Complete----------
+[2023-03-01 13:44:27.283] Going to sleep. Ram( -32309 / 0 ) SAM ZZzzz...
+[2023-03-01 13:45:25.761] 
+[2023-03-01 13:45:25.761] ... zzzZZ SAM Awake @ 2023-03-01T13:45:25-08:00
+[2023-03-01 13:45:36.526] Going to sleep. Ram( -32309 / 0 ) SAM ZZzzz...
+[2023-03-01 13:46:34.819] 
+[2023-03-01 13:46:34.819] ... zzzZZ SAM Awake @ 2023-03-01T13:46:34-08:00
+[2023-03-01 13:46:44.829] ---logDataAndPubReliably (0x3)----
+[2023-03-01 13:46:44.829] Read sensors...
+[2023-03-01 13:46:46.967] 
+[2023-03-01 13:46:46.967]  \/---- Line Saved to logdef_2023-03-01.csv ----\/
+[2023-03-01 13:46:46.967] 2023-03-01 13:46:44,9,50.5,17.7,17.5000,17.5000,17.8125,17.6250
+[2023-03-01 13:46:46.967] 
+[2023-03-01 13:46:46.967] 
+[2023-03-01 13:46:47.001] Connecting to the Internet with RTL8720D
+[2023-03-01 13:46:47.001] Connected Internet
+[2023-03-01 13:46:47.032] 
+[2023-03-01 13:46:47.032] pubDQTR Sending data to [ 0 ] data.envirodiy.org:80
+[2023-03-01 13:46:47.299] POST /api/data-stream/ HTTP/1.1
+[2023-03-01 13:46:47.299] Host: data.envirodiy.org
+[2023-03-01 13:46:47.299] TOKEN: 0cf7c40a-232e-457d-87d6-cea5c0757fec
+[2023-03-01 13:46:47.299] Content-Length: 416
+[2023-03-01 13:46:47.299] Content-Type: application/json
+[2023-03-01 13:46:47.299] 
+[2023-03-01 13:46:47.299] {"sampling_feature":"236c674b-69b9-43af-b0d6-33d67b870ecc","timestamp":"2023-03-01T13:46:44-08:00","8c57835f-a32f-4d62-82dc-0ba09f04cf52":9,"08646cc3-c5de-414c-af65-c795b2dcac24":50.5,"8849814d-1603-4a2f-861f-f31ae68cccf3":17.7,"03e7b375-97a7-4423-a3f0-1d822d8b19b9":17.5000,"c62fcd8a-406e-4fe1-87d9-ff3dca8e1b90":17.5000,"43bcda9b-2973-4639-af2c-f0b6bb3fa44b":17.8125,"ff4d732d-88d8-4a1b-b499-16417603edfe":17.6250}
+[2023-03-01 13:46:47.299] 
+[2023-03-01 13:46:48.030] -- Response Code -- 201 waited  641 mS Timeout 15432
+[2023-03-01 13:46:48.538] Sent 1 readings in 1.51 sec. Queued readings= 0
+[2023-03-01 13:46:48.571] SyncTimeCheck  0  modulo_sec 2804  Time 1677678404
+[2023-03-01 13:46:48.571] ---logDataAndPubReliably  Complete----------
+[2023-03-01 13:46:49.308] Going to sleep. Ram( -32309 / 0 ) SAM ZZzzz...
+[2023-03-01 13:47:47.780] 
+[2023-03-01 13:47:47.780] ... zzzZZ SAM Awake @ 2023-03-01T13:47:47-08:00
+[2023-03-01 13:47:58.558] Going to sleep. Ram( -32309 / 0 ) SAM ZZzzz...
+[2023-03-01 13:48:56.840] 
+[2023-03-01 13:48:56.840] ... zzzZZ SAM Awake @ 2023-03-01T13:48:56-08:00
+[2023-03-01 13:49:07.604] Going to sleep. Ram( -32309 / 0 ) SAM ZZzzz...
+[2023-03-01 13:50:05.875] 
+[2023-03-01 13:50:05.875] ... zzzZZ SAM Awake @ 2023-03-01T13:50:05-08:00
+[2023-03-01 13:50:15.900] ---logDataAndPubReliably (0x3)----
+[2023-03-01 13:50:15.900] Read sensors...
+[2023-03-01 13:50:18.032] 
+[2023-03-01 13:50:18.032]  \/---- Line Saved to logdef_2023-03-01.csv ----\/
+[2023-03-01 13:50:18.032] 2023-03-01 13:50:15,10,50.5,17.6,17.5000,17.4375,17.8125,17.5625
+[2023-03-01 13:50:18.032] 
+[2023-03-01 13:50:18.032] 
+[2023-03-01 13:50:18.082] Connecting to the Internet with RTL8720D
+[2023-03-01 13:50:18.082] Connected Internet
+[2023-03-01 13:50:18.101] 
+[2023-03-01 13:50:18.101] pubDQTR Sending data to [ 0 ] data.envirodiy.org:80
+[2023-03-01 13:50:18.348] POST /api/data-stream/ HTTP/1.1
+[2023-03-01 13:50:18.348] Host: data.envirodiy.org
+[2023-03-01 13:50:18.348] TOKEN: 0cf7c40a-232e-457d-87d6-cea5c0757fec
+[2023-03-01 13:50:18.348] Content-Length: 417
+[2023-03-01 13:50:18.348] Content-Type: application/json
+[2023-03-01 13:50:18.348] 
+[2023-03-01 13:50:18.348] {"sampling_feature":"236c674b-69b9-43af-b0d6-33d67b870ecc","timestamp":"2023-03-01T13:50:15-08:00","8c57835f-a32f-4d62-82dc-0ba09f04cf52":10,"08646cc3-c5de-414c-af65-c795b2dcac24":50.5,"8849814d-1603-4a2f-861f-f31ae68cccf3":17.6,"03e7b375-97a7-4423-a3f0-1d822d8b19b9":17.5000,"c62fcd8a-406e-4fe1-87d9-ff3dca8e1b90":17.4375,"43bcda9b-2973-4639-af2c-f0b6bb3fa44b":17.8125,"ff4d732d-88d8-4a1b-b499-16417603edfe":17.5625}
+[2023-03-01 13:50:18.348] 
+[2023-03-01 13:50:22.243] -- Response Code -- 201 waited  3813 mS Timeout 15432
+[2023-03-01 13:50:22.761] Sent 1 readings in 4.66 sec. Queued readings= 0
+[2023-03-01 13:50:22.776] SyncTimeCheck  0  modulo_sec 3015  Time 1677678615
+[2023-03-01 13:50:22.792] ---logDataAndPubReliably  Complete----------
+[2023-03-01 13:50:23.530] Going to sleep. Ram( -32309 / 0 ) SAM ZZzzz...
