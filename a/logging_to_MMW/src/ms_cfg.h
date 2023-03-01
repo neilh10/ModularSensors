@@ -54,7 +54,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define MFName_DEF "Mayfly"
 //#define HwVersion_DEF MFVersion_DEF
 #define HwName_DEF MFName_DEF
-#define CONFIGURATION_DESCRIPTION_STR "Maylfy Digi LTE XB3-C-A2 MMW"
+#define CONFIGURATION_DESCRIPTION_STR "Maylfy1.1 DigiWiFi Xbee 4 Temperature to MMW"
 
 #define USE_MS_SD_INI 1
 //#define USE_PS_EEPROM 1
@@ -75,7 +75,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define sensorPowerPin_DEF 22
 #define OneWireBus_DEF 6
 
-#define modemVccPin_DEF -2  // MCU pin controlling modem power
+#define modemVccPin_DEF 18  // Mayfly1.1 MCU pin controlling modem power
 #define modemSleepRqPin_DEF 23
 #define modemStatusPin_DEF  19  // MCU pin used to read modem status (-1 if not applicable)
 #define modemResetPin_DEF   20  // MCU pin connected to modem reset pin (-1 if unconnected)
@@ -89,7 +89,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 
 
 #define HwName_DEF "WioTerminal"
-#define CONFIGURATION_DESCRIPTION_STR "WioTerm WiFi Basic"
+#define CONFIGURATION_DESCRIPTION_STR "WioTerm WiFi 4 Temperature to MMW"
 
 #define USE_MS_SD_INI 1
 //#define USE_PS_EEPROM 1

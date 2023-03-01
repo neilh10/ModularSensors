@@ -138,7 +138,7 @@ const int32_t   modemBaud   = modemBaud_Upstream_DEF ;   // All XBee's use 9600 
 // NOTE:  Use -1 for pins that do not apply
 const int8_t modemVccPin    = modemVccPin_DEF;    // MCU pin controlling modem power
 const int8_t modemStatusPin = modemStatusPin_DEF; // MCU pin used to read modem status
-const bool useCTSforStatus  = true;  // Flag to use the XBee CTS pin for status
+const bool useCTSforStatus  = false;  // Flag to use the XBee CTS pin for status
 const int8_t modemResetPin  = modemResetPin_DEF;     // MCU pin connected to modem reset pin
 const int8_t modemSleepRqPin = modemSleepRqPin_DEF;    // MCU pin for modem sleep/wake request
 const int8_t modemLEDPin = redLED;    // MCU pin connected an LED to show modem
@@ -163,8 +163,8 @@ DigiXBeeCellularTransparent modemPhy = modemXBCT;
 #include <modems/DigiXBeeWifi.h>
 
 // Network connection information
-const char* wifiId  = "xxxxx";  // WiFi access point name
-const char* wifiPwd = "xxxxx";  // WiFi password (WPA2)
+const char* wifiId  = WIFIID_CDEF;  // WiFi access point name
+const char* wifiPwd = WIFIPWD_CDEF;  // WiFi password (WPA2)
 
 // Create the modem object
 DigiXBeeWifi modemXBWF(&modemSerial, modemVccPin, modemStatusPin,
@@ -332,11 +332,12 @@ const char* samplingFeature =   samplingFeature_UUID;
 //An Arduino client instance to use to print data to.
 //     * Allows the use of any type of client and multiple clients tied to a
 //     * single modem instance 
-#if ! defined WIO_TERMINAL
-//EnviroDIYPublisher EnviroDIYPOST(dataLogger, 15, 0);
+#if defined WIO_TERMINAL
+EnviroDIYPublisher EnviroDIYPOST(dataLogger, 15, 0);
+#else 
 EnviroDIYPublisher EnviroDIYPOST(dataLogger, &modemPhy.gsmClient,
                                  registrationToken, samplingFeature);
-#endif //
+#endif // WIO_TERMINAL
 /** End [publishers] */
 
 
