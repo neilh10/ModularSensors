@@ -757,11 +757,15 @@ float getBatteryVoltageProc() {
             }
         }
     } else {
+        bfv_lowest = bat_now_v = mcuBoardPhy.readSensorVbat();
         for (bfv_lp=0;bfv_lp<BFV_VBATLOW_WINDOW_SZ ;bfv_lp++){
             bfv_sliding[bfv_lp]=bfv_lowest;
         }
         bfv_Init=true;
-        MS_DBG(F("Vbat_low init"),BFV_VBATLOW_WINDOW_SZ, bat_now_v);
+        Serial.print(F("Vbat_low init="));
+        Serial.print(bat_now_v,3);
+        Serial.print(F(" filter_sz="));
+        Serial.println(BFV_VBATLOW_WINDOW_SZ); 
     }
     bat_filtered_v = bfv_lowest;
     if (bat_filtered_v > bat_now_v) {
@@ -1475,7 +1479,6 @@ void setup() {
     // A vital check on power availability
     batteryCheck(BM_PWR_USEABLE_REQ, true,1);
 
-    PRINTOUT(F("BatV Good ="), bms.getBatteryVm1());
 
 // Allow interrupts for software serial
 #if defined SoftwareSerial_ExtInts_h
