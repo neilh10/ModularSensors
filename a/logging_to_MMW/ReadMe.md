@@ -1,35 +1,36 @@
 # Sending Data to Monitor My Watershed/EnviroDIY <!-- {#example_mmw} -->
 
-This uses a Wio Terminal to send to  https://monitormywatershed.org/
-The per site UUIDs are added in a ms_cfg.h file .
+Port of ModularSensors to a SAMD51  prototype using a Wio Terminal to send to  https://monitormywatershed.org/    
+The per site UUIDs are added in a ms_cfg.h file .    
 
 The modem settings are for the onboard Wio Terminal WiFi.
 
 The Wio Terminal (WioT) uses SAMD51/Cortex M4F processor with program flash of 512K Bytes and ram of 192K Bytes
-(The Mayfly mega1284 has program flash 128KBytes and 16K Bytes) 
+(The Mayfly mega1284 has program flash 128KBytes and 16K Bytes)    
+
 https://www.seeedstudio.com/Wio-Terminal-p-4509.html
-The WioT has following feautures 
- microSD card Slot - max 16GB
- onboard 4MB local flash chip
- WiFi/BlueTooth
- LCD screen 2.4inches
- 40 Pin connector, Raspberry Pi Format, 29useable data pins
- 2 useable UARTS out of 8 SERCOM devices
- USB OTG Console port
+The WioT has following feautures  
+ LCD screen 2.4inches  
+ WiFi/BlueTooth   
+ 2 useable UARTS out of 8 SERCOM devices   
+ USB OTG Console port   
  2 Seeed connectors - ADC 12bits.
- DEBUG 
- requires external battery unit
- Diary with Wio Terminal build
- 230216: Low Power testing IDLE2 
- SAMD51 clock can be set from 120MHz to 48Mhz at compile.
- SAMD51 has various sleep modes - using IDLE2. 
- For lower power STANDBY the Serial1 doesn't recover
+ microSD card Slot - max 16GB   
+ onboard 4MB local flash chip   
+ 40 Pin connector, Raspberry Pi Format, 29useable data pins   
+    
 
- 48Mhz using Serial1/IDEL2 disabling all onboard pins sleep=5mA wake=9mA - no WiFi on wake
- 48Mhz using Serial1/IDEL2 running MS overnight on a one munute sampling schedule sleep24mA wake30mA 
+ Diary using Wio Terminal build   
+ 230216: Low Power testing IDLE2    
+ SAMD51 clock can be set from 120MHz to 48Mhz at compile.   
+ SAMD51 has various sleep modes - using IDLE2.    
+ For lower power STANDBY the Serial1 doesn't recover   
 
- 48Mhz using Serial1/STANDBY disabling all onboard pins sleep3mA wake9mA - Serial1 doesn't recover
- Testing on a Adafruit Express M4 - similar SAMD51 - had  sleep1.3mA and wake3.9mA
+ 48Mhz using Serial1/IDEL2 disabling all onboard pins sleep=5mA wake=9mA - no WiFi on wake   
+ 48Mhz using Serial1/IDEL2 running MS overnight on a one munute sampling schedule sleep24mA wake30mA    
+
+ 48Mhz using Serial1/STANDBY disabling all onboard pins sleep3mA wake9mA - Serial1 doesn't recover   
+ Testing on a Adafruit Express M4 - similar SAMD51 - had  sleep1.3mA and wake3.9mA    
 
  Sensors
 
