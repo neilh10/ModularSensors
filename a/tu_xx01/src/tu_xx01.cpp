@@ -757,7 +757,21 @@ float getBatteryVoltageProc() {
             }
         }
     } else {
+        //Initialize with the highest voltage read.
         bfv_lowest = bat_now_v = mcuBoardPhy.readSensorVbat();
+
+        //Look for highest voltage and init with that voltage
+        // bfv_lowest is a temporary variable with highest found Vbat
+        #define BFV_FILTER_INITIALIZE_LOOP 5
+        for (bfv_lp=0;bfv_lp<BFV_FILTER_INITIALIZE_LOOP ;bfv_lp++){ {
+            delay(10); // allow some settline between readings.
+            bat_now_v = mcuBoardPhy.readSensorVbat();
+            if (bat_now_v > bfv_lowest) {
+                bfv_lowest =bat_now_v ;
+                MS_DBG(F("VbatFilter init new value:"), bfv_lowest);
+                }
+        }
+
         for (bfv_lp=0;bfv_lp<BFV_VBATLOW_WINDOW_SZ ;bfv_lp++){
             bfv_sliding[bfv_lp]=bfv_lowest;
         }
