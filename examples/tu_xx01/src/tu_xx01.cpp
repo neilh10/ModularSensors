@@ -763,7 +763,7 @@ float getBatteryVoltageProc() {
         //Look for highest voltage and init with that voltage
         // bfv_lowest is a temporary variable with highest found Vbat
         #define BFV_FILTER_INITIALIZE_LOOP 5
-        for (bfv_lp=0;bfv_lp<BFV_FILTER_INITIALIZE_LOOP ;bfv_lp++){ {
+        for (bfv_lp=0;bfv_lp<BFV_FILTER_INITIALIZE_LOOP ;bfv_lp++){
             delay(10); // allow some settline between readings.
             bat_now_v = mcuBoardPhy.readSensorVbat();
             if (bat_now_v > bfv_lowest) {
