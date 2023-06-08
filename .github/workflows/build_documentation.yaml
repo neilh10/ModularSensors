@@ -24,7 +24,7 @@ concurrency:
 env:
   REBUILD_CACHE_NUMBER: 2
   PYTHON_DEPS_ARCHIVE_NUM: 2
-  DOXYGEN_VERSION: Release_1_9_4
+  DOXYGEN_VERSION: Release_1_9_6
   TEX_VERSION: 2019
   # ^^ 2019 is the latest TeX live available on apt-get and that's good enough
   GRAPHVIZ_VERSION: 2.43.0
@@ -149,7 +149,7 @@ jobs:
 
       - name: Deploy to github pages
         if: "(github.event_name == 'release' && github.event.action == 'published') || (github.event_name == 'workflow_dispatch' && github.event.inputs.publish == 'true')"
-        uses: peaceiris/actions-gh-pages@v3.9.2
+        uses: peaceiris/actions-gh-pages@v3.9.3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ${{ github.workspace }}/code_docs/ModularSensorsDoxygen/m.css
