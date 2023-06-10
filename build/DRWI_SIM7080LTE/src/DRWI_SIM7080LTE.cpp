@@ -253,14 +253,14 @@ const char* UUIDs[] =  // UUID array for device sensors
         "12345678-abcd-1234-ef00-1234567890ab",  // Turbidity (Campbell_OBS3_Turb) (High)
         "12345678-abcd-1234-ef00-1234567890ab",  // Battery voltage (EnviroDIY_Mayfly_Batt)
         #endif // SENSORS_EXTERNAL
-        "12345678-abcd-1234-ef00-1234567890ab",  // Board Temperature (EnviroDIY_Mayfly_Batt)
-        "12345678-abcd-1234-ef00-1234567890ab",  // System Seq Number (EnviroDIY_Mayfly_SampleNum)
-        // Fut Sensiron Temperature
-        // Fut Sensirom Humidity 
-        //"12345678-abcd-1234-ef00-1234567890ab",  // Percent full scale (EnviroDIY_LTEB_SignalPercent)
+        "9fdcefc1-b43f-4c3c-8d46-ca0e90845153",  // Temperature (Maxim_DS3231_Temp)
+        "e0d7b81b-0241-4017-b5dc-e90ecdb7c279",  // Sequence number (EnviroDIY_Mayfly_SampleNum)
+        //"d73e060d-df4e-4f29-8b69-34891f518bdf",   // Temperature (Sensirion_SHT40_Temperature)
+        //"acc456aa-1148-4385-a984-a68b6eb6b044",   // Relative humidity (Sensirion_SHT40_Humidity)
+        //"97893988-6c2d-43ee-9cfe-3715d45019db"    // Percent full scale (Digi_Cellular_SignalPercent)
 };
-const char* registrationToken = "12345678-abcd-1234-ef00-1234567890ab";  // Device registration token
-const char* samplingFeature = "12345678-abcd-1234-ef00-1234567890ab";  // Sampling feature UUID
+const char* registrationToken = "22752220-5925-4a2c-aeb1-a57b58e1c246";  // Device registration token
+const char* samplingFeature   = "747478ef-4e80-4cc8-921e-89172d05ea42";  // Sampling feature UUID
 
 
 // -----------------------   End of Token UUID List  -----------------------
