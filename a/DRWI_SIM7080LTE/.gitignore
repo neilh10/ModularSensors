@@ -64,7 +64,6 @@ Temporary Items
 .atomrc.cson
 lib/*
 include/*
-/platformio.ini
 .sconsign.dblite
 
 # VSCode
