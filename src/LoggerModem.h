@@ -989,6 +989,116 @@ class loggerModem {
 
     // modemType gsmModem;
     // modemClientType gsmClient;
+
+   /**
+     * @brief The retreived modem paramters
+     *
+     * Set by #getModemBatteryStats() or updateModemMetadata().
+     * Returned by #getModemBatteryVoltage().
+     */
+    String _modemHwVersion;
+    String _modemSerialNumber;
+    String _modemFwVersion;
+
+
+ public:
+     /**
+     * @brief Get a printable description of the modem.
+     *
+     *
+     * @note These values are polled for and cached in memory till needed
+     * It's possible that the status pin is on, but the modem is actually
+     * mid-shutdown.  In that case, we'll mistakenly skip re-waking it.  This
+     * only applies to modules with a pulse wake (ie, non-zero wake time).  For
+     * all modules that do pulse on, where possible I've selected a pulse time
+     * that is sufficient to wake but not quite long enough to put it to sleep
+     * and am using AT commands to sleep.  This *should* keep everything lined
+     * up.
+     *
+     * @return *string discritption of modem.
+     */
+    String getModemDevId(void)
+    {return _modemName+F(" Sn ")+_modemSerialNumber+F(" HwVer " )+_modemHwVersion+F(" FwVer ")+_modemFwVersion;}
+
+    /**
+     * @brief modem management data setup
+     *
+     * Set in setup()
+     *
+     * @param status type of default polling
+     */
+#if !defined POLL_MODEM_META_DATA_ON
+#define POLL_MODEM_META_DATA_ALL 0xFF
+#endif  // POLL_MODEM_META_DATA_ON
+    typedef enum {
+        POLL_MODEM_META_DATA_OFF  = 0x0,
+        POLL_MODEM_META_DATA_RSSI  = 0x01,
+        POLL_MODEM_META_DATA_VCC   = 0x02,
+        POLL_MODEM_META_DATA_TEMP  = 0x04,
+        POLL_MODEM_META_DATA_PARM4 = 0x08,
+        POLL_MODEM_META_DATA_PARM5 = 0x010,
+        POLL_MODEM_META_DATA_DEF   = POLL_MODEM_META_DATA_ALL,
+    } PollModemMetaData_t;
+    /**
+     * @brief poll modem meta data 
+     *
+     * Set polling status.
+     * Default won't poll
+     */
+    void pollModemMetadata(PollModemMetaData_t status = POLL_MODEM_META_DATA_DEF);
+
+    /**
+     * @brief return state of modem poll and what to poll for 
+     *
+     * Set polling status.
+     * @param status return poll status ~ one of PollModemMetaData_t 
+     */
+    uint8_t getModemMetadata() {
+        return _pollModemMetaData;
+    }
+
+ protected:
+    /**
+     * @brief poll the modem management data
+     *
+     * Set in the init() portion of the #modemSetup().
+     */
+    PollModemMetaData_t static _pollModemMetaData;
+
+
+#if not defined SENSOR_DEFAULT_I
+// For modems -db means something special.
+// A default of -9999 makes graphing more difficult
+// however set to -9999 to be standard across MS errors
+#define SENSOR_DEFAULT_I -9999
+//#define SENSOR_DEFAULT_I -1
+#endif  // SENSOR_DEFAULT
+
+#if not defined SENSOR_DEFAULT_F
+// For modems -db means something special.
+// A default of -9999 makes graphing more difficult
+// however set to -9999 to be standard across MS errors
+//#define SENSOR_DEFAULT_F -0.0099
+#define SENSOR_DEFAULT_F -9999
+//#define SENSOR_DEFAULT_I -1
+#endif  // SENSOR_DEFAULT
+
+public:
+    /**
+     * @brief Set the power pin.
+     *
+     * If this function is not called, the power pin is defined on init
+     *
+     * @param powerPin The arduino pin number or if none <0 .
+     */
+    inline void   setPowerPin(int8_t powerPin) {_powerPin = powerPin;}
+
+    /**
+     * @brief get the power pin.
+     *
+     * @returns powerPin 
+     */
+    inline int8_t getPowerPin() {return _powerPin;}
 };
 
 // typedef float (loggerModem::_*loggerGetValueFxn)(void);
