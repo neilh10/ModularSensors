@@ -191,9 +191,11 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define registrationToken_UUID "0cf7c40a-232e-457d-87d6-cea5c0757fec"
 #define samplingFeature_UUID   "236c674b-69b9-43af-b0d6-33d67b870ecc"
 #define SEQUENCE_NUMBER_UUID   "8c57835f-a32f-4d62-82dc-0ba09f04cf52"
+#if defined WIO_TERMINAL 
 #define TEMPERATURE_A_UUID     "03e7b375-97a7-4423-a3f0-1d822d8b19b9"
 #define TEMPERATURE_B_UUID     "c62fcd8a-406e-4fe1-87d9-ff3dca8e1b90"
 #define TEMPERATURE_C_UUID     "8849814d-1603-4a2f-861f-f31ae68cccf3"
 #define TEMPERATURE_D_UUID     "08646cc3-c5de-414c-af65-c795b2dcac24"
+#endif //WIO_TERMINAL
 #define BAT_VOLTAGE_UUID       "3bebd4a3-8b54-4f92-ba55-5fd2fd021358"
 #endif  // ms_cfg_h

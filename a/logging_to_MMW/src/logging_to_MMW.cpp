@@ -132,32 +132,71 @@ const int8_t sensorPowerPin = sensorPowerPin_DEF;  // MCU pin controlling main s
 // The Telit based Digi XBees (LTE Cat1) can only use this mode.
 // Create a reference to the serial port for the modem
 HardwareSerial& modemSerial = modemSerial_Upstream_DEF;  // Use hardware serial if possible
-const int32_t   modemBaud   = modemBaud_Upstream_DEF ;   // All XBee's use 9600 by default
+#if defined STREAMDEBUGGER_DBG
+#include <StreamDebugger.h>
+StreamDebugger modemDebugger(modemSerial, STANDARD_SERIAL_OUTPUT);
+#define modemSerHw modemDebugger
+#else
+#define modemSerHw modemSerial
+#endif  // STREAMDEBUGGER_DBG
 
 // Modem Pins - Describe the physical pin connection of your modem to your board
 // NOTE:  Use -1 for pins that do not apply
 const int8_t modemVccPin    = modemVccPin_DEF;    // MCU pin controlling modem power
 const int8_t modemStatusPin = modemStatusPin_DEF; // MCU pin used to read modem status
-const bool useCTSforStatus  = false;  // Flag to use the XBee CTS pin for status
+
 const int8_t modemResetPin  = modemResetPin_DEF;     // MCU pin connected to modem reset pin
 const int8_t modemSleepRqPin = modemSleepRqPin_DEF;    // MCU pin for modem sleep/wake request
 const int8_t modemLEDPin = redLED;    // MCU pin connected an LED to show modem
                                       // status (-1 if unconnected)
-#if defined USE_DIGI_XBEE_CELL
+
+// Specify one of the following
+#define USE_CELL_DIGI_LTE_XBM3 1
+#define USE_CELL_SIMCON_SIM7080 2
+#define USE_WIFI_DIGI_S6B 3
+#define USE_WIFI_ENVIRODIY_ESP32 4
+
+#define USE_MODEM USE_WIFI_DIGI_S6B
+
+#if USE_MODEM == USE_CELL_DIGI_LTE_XBM3
+#warning Specified USE_CELL_DIGI_LTE_XBM3
+/** Start [digi_xbee_cellular_transparent] */
 #include <modems/DigiXBeeCellularTransparent.h>
 
 // Network connection information
 const char* apn = "xxxxx";  // The APN for the gprs connection
-
+const int32_t   modemBaud   = modemBaud_Upstream_DEF ;   // All XBee's use 9600 by default
+const bool useCTSforStatus  = true;  // Flag to use the XBee CTS pin for status
 // NOTE:  If possible, use the `STATUS/SLEEP_not` (XBee pin 13) for status, but
 // the `CTS` pin can also be used if necessary
-DigiXBeeCellularTransparent modemXBCT(&modemSerial, modemVccPin, modemStatusPin,
+DigiXBeeCellularTransparent modemXBCT(&modemSerHw, modemVccPin, modemStatusPin,
                                       useCTSforStatus, modemResetPin,
                                       modemSleepRqPin, apn);
 // Create an extra reference to the modem by a generic name
 DigiXBeeCellularTransparent modemPhy = modemXBCT;
+#define MODEM_DEF F("Modem LTE XB3"))
 /** End [digi_xbee_cellular_transparent] */
-#else // USE_DIGI_XBEE_CELL expect DIGI_WIFI
+#elif USE_MODEM == USE_CELL_SIMCON_SIM7080
+#warning Specified USE_CELL_SIMCON_SIM7080
+/** Start [sim_com_sim7080] */
+// For almost anything based on the SIMCom SIM7080G
+#include <modems/SIMComSIM7080.h>
+
+// Network connection information
+const char* apn =
+    "hologram";  // APN connection name, typically Hologram unless you have a
+                 // different provider's SIM card. Change as needed
+const int32_t   modemBaud   = modemBaud_Upstream_DEF ;   // Default 9600?
+const bool useCTSforStatus  = false;  // Flag to use the XBee CTS pin for status
+// Create the modem object
+SIMComSIM7080 modem7080(&modemSerHw, modemVccPin, modemStatusPin,
+                        modemSleepRqPin, apn);
+// Create an extra reference to the modem by a generic name
+SIMComSIM7080 modemPhy = modem7080;
+#define MODEM_DEF F("Modem LTE SIM7080"))
+/** End [sim_com_sim7080] */
+#elif USE_MODEM == USE_WIFI_DIGI_S6B
+#warning Specified USE_WIFI_DIGI_S6B
 /** Start [digi_xbee_wifi] */
 // For the Digi Wifi XBee (S6B)
 #include <modems/DigiXBeeWifi.h>
@@ -166,14 +205,37 @@ DigiXBeeCellularTransparent modemPhy = modemXBCT;
 const char* wifiId  = WIFIID_CDEF;  // WiFi access point name
 const char* wifiPwd = WIFIPWD_CDEF;  // WiFi password (WPA2)
 
+const int32_t   modemBaud   = modemBaud_Upstream_DEF ;   // All XBee's use 9600 by default
+const bool useCTSforStatus  = true;  // Flag to use the XBee CTS pin for status
 // Create the modem object
-DigiXBeeWifi modemXBWF(&modemSerial, modemVccPin, modemStatusPin,
+DigiXBeeWifi modemXBWF(&modemSerHw, modemVccPin, modemStatusPin,
                        useCTSforStatus, modemResetPin, modemSleepRqPin, wifiId,
                        wifiPwd);
 // Create an extra reference to the modem by a generic name
 DigiXBeeWifi modemPhy = modemXBWF;
+#define MODEM_DEF F("Modem WiFi S6B")
 /** End [digi_xbee_wifi] */
-#endif // USE_DIGI_XBEE_CELL
+#elif USE_MODEM == USE_WIFI_ENVIRODIY_ESP32
+#warning Specified USE_WIFI_ENVIRODIY_ESP32
+/** Start [espressif_esp32] */
+#include <modems/EspressifESP32.h>
+
+// Network connection information
+const char* wifiId  = WIFIID_CDEF;  // WiFi access point name
+const char* wifiPwd = WIFIPWD_CDEF;  // WiFi password (WPA2)
+
+const int32_t   modemBaud   = 115200;   // Default speed of the modem 
+const int8_t    modemEspResetPin = -1;
+// Create the modem object
+EspressifESP32 modemESP(&modemSerHw, modemVccPin, modemEspResetPin, wifiId,
+                        wifiPwd);
+// Create an extra reference to the modem by a generic name
+EspressifESP32 modemPhy = modemESP;
+#define MODEM_DEF F("Modem WiFi ESP32"))
+
+#else
+#error "modem not defined "
+#endif // USE_CELL_DIGI_LTE_XBM3
 
 #elif defined WIO_TERMINAL 
 /** Start [WIO_TERMINAL_COMMS] */
@@ -290,10 +352,12 @@ MaximDS18 ds18phy_d(Dev1_Ds18Addr_d,OneWirePower, OneWireBus);
 /** Start [variable_arrays] */
 Variable* variableList[] = {
     new ProcessorStats_SampleNumber(&mcuBoard, SEQUENCE_NUMBER_UUID),
+    #if defined TEMPERATURE_A_UUID
     new MaximDS18_Temp(&ds18phy_a, TEMPERATURE_A_UUID,"Ds18Ta"),
     new MaximDS18_Temp(&ds18phy_b, TEMPERATURE_B_UUID,"Ds18Tb"),
     new MaximDS18_Temp(&ds18phy_c, TEMPERATURE_C_UUID,"Ds18Tc"),
     new MaximDS18_Temp(&ds18phy_d, TEMPERATURE_D_UUID,"Ds18Td"),
+    #endif //TEMPERATURE_A_UUID
     #if defined(ARDUINO_AVR_ENVIRODIY_MAYFLY)
     new ProcessorStats_Battery(&mcuBoard,BAT_VOLTAGE_UUID ),
     #endif // ARDUINO_AVR_ENVIRODIY_MAYFLY
@@ -415,13 +479,19 @@ void setup() {
 
     SerialStd.print(F("Sw Name: "));
     SerialStd.println(configDescription);
+    #if defined WIO_TERMINAL 
     SerialStd.print("  ***** Low Power RTC SAMD51 ");
     SerialStd.print(F_CPU);
     SerialStd.println("MHz ***** ");
+    #else //assume Mayfly
+    SerialStd.print(MODEM_DEF);
+    SerialStd.print(F(" TinyGSM Library version "));
+    SerialStd.println(TINYGSM_VERSION);
+
+    #endif //WIO_TERMINAL 
     SerialStd.print(F("Using ModularSensors Library version "));
     SerialStd.println(MODULAR_SENSORS_VERSION);
-    //SerialStd.print(F("TinyGSM Library version "));
-    //SerialStd.println(TINYGSM_VERSION);
+
 #if defined USB_SERIALSTD
     SerialStd.print(" USB UsbStat=");
     SerialStd.print(statusUsb);
@@ -442,8 +512,10 @@ void setup() {
     enableInterrupt(neoSSerial1Rx, neoSSerial1ISR, CHANGE);
 #endif
 
-    // Start the serial connection with the modem
-    // nh modemSerial.begin(modemBaud);
+    #if !defined WIO_TERMINAL 
+    // Mayfly has UART, WiO_TERMINAL is other
+    modemSerial.begin(modemBaud);
+    #endif 
 
     // Set up pins for the LED's
     #if defined USE_LEDS
