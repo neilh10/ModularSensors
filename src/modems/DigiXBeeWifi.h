@@ -131,6 +131,12 @@ class DigiXBeeWifi : public DigiXBee {
 
     bool updateModemMetadata(void) override;
 
+    // Access Management
+    void   setWiFiId(const char* WiFiId, bool copyId = false);
+    void   setWiFiPwd(const char* WiFiPwd, bool copyId = false);
+    String getWiFiId(void);
+    String getWiFiPwd(void);
+    
 #ifdef MS_DIGIXBEEWIFI_DEBUG_DEEP
     StreamDebugger _modemATDebugger;
 #endif
@@ -162,7 +168,7 @@ class DigiXBeeWifi : public DigiXBee {
     const char* _ssid;
     const char* _pwd;
 
-    // Az extension
+    // Access Management
     char* _ssid_buf = NULL;
     char* _pwd_buf  = NULL;
 
@@ -170,12 +176,6 @@ class DigiXBeeWifi : public DigiXBee {
     //This causes the Xbee to reset afte this number of transmission attempts
 #define XBEE_RESET_THRESHOLD 4
 
- public:
-    // Az extension
-    void   setWiFiId(const char* WiFiId, bool copyId = false);
-    void   setWiFiPwd(const char* WiFiPwd, bool copyId = false);
-    String getWiFiId(void);
-    String getWiFiPwd(void);
 };
 /**@}*/
 #endif  // SRC_MODEMS_DIGIXBEEWIFI_H_

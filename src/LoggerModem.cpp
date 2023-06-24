@@ -19,8 +19,7 @@ float   loggerModem::_priorModemTemp      = SENSOR_DEFAULT_F;
 float   loggerModem::_priorBatteryState   = SENSOR_DEFAULT_F;
 float   loggerModem::_priorBatteryPercent = SENSOR_DEFAULT_F;
 float   loggerModem::_priorBatteryVoltage = SENSOR_DEFAULT_F;
-// float loggerModem::_priorActivationDuration = -9999;
-// float loggerModem::_priorPoweredDuration = -9999;
+
 
 // Constructor
 loggerModem::loggerModem(int8_t powerPin, int8_t statusPin, bool statusLevel,

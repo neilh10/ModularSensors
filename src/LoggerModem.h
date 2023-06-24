@@ -990,13 +990,23 @@ class loggerModem {
     // modemType gsmModem;
     // modemClientType gsmClient;
 
-    /* atl_extension */
+   /**
+     * @brief The retreived modem paramters
+     *
+     */
     String _modemHwVersion;
     String _modemSerialNumber;
     String _modemFwVersion;
 
-
  public:
+     /**
+     * @brief Get a printable description of the modem.
+     *
+     *
+     * @note These values are polled for and cached in memory till needed
+     *
+     * @return *string discritption of modem.
+     */
     String getModemDevId(void)
     {return _modemName+F(" Sn ")+_modemSerialNumber+F(" HwVer " )+_modemHwVersion+F(" FwVer ")+_modemFwVersion;}
 
@@ -1019,20 +1029,13 @@ class loggerModem {
         POLL_MODEM_META_DATA_PARM5 = 0x010,
         POLL_MODEM_META_DATA_DEF   = POLL_MODEM_META_DATA_ALL,
     } PollModemMetaData_t;
-    // By default modem metadata won't be polled. Call this to enable.
-    void
-            pollModemMetadata(PollModemMetaData_t status = POLL_MODEM_META_DATA_DEF);
-    uint8_t getModemMetadata() {
-        return _pollModemMetaData;
-    }
-
- protected:
     /**
-     * @brief poll the modem management data
+     * @brief poll modem meta data 
      *
-     * Set in the init() portion of the #modemSetup().
+     * Set polling status.
+     * Default won't poll
      */
-    PollModemMetaData_t static _pollModemMetaData;
+    void pollModemMetadata(PollModemMetaData_t status = POLL_MODEM_META_DATA_DEF);
 
 
 #if not defined SENSOR_DEFAULT_I
@@ -1061,6 +1064,15 @@ public:
      * @returns powerPin 
      */
     inline int8_t getPowerPin() {return _powerPin;}
+
+ protected:
+    /**
+     * @brief poll the modem management data
+     *
+     * Set in the init() portion of the #modemSetup().
+     */
+    PollModemMetaData_t static _pollModemMetaData;
+
 };
 
 /* atl_extension */
