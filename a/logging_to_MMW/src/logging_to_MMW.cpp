@@ -156,7 +156,7 @@ const int8_t modemLEDPin = redLED;    // MCU pin connected an LED to show modem
 #define USE_WIFI_DIGI_S6B 3
 #define USE_WIFI_ENVIRODIY_ESP32 4
 
-#define USE_MODEM USE_WIFI_DIGI_S6B
+#define USE_MODEM USE_WIFI_ENVIRODIY_ESP32
 
 #if USE_MODEM == USE_CELL_DIGI_LTE_XBM3
 #warning Specified USE_CELL_DIGI_LTE_XBM3
@@ -231,7 +231,7 @@ EspressifESP32 modemESP(&modemSerHw, modemVccPin, modemEspResetPin, wifiId,
                         wifiPwd);
 // Create an extra reference to the modem by a generic name
 EspressifESP32 modemPhy = modemESP;
-#define MODEM_DEF F("Modem WiFi ESP32"))
+#define MODEM_DEF F("Modem WiFi ESP32")
 
 #else
 #error "modem not defined "
@@ -514,9 +514,27 @@ void setup() {
 
     #if !defined WIO_TERMINAL 
     // Mayfly has UART, WiO_TERMINAL is other
+    SerialStd.print(" ModemESP32 init default ");
+    SerialStd.println(modemBaud);
     modemSerial.begin(modemBaud);
     #endif 
-
+    #if USE_MODEM == USE_WIFI_ENVIRODIY_ESP32
+    /** Start [setup_esp] */
+    for (int8_t ntries = 5; ntries; ntries--) {
+        // This will also verify communication and set up the modem
+        if (modemPhy.modemWake()) break;
+        SerialStd.print(" ModemESP32 init 9600 pass ");
+        SerialStd.println(ntries);
+        // if that didn't work, try changing baud rate
+        modemSerial.begin(115200);
+        
+        modemPhy.gsmModem.sendAT(GF("+UART_DEF=9600,8,1,0,0"));
+        modemPhy.gsmModem.waitResponse();
+        modemSerial.end();
+        modemSerial.begin(9600);
+    }
+    #endif 
+    /** End [setup_esp] */
     // Set up pins for the LED's
     #if defined USE_LEDS
     pinMode(greenLED, OUTPUT);
