@@ -111,7 +111,7 @@ const int8_t  greenLED   = greenLEDPinDef;
 const int8_t  redLED     = redLEDPinDef; 
 const int8_t  buttonPin  = buttonPinDef; // Pin for debugging mode (ie, button pin)
 //const int8_t  buttonWakePin  = -1; // Pin for debugging mode (ie, button pin)
-const int8_t  wakePin    = -1;//wakePinDef ;  // MCU interrupt/alarm pin to wake from sleep also used for setting TestMode
+const int8_t  wakePin    = wakePinDef ;  // MCU interrupt/alarm pin to wake from sleep
 // Mayfly 0.x D31 = A7
 // Set the wake pin to -1 if you do not want the main processor to sleep.
 // In a SAMD system where you are using the built-in rtc, set wakePin to 1
