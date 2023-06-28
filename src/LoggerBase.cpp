@@ -1113,7 +1113,12 @@ void Logger::systemSleep(uint8_t sleep_min) { //__AVR__
 
     // Actually put the processor into sleep mode.
     // This must happen after the SE bit is set.
-    sleep_cpu();
+    uint16_t sleep_cnt=0;
+    do {
+        sleep_cpu();
+        //Check if this event was an RTC event.
+        sleep_cnt++;
+    } while (1 ==  digitalRead(_mcuWakePin));
 
 #endif
     // ---------------------------------------------------------------------
@@ -1162,9 +1167,6 @@ void Logger::systemSleep(uint8_t sleep_min) { //__AVR__
 
 #endif
 
-    // Re-enable the watch-dog timer
-    watchDogTimer.enableWatchDog();
-
 // Re-start the I2C interface
 #ifdef SDA
     pinMode(SDA, INPUT_PULLUP);  // set as input with the pull-up on
@@ -1197,7 +1199,9 @@ void Logger::systemSleep(uint8_t sleep_min) { //__AVR__
 
     // Wake-up message
     wakeUpTime_secs = getNowLocalEpoch();
-    PRINTOUT(F("\n... zzzZZ Awake @"), formatDateTime_ISO8601(wakeUpTime_secs) );
+    PRINTOUT(F("\n... zzzZZ Awake @"),sleep_cnt, formatDateTime_ISO8601(wakeUpTime_secs) );
+    watchDogTimer.debugInfo();  // enable watchdog indications
+    watchDogTimer.resetWatchDog();
 
     // The logger will now start the next function after the systemSleep
     // function in either the loop or setup
