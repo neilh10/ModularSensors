@@ -79,14 +79,18 @@ bool EspressifESP8266::ESPwaitForBoot(void) {
 bool EspressifESP8266::modemWakeFxn(void) {
     bool success = true;
     if (_powerPin >= 0) {  // Turns on when power is applied
-        digitalWrite(_modemSleepRqPin, !_wakeLevel);
+        uint8_t pwrState= digitalRead(_powerPin);
+        MS_DBG(F("modemWakeFxn1"),_powerPin,pwrState,_modemSleepRqPin);
+        //digitalWrite(_modemSleepRqPin, !_wakeLevel);
+        digitalWrite(_powerPin, 1);
+        delay(1000);
         success &= ESPwaitForBoot();
         if (_modemSleepRqPin >= 0) {
             digitalWrite(_modemSleepRqPin, _wakeLevel);
         }
-        return success;
+        //return success;
     } else if (_modemResetPin >= 0) {
-        MS_DBG(F("Sending a reset pulse to pin"), _modemResetPin,
+        MS_DBG(F("modemWakeFxn2 Sending a reset pulse to pin"), _modemResetPin,
                F("to wake ESP8266 from deep sleep"));
         digitalWrite(_modemResetPin, LOW);
         delay(_resetPulse_ms);
@@ -96,16 +100,17 @@ bool EspressifESP8266::modemWakeFxn(void) {
         if (_modemSleepRqPin >= 0) {
             digitalWrite(_modemSleepRqPin, _wakeLevel);
         }
-        return success;
+        //return success;
     } else if (_modemSleepRqPin >= 0) {
-        MS_DBG(F("Setting pin"), _modemSleepRqPin,
+        MS_DBG(F("modemWakeFxn3 Setting pin"), _modemSleepRqPin,
                _wakeLevel ? F("HIGH") : F("LOW"),
                F("to wake ESP8266 from light sleep"));
         digitalWrite(_modemSleepRqPin, _wakeLevel);
         return success;
     } else {
-        return true;
+         MS_DBG(F("modemWakeFxn4 NoOp"));
     }
+    return success;
 }
 
 bool EspressifESP8266::modemSleepFxn(void) {
@@ -129,5 +134,10 @@ bool EspressifESP8266::extraModemSetup(void) {
     gsmModem.init();
     gsmClient.init(&gsmModem);
     _modemName = gsmModem.getModemName();
+
+    // ?? if (gsmModem.commandMode()) {
+    String modemInfo = gsmModem.getModemInfo();
+    MS_DBG(F("ESP32-WROOM  extra Initializing"),_modemName, modemInfo);
+
     return true;
 }

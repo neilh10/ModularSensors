@@ -392,7 +392,7 @@
             MS_START_DEBUG_TIMER                                             \
             MS_DBG(F("\nAttempting to connect to WiFi network..."));         \
             if (!(gsmModem.isNetworkConnected())) {                          \
-                MS_DBG(F("Sending credentials..."));                         \
+                MS_DBG(F("Sending credentials..."),_ssid, _pwd);              \
                 for (uint8_t i = 0; i < 5; i++) {                            \
                     if (gsmModem.networkConnect(_ssid, _pwd)) { break; }     \
                 }                                                            \
