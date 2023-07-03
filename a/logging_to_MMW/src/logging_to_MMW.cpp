@@ -156,6 +156,7 @@ const int8_t modemLEDPin = redLED;    // MCU pin connected an LED to show modem
 #define USE_WIFI_DIGI_S6B 3
 #define USE_WIFI_ENVIRODIY_ESP32 4
 
+//#define USE_MODEM USE_WIFI_DIGI_S6B
 #define USE_MODEM USE_WIFI_ENVIRODIY_ESP32
 
 #if USE_MODEM == USE_CELL_DIGI_LTE_XBM3

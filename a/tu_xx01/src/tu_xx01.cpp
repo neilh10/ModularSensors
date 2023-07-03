@@ -1592,17 +1592,6 @@ void setup() {
     loggerModemPhyInst->modemHardReset(); //Ensure in known state ~ 5mS
 
     // loggerModemPhyInst->setModemLED(modemLEDPin); //Used in UI_status subsystem
-#if defined Modem_SignalPercent_UUID || defined DIGI_RSSI_UUID || \
-    defined                                     DIGI_VCC_UID
-#define POLL_MODEM_REQ                           \
-    (loggerModem::PollModemMetaData_t)(          \
-        loggerModem::POLL_MODEM_META_DATA_RSSI | \
-        loggerModem::POLL_MODEM_META_DATA_VCC)
-    loggerModemPhyInst->pollModemMetadata(loggerModem::POLL_MODEM_META_DATA_RSSI );
-    #else
-    //Ensure its all turned OFF.
-    loggerModemPhyInst->pollModemMetadata(loggerModem::POLL_MODEM_META_DATA_OFF);
-#endif
 #endif  // UseModem_Module
 
     // Begin the logger
