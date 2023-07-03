@@ -224,7 +224,7 @@ DigiXBeeWifi modemPhy = modemXBWF;
 const char* wifiId  = WIFIID_CDEF;  // WiFi access point name
 const char* wifiPwd = WIFIPWD_CDEF;  // WiFi password (WPA2)
 
-const int32_t   modemBaud   = 115200;   // Default speed of the modem 
+const uint32_t modemBaud   = 9600;   // Expected speed of the modem, default is 115200 
 const int8_t    modemEspResetPin = -1;
 // Create the modem object
 EspressifESP32 modemESP(&modemSerHw, modemVccPin, modemEspResetPin, wifiId,
@@ -512,29 +512,7 @@ void setup() {
     enableInterrupt(neoSSerial1Rx, neoSSerial1ISR, CHANGE);
 #endif
 
-    #if !defined WIO_TERMINAL 
-    // Mayfly has UART, WiO_TERMINAL is other
-    SerialStd.print(" ModemESP32 init default ");
-    SerialStd.println(modemBaud);
-    modemSerial.begin(modemBaud);
-    #endif 
-    #if USE_MODEM == USE_WIFI_ENVIRODIY_ESP32
-    /** Start [setup_esp] */
-    for (int8_t ntries = 5; ntries; ntries--) {
-        // This will also verify communication and set up the modem
-        if (modemPhy.modemWake()) break;
-        SerialStd.print(" ModemESP32 init 9600 pass ");
-        SerialStd.println(ntries);
-        // if that didn't work, try changing baud rate
-        modemSerial.begin(115200);
-        
-        modemPhy.gsmModem.sendAT(GF("+UART_DEF=9600,8,1,0,0"));
-        modemPhy.gsmModem.waitResponse();
-        modemSerial.end();
-        modemSerial.begin(9600);
-    }
-    #endif 
-    /** End [setup_esp] */
+
     // Set up pins for the LED's
     #if defined USE_LEDS
     pinMode(greenLED, OUTPUT);
@@ -557,9 +535,46 @@ void setup() {
                              greenLED);
     dataLogger.setLoggerID("logdef");
     dataLogger.setLoggingInterval(2);
+    dataLogger.setSendEveryX(2); //Default 2
     delay(500);
     // Begin the logger
     dataLogger.begin();
+    EnviroDIYPOST.setQuedState(true);
+    EnviroDIYPOST.setTimerPostTimeout_mS(15432); //15.4Sec
+    EnviroDIYPOST.setTimerPostPacing_mS(500);
+#if USE_MODEM == USE_WIFI_ENVIRODIY_ESP32
+    /** Start [setup_esp] */
+    // Mayfly TinyGSM read() processing doesn't work at 115200.
+    // It needs to be slowed down.
+    // On a newly installed modem, it will be at 115200, so needs to be changed
+    SerialStd.print("ModemESP32 init default ");
+    SerialStd.println(modemBaud);
+    modemSerial.end();
+    modemSerial.begin(modemBaud);
+
+    for (int8_t ntries = 5; ntries; ntries--) {
+        // This will also verify communication and set up the modem
+        if (modemPhy.modemWake()) break;
+        // if that didn't work, try changing baud rate
+        #define ESP32_MODEM_DEF_BAUD 115200
+        modemSerial.begin(ESP32_MODEM_DEF_BAUD );
+        modemPhy.gsmModem.sendAT(GF("+UART_DEF=9600,8,1,0,0"));
+        modemPhy.gsmModem.waitResponse();
+        modemSerial.end();
+        modemSerial.begin(9600);
+    }
+    modemPhy.gsmModem.sendAT(GF("+GMR"));
+    //String MdmRsp;
+    modemPhy.gsmModem.waitResponse();   
+    modemPhy.gsmModem.sendAT(GF("+UART_DEF?"));
+    modemPhy.gsmModem.waitResponse();   
+    //modemPhy.gsmModem.sendAT(GF("+UART_DEF=115200,8,1,0,0"));
+    //modemPhy.gsmModem.waitResponse();  
+    modemPhy.gsmModem.sendAT(GF("+UART_CUR?"));
+    modemPhy.gsmModem.waitResponse();     
+    //modemPhy.extraModemSetup();
+    /** End [setup_esp] */
+#endif  //USE_WIFI_ENVIRODIY_ESP32    
 #if defined WIO_TERMINAL 
     SerialStd.println(F("Setting up modemPhy as RTL8270 WiFiClient..."));
     EnviroDIYPOST.setClient(&modemPhy.endClient);
@@ -570,9 +585,10 @@ void setup() {
     EnviroDIYPOST.setTimerPostTimeout_mS(15432); //15.4Sec
     EnviroDIYPOST.setTimerPostPacing_mS(500);
     dataLogger.setLoggingInterval(2); //Set every minute, default 5min
-    #endif //WIO_TERMINAL 
+#endif //WIO_TERMINAL 
+
     //dataLogger.setSendQueSz_num(ps_ram.app.msn.s.sendQueSz_num); 
-    dataLogger.setSendEveryX(1); //Default 2
+
     //dataLogger.setSendOffset(ps_ram.app.msn.s.sendOffset_min);  // delay Minutes
     //dataLogger.setPostMax_num(ps_ram.app.msn.s.postMax_num); 
 
