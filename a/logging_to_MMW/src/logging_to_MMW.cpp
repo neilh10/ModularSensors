@@ -50,7 +50,9 @@
 //  Include the libraries required for any data logger
 // ==========================================================================
 /** Start [includes] */
+//https://monitormywatershed.org/sites/intg_test01/
 #include "ms_cfg.h"  //must be before ms_common.h & Arduino.h
+
 // The Arduino library is needed for every Arduino program.
 #include <Arduino.h>
 
@@ -79,7 +81,7 @@ const char git_usr[] = PIO_SRC_USR;
 #else
 const char git_usr[] = "usr";
 #endif
-
+#include "ms_cfg_intg_test01.h"
 // The name of this program file
 // Logger ID, also becomes the prefix for the name of the data file on SD card
 const char* LoggerID          = LOGGERID_DEF_STR;
@@ -203,8 +205,8 @@ SIMComSIM7080 modemPhy = modem7080;
 #include <modems/DigiXBeeWifi.h>
 
 // Network connection information
-const char* wifiId  = WIFIID_CDEF;  // WiFi access point name
-const char* wifiPwd = WIFIPWD_CDEF;  // WiFi password (WPA2)
+const char* wifiId  = WIFIID_SSID_DEF;  // WiFi access point name
+const char* wifiPwd = WIFIPWD_DEF;  // WiFi password (WPA2)
 
 const int32_t   modemBaud   = modemBaud_Upstream_DEF ;   // All XBee's use 9600 by default
 const bool useCTSforStatus  = true;  // Flag to use the XBee CTS pin for status
@@ -222,8 +224,8 @@ DigiXBeeWifi modemPhy = modemXBWF;
 #include <modems/EspressifESP32.h>
 
 // Network connection information
-const char* wifiId  = WIFIID_CDEF;  // WiFi access point name
-const char* wifiPwd = WIFIPWD_CDEF;  // WiFi password (WPA2)
+const char* wifiId  = WIFIID_SSID_DEF;  // WiFi access point name
+const char* wifiPwd = WIFIPWD_DEF;  // WiFi password (WPA2)
 
 const uint32_t modemBaud   = 9600;   // Expected speed of the modem, default is 115200 
 const int8_t    modemEspResetPin = -1;
@@ -259,8 +261,8 @@ const int8_t modemSleepRqPin = -1;//modemSleepRqPin_DEF;    // MCU pin for modem
 const int8_t espSleepRqPin = -1;  // ESP8266 light sleep request
 const int8_t espStatusPin = -1;   // ESP8266 light sleep status
 // Network connection information
-const char* wifi_ssid = WIFIID_CDEF;  // The WiFi access point
-const char* wifi_pwd  = WIFIPWD_CDEF;  // The password for connecting to WiFi
+const char* wifi_ssid = WIFIID_SSID_DEF;  // The WiFi access point
+const char* wifi_pwd  = WIFIPWD_DEF;  // The password for connecting to WiFi
 
 // Create the loggerModem object
 WioTerminal_rpcwifi modemWIOT( modemVccPin, 
@@ -352,7 +354,7 @@ MaximDS18 ds18phy_d(Dev1_Ds18Addr_d,OneWirePower, OneWireBus);
 // ==========================================================================
 /** Start [variable_arrays] */
 Variable* variableList[] = {
-    new ProcessorStats_SampleNumber(&mcuBoard, SEQUENCE_NUMBER_UUID),
+    new ProcessorStats_SampleNumber(&mcuBoard),
     #if defined TEMPERATURE_A_UUID
     new MaximDS18_Temp(&ds18phy_a, TEMPERATURE_A_UUID,"Ds18Ta"),
     new MaximDS18_Temp(&ds18phy_b, TEMPERATURE_B_UUID,"Ds18Tb"),
@@ -360,7 +362,7 @@ Variable* variableList[] = {
     new MaximDS18_Temp(&ds18phy_d, TEMPERATURE_D_UUID,"Ds18Td"),
     #endif //TEMPERATURE_A_UUID
     #if defined(ARDUINO_AVR_ENVIRODIY_MAYFLY)
-    new ProcessorStats_Battery(&mcuBoard,BAT_VOLTAGE_UUID ),
+    new ProcessorStats_Battery(&mcuBoard ),
     #endif // ARDUINO_AVR_ENVIRODIY_MAYFLY
 };
 
@@ -369,7 +371,7 @@ Variable* variableList[] = {
 int variableCount = sizeof(variableList) / sizeof(variableList[0]);
 
 // Create the VariableArray object
-VariableArray varArray(variableCount, variableList);
+VariableArray varArray(variableCount, variableList,UUIDs);
 /** End [variable_arrays] */
 
 
@@ -389,8 +391,8 @@ Logger dataLogger(LoggerID, loggingIntervaldef, &varArray);
 // A Publisher to Monitor My Watershed / EnviroDIY Data Sharing Portal
 // Device registration and sampling feature information can be obtained after
 // registration at https://monitormywatershed.org or https://data.envirodiy.org
-const char* registrationToken = registrationToken_UUID;
-const char* samplingFeature =   samplingFeature_UUID;
+// see ms_cfg.h const char* registrationToken = registrationToken;
+//const char* samplingFeature =   samplingFeature;
 
 // Create a data publisher for the Monitor My Watershed/EnviroDIY POST endpoint
 #include <publishers/EnviroDIYPublisher.h>

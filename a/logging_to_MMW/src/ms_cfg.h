@@ -185,9 +185,12 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 //#define SENSOR_CONFIG_GENERAL 1
 //#define KellerAcculevel_ACT 1
 // Defaults for data.envirodiy.org
+#define NEW_LOGGERID_MAX_SIZE 40
+#if 0
+#error see seperate ms_cfg_xxx.h
 //Test08 https://monitormywatershed.org/sites/tu_rc_test08/
 #define LOGGERID_DEF_STR "test08"
-#define NEW_LOGGERID_MAX_SIZE 40
+
 #define registrationToken_UUID "0cf7c40a-232e-457d-87d6-cea5c0757fec"
 #define samplingFeature_UUID   "236c674b-69b9-43af-b0d6-33d67b870ecc"
 #define SEQUENCE_NUMBER_UUID   "8c57835f-a32f-4d62-82dc-0ba09f04cf52"
@@ -198,4 +201,5 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define TEMPERATURE_D_UUID     "08646cc3-c5de-414c-af65-c795b2dcac24"
 #endif //WIO_TERMINAL
 #define BAT_VOLTAGE_UUID       "3bebd4a3-8b54-4f92-ba55-5fd2fd021358"
+#endif
 #endif  // ms_cfg_h

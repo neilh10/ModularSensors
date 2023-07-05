@@ -87,7 +87,7 @@ bool DigiXBeeWifi::connectInternet(uint32_t maxConnectionTime) {
                 success = false;
             }
         }
-        MS_DBG(F("... WiFi connected after"), MS_PRINT_DEBUG_TIMER,
+        MS_DBG(F("... WiFi"),_ssid_buf,F("connected after"), MS_PRINT_DEBUG_TIMER,
                F("milliseconds!"));
     }
     if (!wasPowered) {
@@ -126,9 +126,9 @@ bool DigiXBeeWifi::extraModemSetup(void) {
         gsmModem.sendAT(F("HV"));  // Request Module Hw Version
         gsmModem.waitResponse(TGWRIDW+0x03,1000, _modemHwVersion);
         gsmModem.sendAT(F("VR"));  // Firmware Version
-        gsmModem.waitResponse(TGWRIDW+0x04,1000, _modemFwVersion);
-        PRINTOUT(F("XbeeWiFi internet comms with"),_modemName, 
-                F("Mac/Sn "), _modemSerialNumber,F("HwVer"),_modemHwVersion, F("FwVer"), _modemFwVersion);
+        gsmModem.waitResponse(1000, _modemFwVersion);
+        PRINTOUT(F("Digi XBee"), _modemName, F("Mac/SN"), xbeeSnHigh, xbeeSnLow,
+                 F("HwVer"), _modemHwVersion, F("FwVer"), _modemFwVersion);
 
         MS_DBG(F("Enabling XBee Pin Pullups..."));
         // Leave all unused pins disconnected. Use the PR command to pull
