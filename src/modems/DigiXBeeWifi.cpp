@@ -131,7 +131,7 @@ bool DigiXBeeWifi::extraModemSetup(void) {
                  F("HwVer"), _modemHwVersion, F("FwVer"), _modemFwVersion);
 
         bool changesMade = false;
-        MS_DBG(F("Enabling XBee Pin Pullups..."));
+
         // Leave all unused pins disconnected. Use the PR command to pull
         // all of the inputs on the device high using 40 k internal pull-up
         // resistors. You do not need a specific treatment for unused
@@ -156,37 +156,38 @@ bool DigiXBeeWifi::extraModemSetup(void) {
         bool changedRP = gsmModem.changeSettingIfNeeded(GF("PR"), "3D3F");
         changesMade |= changedRP;
         if (changedRP) {
-            MS_DBG(F("Pin pullup bits changed to"), F("3D3F"));
+            MS_DBG(F("Pullups now 3D3F"));
         } else {
-            MS_DEEP_DBG(F("Pin pullup bits not changed"));
+            MS_DBG(F("Pullups 3D3F"));
         }
 
 
-        MS_DBG(F("Setting I/O Pins..."));
         // To use sleep pins they physically need to be enabled.
         /** Enable pin sleep functionality on `DIO8` if a pin is assigned.
          * NOTE: Only the `DTR_N/SLEEP_RQ/DIO8` pin (9 on the bee socket) can be
          * used for this pin sleep/wake. */
+        bool new_settingDI08 = (_modemSleepRqPin >= 0);
         bool changedD8 = gsmModem.changeSettingIfNeeded(GF("D8"),
-                                                        _modemSleepRqPin >= 0);
+                                                        new_settingDI08);
         changesMade |= changedD8;
         if (changedD8) {
-            MS_DBG(F("DTR_N/SLEEP_RQ/DIO8 changed to"), _modemSleepRqPin >= 0);
+            MS_DBG(F("DTR_N/SLEEP_RQ/DIO8 changed"),new_settingDI08);
         } else {
-            MS_DEEP_DBG(F("DTR_N/SLEEP_RQ/DIO8 not changed"));
+            MS_DBG(F("DTR_N/SLEEP_RQ/DIO8"),new_settingDI08);
         }
 
         /** Enable status indication on `DIO9` if a pin is assigned - it will be
          * HIGH when the XBee is awake.
          * NOTE: Only the `ON/SLEEP_N/DIO9` pin (13 on the bee socket) can be
          * used for direct status indication. */
+        bool new_settingDI09 =_statusPin >= 0;
         bool changedD9 = gsmModem.changeSettingIfNeeded(GF("D9"),
-                                                        _statusPin >= 0);
+                                                        new_settingDI09);
         changesMade |= changedD9;
         if (changedD9) {
-            MS_DBG(F("ON/SLEEP_N/DIO9 changed to"), _statusPin >= 0);
+            MS_DBG(F("DIO9 how"),new_settingDI09);
         } else {
-            MS_DEEP_DBG(F("ON/SLEEP_N/DIO9 not changed"));
+            MS_DBG(F("DIO9"),new_settingDI09);
         }
 
         /** Enable CTS on `DIO7` if a pin is assigned - it will be `LOW` when
@@ -194,14 +195,14 @@ bool DigiXBeeWifi::extraModemSetup(void) {
          * status indication if that pin is not readable.
          * NOTE: Only the `CTS_N/DIO7` pin (12 on the bee socket) can be used
          * for CTS. */
+        bool new_settingDI07 = (_statusPin >= 0 && !_statusLevel);
         bool changedD7 = gsmModem.changeSettingIfNeeded(
-            GF("D7"), _statusPin >= 0 && !_statusLevel);
+            GF("D7"), new_settingDI07);
         changesMade |= changedD7;
         if (changedD7) {
-            MS_DBG(F("CTS_N/DIO7 changed to"),
-                   _statusPin >= 0 && !_statusLevel);
+            MS_DBG(F("CTS_N/DIO7 now"),new_settingDI07);
         } else {
-            MS_DEEP_DBG(F("CTS_N/DIO7 not changed"));
+            MS_DBG(F("CTS_N/DIO7"),new_settingDI07);
         }
 
         /** Enable association indication on `DIO5` - this is should be
@@ -229,7 +230,7 @@ bool DigiXBeeWifi::extraModemSetup(void) {
          * thus brighter LED) indicates better signal quality. NOTE: Only
          * the `DIO10/PWM0` pin (6 on the bee socket) can be used for this
          * function. */
-        gsmModem.changeSettingIfNeeded(GF("D5"), 0);
+        changesMade |= gsmModem.changeSettingIfNeeded(GF("D5"), 0);
         /* Not connected on Mayfly - turnoff for power savings
         bool changedP0 = gsmModem.changeSettingIfNeeded(GF("D5"), 1);
         changesMade |= changedP0;
@@ -251,13 +252,14 @@ bool DigiXBeeWifi::extraModemSetup(void) {
         // Cyclic Sleep but does not sleep if the SLEEP_RQ pin is inactive,
         // allowing the device to be kept awake or woken by the connected
         // system.
+        bool new_settingD8 =_modemSleepRqPin >= 0;
         bool changedSM = gsmModem.changeSettingIfNeeded(GF("SM"),
-                                                        _modemSleepRqPin >= 0);
+                                                        new_settingD8);
         changesMade |= changedSM;
         if (changedSM) {
-            MS_DBG(F("Sleep mode changed to"), _modemSleepRqPin >= 0);
+            MS_DBG(F("SleepD8 now"), new_settingD8);
         } else {
-            MS_DEEP_DBG(F("Sleep mode not changed"));
+            MS_DBG(F("SleepD8"),new_settingD8);
         }
         // Disassociate from the network for the lowest power deep sleep.
         // From S6B User Guide:
@@ -272,39 +274,40 @@ bool DigiXBeeWifi::extraModemSetup(void) {
             GF("SO"), _maintainAssociation ? "40" : "100");
         changesMade |= changedSO;
         if (changedSO) {
-            MS_DBG(F("Sleep options changed to"),
+            MS_DBG(F("SleepS0 now"),
                    _maintainAssociation ? "0x40" : "0x100");
         } else {
-            MS_DEEP_DBG(F("Sleep options not changed"));
+            MS_DBG(F("SleepS0"), _maintainAssociation ? "0x40" : "0x100");
         }
 
         /** Write pin and sleep options to flash and apply them, if needed. */
+        /* Write changes once at end
         if (changesMade) {
             MS_DBG(F("Applying changes to pin and sleep options..."));
             gsmModem.writeChanges();
         } else {
             MS_DBG(F("No pin or sleep option changes to apply"));
         }
+        */
 
-        MS_DBG(F("Setting Wifi Network Options..."));
         // Put the network connection parameters into flash
         // NOTE: This will write to the flash every time if there is a password
         // set!
         success &= gsmModem.networkConnect(_ssid, _pwd);
         // Set the socket timeout to 10s (this is default)
         if (!success) {
-            MS_DBG(F("Fail Connect "), success);
+            MS_DBG(F("Fail Connect"), success);
             success = true;
         }
 
         // Set to TCP mode
-        changesMade        = false;
+        //changesMade        = false;
         bool changedIPMode = gsmModem.changeSettingIfNeeded(GF("IP"), 1);
         changesMade |= changedIPMode;
         if (changedIPMode) {
-            MS_DBG(F("IP mode changed to"), 1);
+            MS_DBG(F("IP mode changed to 1"));
         } else {
-            MS_DEEP_DBG(F("IP mode not changed"));
+            MS_DBG(F("IP mode 1"));
         }
 
 
@@ -312,9 +315,9 @@ bool DigiXBeeWifi::extraModemSetup(void) {
         bool changedTM = gsmModem.changeSettingIfNeeded(GF("TM"), "64");
         changesMade |= changedTM;
         if (changedTM) {
-            MS_DBG(F("Socket timeout changed to"), F("0x64"));
+            MS_DBG(F("Socket timeout now 0x64"));
         } else {
-            MS_DEEP_DBG(F("Socket timeout not changed"));
+            MS_DBG(F("Socket timeout 0x64"));
         }
 
         /** Set the destination IP to 0 (this is default). */
@@ -322,15 +325,17 @@ bool DigiXBeeWifi::extraModemSetup(void) {
                                                         GF("0.0.0.0"));
         changesMade |= changedDL;
         if (changedDL) {
-            MS_DBG(F("Destination IP changed to"), F("0.0.0.0"));
+            MS_DBG(F("Destination IP now 0.0.0.0"));
         } else {
-            MS_DEEP_DBG(F("Destination IP not changed"));
+            MS_DBG(F("Destination IP 0.0.0.0"));
         }
 
         /** Write all changes to flash and apply them. */
         if (changesMade) {
-            MS_DBG(F("Applying changes to socket times..."));
+            MS_DBG(F("Updating Xbee Eeprom"));
             success &= gsmModem.writeChanges();
+        } else {
+            MS_DBG(F("Xbee EEPROM setup"));
         }
 
         if (success) {
