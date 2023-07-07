@@ -1805,6 +1805,7 @@ void Logger::setFileTimestamp(File fileToStamp, uint8_t stampFlag, bool localTim
     }
 }
 
+
 // Protected helper function - This opens or creates a file, converting a string
 // file name to a character file name
 bool Logger::openFile(String& filename, bool createFile,

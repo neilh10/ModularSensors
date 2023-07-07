@@ -99,7 +99,7 @@ typedef enum {
     LB_PWR_END
 } lb_pwr_req_t;
 typedef bool (*bat_handler_atl)(lb_pwr_req_t reqBatState);
-// The largest number of variables from a single sensor
+
 
 /**
  * @brief The largest number of variables from a single sensor

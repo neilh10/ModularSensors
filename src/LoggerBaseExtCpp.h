@@ -672,17 +672,6 @@ bool Logger::parseAndRename(const char ini_ext, const char* ini_filename, ini_ha
 } //parseAndRename
 #endif // __AVR__
 
-void Logger::forceSysReset(uint8_t source, uint16_t simpleMagicNumber) {
-    
-    if (4567 !=simpleMagicNumber) return;
-
-    PRINTOUT(F("Forcing reset"), source);
-    delay(20);
-    watchDogTimer.setupWatchDog(1);
-    watchDogTimer.enableWatchDog();
-    delay(100000); //Expect watchdog to kick in within 8secs
-} //forceReset
-
 #ifdef USE_MS_SD_INI
 void Logger::setPs_cache(persistent_store_t* ps_ram) {
     ps_cache = ps_ram;
@@ -748,12 +737,48 @@ USE_RTCLIB* Logger::rtcExtPhyObj() {
 
 // End parse.ini
 
+#if defined(__AVR__)
+
+//Verify EveryMinute on the RTC DS3231M
+void Logger::setExtRtcSleep() {
+    uint8_t isRtcRegBad;
+
+    #if defined ARDUINO_AVR_ENVIRODIY_MAYFLY
+    #define MAYFLY_WR_RETRYS 3
+    for (uint8_t chklp=0;chklp<MAYFLY_WR_RETRYS;chklp++) {
+        isRtcRegBad = rtcExtPhy.enableInterruptsCheckAlm1(EveryMinute);
+        if (0==isRtcRegBad) {
+            MS_DBG(F("RTC Alarm good." ));
+            break;
+        }
+        Serial.print(chklp);
+        Serial.print(F("]RTC Alarm set for every minute. Reg check was 0x"));
+        Serial.println(isRtcRegBad,HEX);
+        rtcExtPhy.enableInterrupts(EveryMinute);
+        //rtc.enableInterruptsAlm2(EveryMinute);
+    } 
+    #else
+    rtc.enableInterrupts(EveryMinute);
+    #endif 
+}
+#endif // __AVR__
+
+void Logger::forceSysReset(uint8_t source, uint16_t simpleMagicNumber) {
+    
+    if (4567 !=simpleMagicNumber) return;
+
+    PRINTOUT(F("Forcing reset"), source);
+    delay(20);
+    watchDogTimer.setupWatchDog(1);
+    watchDogTimer.enableWatchDog();
+    delay(100000); //Expect watchdog to kick in within 8secs
+} //forceReset
+
 // ===================================================================== //
 // Reliable Delivery functions
 // see class headers
 // ===================================================================== //
 
-// This is a one-and-done to log data
 void Logger::logDataAndPubReliably(uint8_t cia_val_override) {
 
     if (cia_val_override & CIA_NO_SLEEP) {
@@ -925,32 +950,7 @@ void Logger::logDataAndPubReliably(uint8_t cia_val_override) {
 
     // Call the processor sleep
     //systemSleep();
-}
-
-#if defined(__AVR__)
-//Verify EveryMinute on the RTC DS3231M
-void Logger::setExtRtcSleep() {
-    uint8_t isRtcRegBad;
-
-    #if defined ARDUINO_AVR_ENVIRODIY_MAYFLY
-    #define MAYFLY_WR_RETRYS 3
-    for (uint8_t chklp=0;chklp<MAYFLY_WR_RETRYS;chklp++) {
-        isRtcRegBad = rtcExtPhy.enableInterruptsCheckAlm1(EveryMinute);
-        if (0==isRtcRegBad) {
-            MS_DBG(F("RTC Alarm good." ));
-            break;
-        }
-        Serial.print(chklp);
-        Serial.print(F("]RTC Alarm set for every minute. Reg check was 0x"));
-        Serial.println(isRtcRegBad,HEX);
-        rtcExtPhy.enableInterrupts(EveryMinute);
-        //rtc.enableInterruptsAlm2(EveryMinute);
-    } 
-    #else
-    rtc.enableInterrupts(EveryMinute);
-    #endif 
-}
-#endif // __AVR__
+} // logDataAndPubReliably
 
 bool Logger::publishRspCodeAccepted(int16_t  rspCode) {
     if (HTTPSTATUS_CREATED_201 == rspCode) return true;
@@ -1157,7 +1157,7 @@ void Logger::publishDataQuedToRemotes(bool internetPresent) {
         }
     }
     postLogClose();
-}
+} // publishDataQuedToRemotes
 
 // ===================================================================== //
 // Serialize/deserialize functions
