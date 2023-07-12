@@ -218,7 +218,7 @@ const int32_t CONNECT_TIMEOUT_SEC =7;
         delay(100); //debug allow data to come through UART before stop 1mS/CHar
         MS_DBG(F(" [[Client waited"), elapsed_ms, F("mS for"), did_respond,F("bytes."));
         outClient->stop();
-         MS_DBG( F("Client stopped after"), MS_PRINT_DEBUG_TIMER, F("ms"));
+        MS_DBG(F("Client stopped after"), MS_PRINT_DEBUG_TIMER, F("ms"));
     } else {
         //TODO write to DBGxxx.log
         PRINTOUT(F("\n -- Unable to Establish Connection to EnviroDIY Data "
