@@ -152,8 +152,8 @@ class DigiXBeeCellularTransparent : public DigiXBee {
     DigiXBeeCellularTransparent(Stream* modemStream, int8_t powerPin,
                                 int8_t statusPin, bool useCTSStatus,
                                 int8_t modemResetPin, int8_t modemSleepRqPin,
-                                const char* apn, const char* user = NULL,
-                                const char* pwd = NULL);
+                                const char* apn, const char* user = nullptr,
+                                const char* pwd = nullptr);
     DigiXBeeCellularTransparent(Stream* modemStream, int8_t powerPin, 
                                  int8_t statusPin, bool useCTSStatus,
                                  int8_t modemResetPin, int8_t modemSleepRqPin);
@@ -208,13 +208,13 @@ class DigiXBeeCellularTransparent : public DigiXBee {
     bool isModemAwake(void) override;
 
  private:
-    const char* _apn;
-    const char* _user;
-    const char* _pwd;
+    const char* _apn = nullptr;
+    const char* _user = nullptr;
+    const char* _pwd = nullptr;
 
 
     // Az extension
-    char* _apn_buf = NULL;  // Pointer to updated buffer
+    char* _apn_buf = nullptr;  // Pointer to updated buffer
  public:
     // Az Extensions
     void     setApn(const char* APN, bool copyId = false);
