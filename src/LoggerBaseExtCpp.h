@@ -827,14 +827,14 @@ void Logger::logDataAndPubReliably(uint8_t cia_val_override) {
         if (cia_val & CIA_POST_READINGS) {
             if (_logModem != NULL) {
                 MS_DBG(F("Waking up"), _logModem->getModemName(), F("..."));
+                uint32_t open_internet_t1 = millis();
                 if (_logModem->modemWake()) {
                     // Connect to the network
                     watchDogTimer.resetWatchDog();
                     PRINTOUT(F("Connecting to the Internet with"),_logModem->getModemName());
                     if (_logModem->connectInternet()) {
-                        const static char CONNECT_INTERNET_pm[] EDIY_PROGMEM = 
-                        "Connected Internet"; 
-                        PRINT_LOGLINE_P(CONNECT_INTERNET_pm);
+                        PRINT_LOGLINE_STR_INT(F("Connected(ms), "),(millis()-open_internet_t1));
+                        //PRINTOUT(F("Connected Internet(mS),"), (millis()-open_internet_t1));
                         // be nice to add _logModem->getModemName()
                         //This doesn't work PRINT_LOGLINE_P2(CONNECT_INTERNET_pm,_logModem->getModemName().c_str());
                         // Publish data to remotes
@@ -952,7 +952,10 @@ bool Logger::publishRspCodeAccepted(int16_t  rspCode) {
         // https://github.com/ODM2/ODM2DataSharingPortal/issues/628
         //https://github.com/neilh10/ModularSensors/issues/119
         // Unfortunately throw away this reading
-        PRINTOUT(F("pubRspCode SERVER ERROR discard reading"));
+        const static char DISCARD_READING_pm[] EDIY_PROGMEM = 
+           "pubRspCode SERVER ERROR discard reading"; 
+        PRINT_LOGLINE_P(DISCARD_READING_pm);
+        //PRINTOUT(F("pubRspCode SERVER ERROR discard reading"));
         return true;
         }
     #endif //MS_DISCARD_HTTP_500

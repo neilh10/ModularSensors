@@ -285,6 +285,21 @@ void postLogLine(const char *logMsg,bool addCR=true);
     strcpy_P(tttbuf,msg_parm);\
     PRINTOUT(tttbuf);\
     postLogLine(tttbuf);
+
+/*#define PRINT_LOGLINE_P2(msg_parm,int_parm) \
+    char tttbuf[sizeof(msg_parm)+11+1]; \
+    strcpy_P(tttbuf,msg_parm);\
+    itoa(int_parm,&tttbuf[sizeof(msg_parm)-1],10);\
+    PRINTOUT(tttbuf);\
+    postLogLine(tttbuf);*/
+
+#define PRINT_LOGLINE_STR_INT(msg_parm,int_parm) \
+    String tttbuf(sizeof(msg_parm)+11+1); \
+    tttbuf = msg_parm;\
+    tttbuf += int_parm;\
+    PRINTOUT(tttbuf);\
+    postLogLine(tttbuf.c_str() );
+
 void postLogClose();
 bool listFile(File* filep, char* fn_str, char* uid);
 
