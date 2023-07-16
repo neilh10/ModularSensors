@@ -68,15 +68,6 @@ bool DigiXBeeCellularTransparent::modemWakeFxn(void) {
         MS_DBG(F("Setting pin"), _modemSleepRqPin,
                _wakeLevel ? F("HIGH") : F("LOW"), F("to wake"), _modemName);
         digitalWrite(_modemSleepRqPin, _wakeLevel);
-        MS_DBG(F("Turning off airplane mode..."));
-        if (gsmModem.commandMode()) {
-            gsmModem.sendAT(GF("AM"), 0);
-            gsmModem.waitResponse(TGWRIDT+0x01);
-            // Write changes to flash and apply them
-            gsmModem.writeChanges();
-            // Exit command mode
-            gsmModem.exitCommand();
-        }
         return true;
     } else {
         return true;
@@ -87,15 +78,6 @@ bool DigiXBeeCellularTransparent::modemWakeFxn(void) {
 // We turn on airplane mode in before sleep
 bool DigiXBeeCellularTransparent::modemSleepFxn(void) {
     if (_modemSleepRqPin >= 0) {
-        MS_DBG(F("Turning on airplane mode..."));
-        if (gsmModem.commandMode()) {
-            gsmModem.sendAT(GF("AM"), 0);
-            gsmModem.waitResponse(TGWRIDT+0x00);
-            // Write changes to flash and apply them
-            gsmModem.writeChanges();
-            // Exit command mode
-            gsmModem.exitCommand();
-        }
         MS_DBG(F("Setting pin"), _modemSleepRqPin,
                !_wakeLevel ? F("HIGH") : F("LOW"), F("to put"), _modemName,
                F("to sleep"));
@@ -203,7 +185,8 @@ bool DigiXBeeCellularTransparent::extraModemSetup(void) {
         // gsmModem.sendAT(GF("N#"),0);
         // gsmModem.waitResponse(TGWRIDT+0x00);  // Don't check for success - only works on
         // LTE
-        MS_DBG(F("Setting the APN..."));
+        MS_DBG(F("Setting the APN..."),_apn,_user?"u:!0":"",_pwd?"p!0":"");
+
         /** Save the network connection parameters. */
         success &= gsmModem.gprsConnect(_apn, _user, _pwd);
         MS_DBG(F("Ensuring XBee is in transparent mode..."));
