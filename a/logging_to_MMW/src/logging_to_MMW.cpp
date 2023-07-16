@@ -227,7 +227,11 @@ DigiXBeeWifi modemPhy = modemXBWF;
 const char* wifiId  = WIFIID_SSID_DEF;  // WiFi access point name
 const char* wifiPwd = WIFIPWD_DEF;  // WiFi password (WPA2)
 
-const uint32_t modemBaud   = 9600;   // Expected speed of the modem, default is 115200 
+#define ESP32_MODEM_115K_BAUD 115200
+#define ESP32_MODEM_57K_BAUD  57600
+#define ESP32_MODEM_9K6_BAUD   9600
+#define ESP32_MODEM_DEF_BAUD  ESP32_MODEM_57K_BAUD 
+const uint32_t modemBaud   = ESP32_MODEM_DEF_BAUD;   // Expected speed of the modem, default is 115200 
 const int8_t    modemEspResetPin = -1;
 // Create the modem object
 EspressifESP32 modemESP(&modemSerHw, modemVccPin, modemEspResetPin, wifiId,
@@ -536,9 +540,11 @@ void setup() {
     //modemPhy.setModemLED(modemLEDPin);
     dataLogger.setLoggerPins(wakePin, sdCardSSPin, sdCardPwrPin, wakePin,
                              greenLED);
-    dataLogger.setLoggerID("logdef");
+    dataLogger.setLoggerID("logmmw");
     dataLogger.setLoggingInterval(2);
-    dataLogger.setSendEveryX(2); //Default 2
+    dataLogger.setSendEveryX(6); //Default 2
+    dataLogger.setSendOffset(0);
+    dataLogger.setPostMax_num(18);
     delay(500);
     // Begin the logger
     dataLogger.begin();
@@ -547,25 +553,64 @@ void setup() {
     EnviroDIYPOST.setTimerPostPacing_mS(500);
 #if USE_MODEM == USE_WIFI_ENVIRODIY_ESP32
     /** Start [setup_esp] */
+       // Modem wroom default baud is 115200
     // Mayfly TinyGSM read() processing doesn't work at 115200.
     // It needs to be slowed down.
-    // On a newly installed modem, it will be at 115200, so needs to be changed
+    // On a newly installed modem, it will be at 115200, 
+    // however previously programmed modems could be 57600 or 9600
+    uint32_t cfgMdmBaud = modemBaud;
     SerialStd.print("ModemESP32 init default ");
-    SerialStd.println(modemBaud);
-    modemSerial.end();
-    modemSerial.begin(modemBaud);
+    SerialStd.println(cfgMdmBaud );
+    //modemSerial.end();
+    modemSerial.begin(cfgMdmBaud );
 
-    for (int8_t ntries = 5; ntries; ntries--) {
+    for (uint8_t ntries = 0; ntries<5; ntries++) {
         // This will also verify communication and set up the modem
-        if (modemPhy.modemWake()) break;
+        if (modemPhy.modemWake())  break;
+
         // if that didn't work, try changing baud rate
-        #define ESP32_MODEM_DEF_BAUD 115200
-        modemSerial.begin(ESP32_MODEM_DEF_BAUD );
+        cfgMdmBaud= ESP32_MODEM_115K_BAUD;
+        SerialStd.print(ntries);
+        SerialStd.print("] ModemESP32 init ");
+        SerialStd.println(cfgMdmBaud);
+        modemPhy.gsmModem.sendAT(GF("+UART_DEF=115200,8,1,0,0"));
+        modemPhy.gsmModem.waitResponse();
+        modemSerial.end();
+        modemSerial.begin(cfgMdmBaud);
+        if (modemPhy.modemWake()) break;
+
+        // if that didn't work, try changing baud rate
+        cfgMdmBaud= ESP32_MODEM_57K_BAUD;
+        SerialStd.print(ntries);
+        SerialStd.print("] ModemESP32 init ");
+        SerialStd.println(cfgMdmBaud);
+        modemPhy.gsmModem.sendAT(GF("+UART_DEF=57600,8,1,0,0"));
+        modemPhy.gsmModem.waitResponse();
+        modemSerial.end();
+        modemSerial.begin(cfgMdmBaud);
+        if (modemPhy.modemWake()) break;
+
+
+        cfgMdmBaud=ESP32_MODEM_9K6_BAUD;
+        SerialStd.print(ntries);
+        SerialStd.print("] ModemESP32 init ");
+        SerialStd.println(cfgMdmBaud );
         modemPhy.gsmModem.sendAT(GF("+UART_DEF=9600,8,1,0,0"));
         modemPhy.gsmModem.waitResponse();
         modemSerial.end();
-        modemSerial.begin(9600);
+        modemSerial.begin(cfgMdmBaud);
     }
+    // set BAUD if not expected value
+    if (ESP32_MODEM_DEF_BAUD== cfgMdmBaud ) {
+        cfgMdmBaud= ESP32_MODEM_57K_BAUD;
+        modemPhy.gsmModem.sendAT(GF("+UART_DEF=57600,8,1,0,0"));
+        modemPhy.gsmModem.waitResponse();
+        modemSerial.end();
+        modemSerial.begin(cfgMdmBaud);
+    }
+    SerialStd.print("ModemESP32 connected at baud ");
+    SerialStd.println(cfgMdmBaud);
+
     modemPhy.gsmModem.sendAT(GF("+GMR"));
     //String MdmRsp;
     modemPhy.gsmModem.waitResponse();   
@@ -575,7 +620,6 @@ void setup() {
     //modemPhy.gsmModem.waitResponse();  
     modemPhy.gsmModem.sendAT(GF("+UART_CUR?"));
     modemPhy.gsmModem.waitResponse();     
-    //modemPhy.extraModemSetup();
     /** End [setup_esp] */
 #endif  //USE_WIFI_ENVIRODIY_ESP32    
 #if defined WIO_TERMINAL 
@@ -584,10 +628,7 @@ void setup() {
     //EnviroDIYPOST.setClient(&modemPhy.(Class *inClient))
     EnviroDIYPOST.begin(dataLogger, &modemPhy.endClient, registrationToken, samplingFeature);
     //EnviroDIYPOST.setDIYHost("data.envirodiy.org"); //use default & port
-    EnviroDIYPOST.setQuedState(true);
-    EnviroDIYPOST.setTimerPostTimeout_mS(15432); //15.4Sec
-    EnviroDIYPOST.setTimerPostPacing_mS(500);
-    dataLogger.setLoggingInterval(2); //Set every minute, default 5min
+
 #endif //WIO_TERMINAL 
 
     //dataLogger.setSendQueSz_num(ps_ram.app.msn.s.sendQueSz_num); 
@@ -648,9 +689,7 @@ void setup() {
             true);  // true = wait for internal housekeeping after write
     }
 
-    //dataLogger.setSendOffset=0;
-    dataLogger._sendEveryX_cnt=1;
-    dataLogger.setPostMax_num(100);
+
     dataLogger.logDataAndPubReliably(0x3);
     // Call the processor sleep
     SerialStd.println(F("Starting periodic logging\n"));
