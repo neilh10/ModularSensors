@@ -1108,18 +1108,20 @@ void Logger::systemSleep(uint8_t sleep_min) { //__AVR__
     // Set the sleep enable bit.
     sleep_enable();
 
-    // Re-enables interrupts so we can wake up again
-    interrupts();
+    int sleep_cnt=0;
+#if defined ARDUINO_ARCH_AVR
+    //Assuming an external RTC which activates processor aka Mayfly
+    // There maybe intermediate interrupts eg Watchdog, that are ignored
+    while (digitalRead(_mcuWakePin)) //when low normal processing.
+#endif 
+    { 
+        // Re-enables interrupts so we can wake up again
+        interrupts();
 
-    // Actually put the processor into sleep mode.
-    // This must happen after the SE bit is set.
-    uint16_t sleep_cnt=0;
-    do {
+        // Actually put the processor into sleep mode.
+        // This must happen after the SE bit is set.
         sleep_cpu();
-        //Check if this event was an RTC event.
         sleep_cnt++;
-    } while (1 ==  digitalRead(_mcuWakePin));
-
 #endif
     // ---------------------------------------------------------------------
 
@@ -1144,9 +1146,10 @@ void Logger::systemSleep(uint8_t sleep_min) { //__AVR__
 
 #if defined ARDUINO_ARCH_AVR
 
-    // Temporarily disables interrupts, so no mistakes are made when writing
-    // to the processor registers
-    noInterrupts();
+        // Temporarily disables interrupts, so no mistakes are made when writing
+        // to the processor registers
+        noInterrupts();
+    } 
 
     // Re-enable all power modules (ie, the processor module clocks)
     // NOTE:  This only re-enables the various clocks on the processor!
@@ -1166,6 +1169,9 @@ void Logger::systemSleep(uint8_t sleep_min) { //__AVR__
     interrupts();
 
 #endif
+
+    // Re-enable the watch-dog timer
+    watchDogTimer.enableWatchDog();
 
 // Re-start the I2C interface
 #ifdef SDA
