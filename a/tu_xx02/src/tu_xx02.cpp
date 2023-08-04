@@ -35,6 +35,20 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 // ==========================================================================
 //    Include the base required libraries
 // ==========================================================================
+// Definitions of Modems
+#define BUILD_MODEM_DIGI_XBEE_WIFI 1
+#define BUILD_MODEM_ESPRESSIF_ESP32 2
+#define BUILD_MODEM_DIGI_XBEE_CELLULAR_TRANSPARENT 3
+#define BUILD_MODEM_SIM_COM_SIM7080 4
+#define BUILD_MODEM_FACTORY 5
+//Actual Modem to build for 
+//#define BUILD_MODEM_TYPE BUILD_MODEM_DIGI_XBEE_WIFI
+//cc #define BUILD_MODEM_TYPE BUILD_MODEM_DIGI_XBEE_CELLULAR_TRANSPARENT
+//cc 
+#define BUILD_MODEM_TYPE BUILD_MODEM_ESPRESSIF_ESP32 
+// cc #define BUILD_MODEM_TYPE  BUILD_MODEM_SIM_COM_SIM7080
+//cc #define BUILD_MODEM_TYPE BUILD_MODEM_FACTORY
+
 #include "ms_cfg.h"  //must be before ms_common.h & Arduino.h
 
 // Use  MS_DBG()
@@ -213,14 +227,8 @@ const int8_t I2CPower = -1;  // sensorPowerPin; Needs to remain on if any IC pow
                              // off (-1 if unconnected)
 
 #if defined UseModem_Module
-//Only one
-#define BUILD_MODEM_DIGI_XBEE_WIFI 1
-//#define BUILD_MODEM_ESPRESSIF_ESP32 2
-//#define BUILD_MODEM_DIGI_XBEE_CELLULAR_TRANSPARENT 3
-//#define BUILD_MODEM_SIM_COM_SIM7080 4
-//#define BUILD_MODEM_FACTORY 5
-//#define BUILD_MODEM_TYPE BUILD_MODEM_DIGI_XBEE_WIFI
-#if defined BUILD_MODEM_DIGI_XBEE_CELLULAR_TRANSPARENT
+
+#if BUILD_MODEM_TYPE == BUILD_MODEM_DIGI_XBEE_CELLULAR_TRANSPARENT
 /** Start [digi_xbee_cellular_transparent] */
 // For any Digi Cellular XBee's
 // NOTE:  The u-blox based Digi XBee's (3G global and LTE-M global) can be used
@@ -243,10 +251,9 @@ const int32_t modemBaud = 9600;  // All XBee's use 9600 by default
 // NOTE:  If possible, use the `STATUS/SLEEP_not` (XBee pin 13) for status, but
 // the CTS pin can also be used if necessary
 const bool   useCTSforStatus = false;  // Flag to use the CTS pin for status
-const int8_t modemResetPin   = 20;     // MCU pin connected to modem reset pin
-const int8_t modemSleepRqPin = 23;     // MCU pin for modem sleep/wake request
-const int8_t modemLEDPin =
-    redLED;  // MCU pin connected an LED to show modem status
+//const int8_t modemResetPin   = 20;     // MCU pin connected to modem reset pin
+//const int8_t modemSleepRqPin = 23;     // MCU pin for modem sleep/wake request
+//const int8_t modemLEDPin = redLED;  // MCU pin connected an LED
 
 // Network connection information
 const char* apn = "xxxxx";  // APN for GPRS connection
@@ -260,7 +267,7 @@ DigiXBeeCellularTransparent modemPhy = modemXBCT;
 /** End [digi_xbee_cellular_transparent] */
 // ==========================================================================
 
-#elif defined BUILD_MODEM_DIGI_XBEE_WIFI
+#elif BUILD_MODEM_TYPE ==  BUILD_MODEM_DIGI_XBEE_WIFI
 /** Start [digi_xbee_wifi] */
 // For the Digi Wifi XBee (S6B)
 #include <modems/DigiXBeeWifi.h>
@@ -295,8 +302,8 @@ DigiXBeeWifi modemPhy = modemXBWF;
 /** End [digi_xbee_wifi] */
 // ==========================================================================
 
-#elif defined BUILD_MODEM_ESPRESSIF_ESP8266 || \
-    defined   BUILD_MODEM_ESPRESSIF_ESP32
+#elif (BUILD_MODEM_TYPE == BUILD_MODEM_ESPRESSIF_ESP8266) || \
+    (BUILD_MODEM_TYPE == BUILD_MODEM_ESPRESSIF_ESP32)
 /** Start [espressif_esp8266] */
 // For almost anything based on the Espressif ESP8266 using the
 // AT command firmware
@@ -304,7 +311,11 @@ DigiXBeeWifi modemPhy = modemXBWF;
 
 // NOTE: Extra hardware and software serial ports are created in the "Settings
 // for Additional Serial Ports" section
-const int32_t modemBaud = 115200;  // Communication speed of the modem
+#define ESP32_MODEM_115K_BAUD 115200
+#define ESP32_MODEM_57K_BAUD  57600
+#define ESP32_MODEM_9K6_BAUD   9600
+#define ESP32_MODEM_DEF_BAUD  ESP32_MODEM_57K_BAUD 
+const int32_t modemBaud = ESP32_MODEM_DEF_BAUD;  // Communication speed of the modem
 // NOTE:  This baud rate too fast for an 8MHz board, like the Mayfly!  The
 // module should be programmed to a slower baud rate or set to auto-baud using
 // the AT+UART_CUR or AT+UART_DEF command.
@@ -314,8 +325,8 @@ const int32_t modemBaud = 115200;  // Communication speed of the modem
 // Example pins here are for a EnviroDIY ESP32 Bluetooth/Wifi Bee with
 // Mayfly 1.1
 //const int8_t modemVccPin   = 18;      // MCU pin controlling modem power
-const int8_t modemResetPin = A5;      // MCU pin connected to modem reset pin
-const int8_t modemLEDPin   = redLED;  // MCU pin connected an LED to show modem
+//const int8_t modemResetPin = A5;      // MCU pin connected to modem reset pin
+//const int8_t modemLEDPin   = redLED;  // MCU pin connected an LED to show modem
                                       // status
 
 // Network connection information
@@ -329,7 +340,7 @@ EspressifESP8266 modemESP(&modemSerial, modemVccPin, modemResetPin, wifiId,
 EspressifESP8266 modemPhy = modemESP;
 /** End [espressif_esp8266] */
 // ==========================================================================
-#elif defined BUILD_MODEM_SIM_COM_SIM7080
+#elif BUILD_MODEM_TYPE == BUILD_MODEM_SIM_COM_SIM7080
 /** Start [sim_com_sim7080] */
 // For almost anything based on the SIMCom SIM7080G
 #include <modems/SIMComSIM7080.h>
@@ -344,8 +355,8 @@ const int32_t modemBaud =
 // and-global breakout bk-7080a
 //const int8_t modemVccPin     = 18;  // MCU pin controlling modem power
 //const int8_t modemStatusPin  = 19;  // MCU pin used to read modem status
-const int8_t modemSleepRqPin = 23;  // MCU pin for modem sleep/wake request
-const int8_t modemLEDPin = redLED;  // MCU pin connected an LED to show modem
+//const int8_t modemSleepRqPin = 23;  // MCU pin for modem sleep/wake request
+//const int8_t modemLEDPin = redLED;  // MCU pin connected an LED to show modem
                                     // status
 
 // Network connection information
@@ -358,7 +369,7 @@ SIMComSIM7080 modem7080(&modemSerial, modemVccPin, modemStatusPin,
 SIMComSIM7080 modemPhy = modem7080;
 /** End [sim_com_sim7080] */
 // ==========================================================================
-#elif defined BUILD_MODEM_FACTORY
+#elif BUILD_MODEM_TYPE == BUILD_MODEM_FACTORY
 
 #include <modems/ModemFactory.h>
 // Network connection information
@@ -1153,9 +1164,14 @@ Variable* variableList[] = {
     ds3231TempFcalc,
 #endif  // MaximDS3231_TempF_UUID
 #if defined DIGI_RSSI_UUID
-    //new Modem_RSSI(&modemPhy,  DIGI_RSSI_UUID),
-    //loggerModemPhyInst not setup
-    //new Modem_RSSI(&loggerModemPhyInst, DIGI_RSSI_UUID),
+    #if BUILD_MODEM_TYPE == BUILD_MODEM_FACTORY 
+    //loggerModemPhyInst not setup - also not working
+    new Modem_RSSI(&loggerModemPhyInst, DIGI_RSSI_UUID),
+    #else
+    new Modem_RSSI(&modemPhy,  DIGI_RSSI_UUID),
+    #endif
+
+
     //modemPhyRssi_calc,
 #endif  // DIGI_RSSI_UUID
 
@@ -1464,6 +1480,82 @@ void  managementSensorsPoll() {
 #endif  // MAYFLY_BAT_STC3100
 } //managementSensorsPoll
 
+// ==========================================================================
+// Checks available power on battery.
+void checkModemBaud () {
+#if BUILD_MODEM_TYPE == BUILD_MODEM_ESPRESSIF_ESP32
+    /** Start [setup_esp] */
+       // Modem wroom default baud is 115200
+    // Mayfly TinyGSM read() processing doesn't work at 115200.
+    // It needs to be slowed down.
+    // On a newly installed modem, it will be at 115200, 
+    // however previously programmed modems could be 57600 or 9600
+    uint32_t cfgMdmBaud = modemBaud;
+    SerialStd.print(F("ModemESP32 init default "));
+    SerialStd.println(cfgMdmBaud );
+    //modemSerial.end();
+    modemSerial.begin(cfgMdmBaud );
+
+    for (uint8_t ntries = 0; ntries<5; ntries++) {
+        // This will also verify communication and set up the modem
+        if (modemPhy.modemWake())  break;
+
+        // if that didn't work, try changing baud rate
+        cfgMdmBaud= ESP32_MODEM_115K_BAUD;
+        SerialStd.print(ntries);
+        SerialStd.print(F("] ModemESP32 init "));
+        SerialStd.println(cfgMdmBaud);
+        modemPhy.gsmModem.sendAT(GF("+UART_DEF=115200,8,1,0,0"));
+        modemPhy.gsmModem.waitResponse();
+        modemSerial.end();
+        modemSerial.begin(cfgMdmBaud);
+        if (modemPhy.modemWake()) break;
+
+        // if that didn't work, try changing baud rate
+        cfgMdmBaud= ESP32_MODEM_57K_BAUD;
+        SerialStd.print(ntries);
+        SerialStd.print(F("] ModemESP32 init "));
+        SerialStd.println(cfgMdmBaud);
+        modemPhy.gsmModem.sendAT(GF("+UART_DEF=57600,8,1,0,0"));
+        modemPhy.gsmModem.waitResponse();
+        modemSerial.end();
+        modemSerial.begin(cfgMdmBaud);
+        if (modemPhy.modemWake()) break;
+
+
+        cfgMdmBaud=ESP32_MODEM_9K6_BAUD;
+        SerialStd.print(ntries);
+        SerialStd.print(F("] ModemESP32 init "));
+        SerialStd.println(cfgMdmBaud );
+        modemPhy.gsmModem.sendAT(GF("+UART_DEF=9600,8,1,0,0"));
+        modemPhy.gsmModem.waitResponse();
+        modemSerial.end();
+        modemSerial.begin(cfgMdmBaud);
+    }
+    // set BAUD if not expected value
+    if (ESP32_MODEM_DEF_BAUD== cfgMdmBaud ) {
+        cfgMdmBaud= ESP32_MODEM_57K_BAUD;
+        modemPhy.gsmModem.sendAT(GF("+UART_DEF=57600,8,1,0,0"));
+        modemPhy.gsmModem.waitResponse();
+        modemSerial.end();
+        modemSerial.begin(cfgMdmBaud);
+    }
+    SerialStd.print(F("ModemESP32 connected at baud "));
+    SerialStd.println(cfgMdmBaud);
+
+    modemPhy.gsmModem.sendAT(GF("+GMR"));
+    //String MdmRsp;
+    modemPhy.gsmModem.waitResponse();   
+    modemPhy.gsmModem.sendAT(GF("+UART_DEF?"));
+    modemPhy.gsmModem.waitResponse();   
+    //modemPhy.gsmModem.sendAT(GF("+UART_DEF=115200,8,1,0,0"));
+    //modemPhy.gsmModem.waitResponse();  
+    modemPhy.gsmModem.sendAT(GF("+UART_CUR?"));
+    modemPhy.gsmModem.waitResponse();     
+    /** End [setup_esp] */
+#endif  //USE_WIFI_ENVIRODIY_ESP32   
+
+ } // checkModemBaud
 
 // ==========================================================================
 // Checks available power on battery.
@@ -1696,7 +1788,7 @@ void setup() {
     bms.printBatteryThresholds();
 
 #ifdef UseModem_Module
-    #if defined BUILD_MODEM_FACTORY
+    #if BUILD_MODEM_TYPE == BUILD_MODEM_FACTORY
     //Instaniate modem  
     LoggerModemFactory  mdmFactory;
     uint8_t mdmType = epc_network; 
@@ -1744,20 +1836,21 @@ void setup() {
 
     // loggerModemPhyInst->setModemLED(modemLEDPin); //Used in UI_status subsystem
     #else // not !BUILD_MODEM_FACTORY
-        #if defined BUILD_MODEM_DIGI_XBEE_CELLULAR_TRANSPARENT || \
-        defined BUILD_MODEM_SIM_COM_SIM7080
-        #error need to init APN
+        #if (BUILD_MODEM_TYPE == BUILD_MODEM_DIGI_XBEE_CELLULAR_TRANSPARENT) || \
+        (BUILD_MODEM_TYPE == BUILD_MODEM_SIM_COM_SIM7080)
+
         modemPhy.setApn(epc_apn, false);
         dataLogger.attachModem(modemPhy);
         //Mayfly 1 v 0.5?
-        #elif defined BUILD_MODEM_DIGI_XBEE_WIFI || \
-            defined   BUILD_MODEM_ESPRESSIF_ESP32
+        #elif (BUILD_MODEM_TYPE == BUILD_MODEM_DIGI_XBEE_WIFI) || \
+            (BUILD_MODEM_TYPE == BUILD_MODEM_ESPRESSIF_ESP32)
 
         modemPhy.setWiFiId(epc_WiFiId,false);
         modemPhy.setWiFiPwd(epc_WiFiPwd,false);
         dataLogger.attachModem(modemPhy);
         //modemPhy.setModemLED(modemLEDPin);
         //Mayfly 1 v 0.5?
+        void checkModemBaud();
         #endif //// not !BUILD_MODEM_FACTORY
     #endif // BUILD_MODEM
 
@@ -1768,11 +1861,11 @@ void setup() {
     dataLogger.begin();
 #if defined UseModem_PushData
 #if defined USE_PUB_MMW
-#if defined BUILD_MODEM_FACTORY
+#if (BUILD_MODEM_TYPE == BUILD_MODEM_FACTORY)
     EnviroDIYPOST.begin(dataLogger, inGsmClient, 
                         ps_ram.app.provider.s.ed.registration_token,
                         ps_ram.app.provider.s.ed.sampling_feature);
-#else
+#else // ! BUILD_MODEM_FACTORY
     EnviroDIYPOST.begin(dataLogger, &modemPhy.gsmClient, 
                         ps_ram.app.provider.s.ed.registration_token,
                         ps_ram.app.provider.s.ed.sampling_feature);
@@ -1825,7 +1918,7 @@ void setup() {
 
         bool syncResult = dataLogger.syncRTC();  // Will also set up the modemPhy
         PRINTOUT(F("Sync="),syncResult ,F("with NIST over "), 
-        #if defined BUILD_MODEM_FACTORY
+        #if  BUILD_MODEM_TYPE == BUILD_MODEM_FACTORY
         loggerModemPhyInst->getModemName()
         #else
         modemPhy.getModemName()
