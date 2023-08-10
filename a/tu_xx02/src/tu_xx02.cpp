@@ -35,20 +35,6 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 // ==========================================================================
 //    Include the base required libraries
 // ==========================================================================
-// Definitions of Modems
-#define BUILD_MODEM_DIGI_XBEE_WIFI 1
-#define BUILD_MODEM_ESPRESSIF_ESP32 2
-#define BUILD_MODEM_DIGI_XBEE_CELLULAR_TRANSPARENT 3
-#define BUILD_MODEM_SIM_COM_SIM7080 4
-#define BUILD_MODEM_FACTORY 5
-//Actual Modem to build for 
-//#define BUILD_MODEM_TYPE BUILD_MODEM_DIGI_XBEE_WIFI
-//cc #define BUILD_MODEM_TYPE BUILD_MODEM_DIGI_XBEE_CELLULAR_TRANSPARENT
-//cc 
-#define BUILD_MODEM_TYPE BUILD_MODEM_ESPRESSIF_ESP32 
-// cc #define BUILD_MODEM_TYPE  BUILD_MODEM_SIM_COM_SIM7080
-//cc #define BUILD_MODEM_TYPE BUILD_MODEM_FACTORY
-
 #include "ms_cfg.h"  //must be before ms_common.h & Arduino.h
 
 // Use  MS_DBG()
@@ -758,7 +744,7 @@ float wLionBatStc3100_worker(void) {  // get the Battery Reading
     // Get reading - Assumes updated before calling
     float flLionBatStc3100_V = stc3100_phy.stc3100_device.v.voltage_V;
     if (MS_LION_MAX_VOLT < flLionBatStc3100_V) {
-        Serial.print(F("  wLionBatStc3100 err meas LiIon V"));
+        Serial.print(F("\n  wLionBatStc3100 err meas LiIon V"));
         Serial.print(flLionBatStc3100_V, 4);
         Serial.println();
     
@@ -1711,25 +1697,26 @@ void setup() {
  #if defined MAYFLY_BAT_STC3100
     //Setsup Sensor for battery read. FUT local V ADC
     // Could be warm boot in which case the STC3100 is alreading running
+    #warning checking STC3100
+    delay(10);
     if(!stc3100_phy.setup()){
-        MS_DBG(F("STC3100 Not detected!"));
+        Serial.println(F("STC3100 Not detected!"));
     } else {
-        uint8_t dm_lp=0;
         batteryFuelGauge_present = true;
-        Serial.print("STC3100 detected sn ");
+        Serial.print(F("STC3100 detected sn "));
         for (int snlp=1;snlp<(STC3100_ID_LEN-1);snlp++) {
             Serial.print(stc3100_phy.stc3100_device.serial_number[snlp],HEX);
         }
-        //managementSensorsPoll(); stc3100_phy.stc3100_device.v.voltage_V
-        #define STCDM_POLL 20
-        #define STCDM_MIN_V 2.5
-        for ( dm_lp=0;dm_lp<STCDM_POLL;dm_lp++) {
-            delay(250); //Takes 8192 clock cycles for first V measurement
-            stc3100_phy.stc3100_device.dmBegin(); //read registers
-            if (STCDM_MIN_V  < stc3100_phy.stc3100_device.v.voltage_V) break;
-        }
+        Serial.println();
+        String sn(stc3100_phy.stc3100_device.getSn());
+        PRINTOUT(F("STC3100 sn:"),sn);
 
-        PRINTOUT(F("  BatV/lp/cntr"), stc3100_phy.stc3100_device.v.voltage_V,dm_lp,stc3100_phy.stc3100_device.v.counter);
+        const char STC3100SN_100mohms_pm[] EDIY_PROGMEM = "013717d61100";
+        if (sn.equals(STC3100SN_100mohms_pm)) {
+            #define STC3100_R_SERIES_100mOhms 100
+            PRINTOUT(F("STC3100 diagnostic set R to mOhms "),STC3100_R_SERIES_100mOhms);
+            stc3100_phy.stc3100_device.setCurrentResistor(STC3100_R_SERIES_100mOhms);
+        } 
     }
 #endif //MAYFLY_BAT_STC3100
     // A vital check on power availability
@@ -1756,7 +1743,7 @@ void setup() {
     // sensors use 9600 baud
     MS_DEEP_DBG("***modbusSerial.begin");
     delay(10);
-    PRINTOUT(F("modbus Baudrate:"),MODBUS_BAUD_RATE,F("config:"),MODBUS_SERIAL_CONFIG);
+    PRINTOUT(F("modbus Baudrate:"),MODBUS_BAUD_RATE,F(" (8bits Even 1stop bit)config:"),MODBUS_SERIAL_CONFIG);
     modbusSerial.begin(MODBUS_BAUD_RATE, MODBUS_SERIAL_CONFIG);
     modbusPinPowerMng(false);  // Turn off pins
 #endif
@@ -1924,7 +1911,6 @@ void setup() {
         modemPhy.getModemName()
         #endif 
         );
-
     } else {
         MS_DBG(F("Skipped sync with NIST as not enough power "), bms.getBatteryVm1(),
            F("Req"), LiIon_BAT_REQ );
@@ -1949,23 +1935,30 @@ void setup() {
 #if defined MAYFLY_BAT_STC3100
     //Setsup - Sensor not initialized yet. Reads unique serial number
     //stc3100_phy.stc3100_device.begin(); assumes done
-    if(!stc3100_phy.stc3100_device.start()){
-        MS_DBG(F("STC3100 Not detected!"));
-    } else {
-        batteryFuelGauge_present = true;
+    uint8_t dm_lp=0;
+    while (!(batteryFuelGauge_present = stc3100_phy.stc3100_device.start())) {
+        PRINTOUT(F("STC3100 Not detected!"));
+        if (dm_lp++ > 5) break;
+        delay(100);
     }
     String sn(stc3100_phy.stc3100_device.getSn());
     PRINTOUT(F("STC3100 sn:"),sn);
-    //if sn special, change series resistor range
-    const char STC3100SN_100mohms_pm[] EDIY_PROGMEM = "13717d611";
-    if (sn.equals(STC3100SN_100mohms_pm)) {
-        #define STC3100_R_SERIES_100mOhms 100
-        PRINTOUT(F("STC3100 diagnostic set R to mOhms "),STC3100_R_SERIES_100mOhms);
-        stc3100_phy.stc3100_device.setCurrentResistor(STC3100_R_SERIES_100mOhms);
-    } 
+    //sn updated (12chars) so maybe be different than   13717d611
+    //if sn special, change series resistor range       13717D6110
+    //                                                 013717d61100
+    //                                                 123456789012
     stc3100_phy.stc3100_device.setBatteryCapacity_mAh(epc_battery_mAhr);
-    delay(100); //Let STC3100 run a few ADC to collect readings
     stc3100_phy.stc3100_device.dmBegin(); //begin the Device Manager
+    //managementSensorsPoll(); stc3100_phy.stc3100_device.v.voltage_V
+    #define STCDM_POLL 20
+    #define STCDM_MIN_V 2.5
+
+    for (dm_lp=0;dm_lp<STCDM_POLL;dm_lp++) {
+        delay(250); //Takes 8192 clock cycles for first V measurement
+        stc3100_phy.stc3100_device.dmBegin(); //read registers
+        if (STCDM_MIN_V  < stc3100_phy.stc3100_device.v.voltage_V) break;
+    }
+    PRINTOUT(F("  STC3100 begin BatV/lp/cntr"), stc3100_phy.stc3100_device.v.voltage_V,dm_lp,stc3100_phy.stc3100_device.v.counter);
 #endif // MAYFLY_BAT_STC3100
 
 // SDI12?

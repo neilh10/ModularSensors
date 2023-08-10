@@ -20,7 +20,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 // Local default defitions here
 
 //**************************************************************************
-// This configuration is for a standard Mayfly0.5b
+// This configuration is for a standard Mayfly0.5b or 1.x
 // Sensors Used - two std to begin then
 //#define AnalogProcEC_ACT 1
 // Power Availability monitoring decisions use LiIon Voltge,
@@ -46,7 +46,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #if defined WINGBOARD_KNH002
 //This supports RS485 1.9W and STC3100
 //#define USE_STC3100_DD 1
-//#define MAYFLY_BAT_STC3100 1
+#define MAYFLY_BAT_STC3100 1
 // Only one of NOT both KellerAcculevel and KellerNanolevel as share same ADDR
 //#define KellerAcculevel_ACT 1
 // KellerAcculevel units can be 1 (meter) 2 (feet)
@@ -77,10 +77,30 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define HwVersion_DEF MFVersion_DEF
 #define HwName_DEF MFName_DEF
 
+// Definitions of Modems
+#define BUILD_MODEM_DIGI_XBEE_WIFI 1
+#define BUILD_MODEM_ESPRESSIF_ESP32 2
+#define BUILD_MODEM_DIGI_XBEE_CELLULAR_TRANSPARENT 3
+#define BUILD_MODEM_SIM_COM_SIM7080 4
+#define BUILD_MODEM_FACTORY 5
+//Actual Modem to build for 
+//#define BUILD_MODEM_TYPE BUILD_MODEM_DIGI_XBEE_WIFI
+//cc #define BUILD_MODEM_TYPE BUILD_MODEM_DIGI_XBEE_CELLULAR_TRANSPARENT
+//cc 
+#define BUILD_MODEM_TYPE BUILD_MODEM_ESPRESSIF_ESP32 
+// cc #define BUILD_MODEM_TYPE  BUILD_MODEM_SIM_COM_SIM7080
+//cc #define BUILD_MODEM_TYPE BUILD_MODEM_FACTORY
+
 #if BUILD_MODEM_TYPE ==  BUILD_MODEM_FACTORY 
 #define CONFIG_EXT "Digi WiFi S6/LTE XB3-C-A2"
 #elif BUILD_MODEM_TYPE == BUILD_MODEM_DIGI_XBEE_WIFI
 #define CONFIG_EXT "Digi WIFI"
+#elif BUILD_MODEM_TYPE == BUILD_MODEM_ESPRESSIF_ESP32
+#define CONFIG_EXT "ESP32-wroom"
+#elif BUILD_MODEM_TYPE == BUILD_MODEM_DIGI_XBEE_CELLULAR_TRANSPARENT
+#define CONFIG_EXT "LTE Digi XBC3"
+#elif BUILD_MODEM_TYPE == BUILD_MODEM_SIM_COM_SIM7080
+#define CONFIG_EXT "LTE SIM7080"
 #else 
 #define CONFIG_EXT "OtherModem"
 #endif
@@ -279,8 +299,8 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 
 #if defined MAYFLY_BAT_STC3100
 #define STC3100_Volt_UUID "STC3100Volt_UUID"
-//#define STC3100_USED1_mAhr_UUID "STC3100used1_mAhr_UUID"
-//#define STC3100_AVLBL_mAhr_UUID "STC3100avlbl_mAhr_UUID"
+#define STC3100_USED1_mAhr_UUID "STC3100used1_mAhr_UUID"
+#define STC3100_AVLBL_mAhr_UUID "STC3100avlbl_mAhr_UUID"
 #endif // MAYFLY_BAT_STC3100
 
 #ifdef MAYFLY_BAT_AA0
