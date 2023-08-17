@@ -1823,12 +1823,31 @@ void setup() {
 
     // loggerModemPhyInst->setModemLED(modemLEDPin); //Used in UI_status subsystem
     #else // not !BUILD_MODEM_FACTORY
-        #if (BUILD_MODEM_TYPE == BUILD_MODEM_DIGI_XBEE_CELLULAR_TRANSPARENT) || \
-        (BUILD_MODEM_TYPE == BUILD_MODEM_SIM_COM_SIM7080)
+        #if (BUILD_MODEM_TYPE == BUILD_MODEM_DIGI_XBEE_CELLULAR_TRANSPARENT) 
+        modemPhy.setApn(epc_apn, false);
+        dataLogger.attachModem(modemPhy);
+        #elif (BUILD_MODEM_TYPE == BUILD_MODEM_SIM_COM_SIM7080)
 
         modemPhy.setApn(epc_apn, false);
         dataLogger.attachModem(modemPhy);
-        //Mayfly 1 v 0.5?
+        /** Start [setup_sim7080] */
+        modemPhy.setModemWakeLevel(HIGH);   // ModuleFun Bee inverts the signal
+        modemPhy.setModemResetLevel(HIGH);  // ModuleFun Bee inverts the signal
+        Serial.println(F("Waking modem and setting Cellular Carrier Options..."));
+        modemPhy.modemWake();  // NOTE:  This will also set up the modem
+        modemPhy.gsmModem.setBaud(modemBaud);   // Make sure we're *NOT* auto-bauding!
+        modemPhy.gsmModem.setNetworkMode(38);   // set to LTE only
+                                            // 2 Automatic
+                                            // 13 GSM only
+                                            // 38 LTE only
+                                            // 51 GSM and LTE only
+        modemPhy.gsmModem.setPreferredMode(1);  // set to CAT-M
+                                            // 1 CAT-M
+                                            // 2 NB-IoT
+                                            // 3 CAT-M and NB-IoT
+        Serial.println(F("SIM7080 left on for NIST time sync"));
+ 
+        /** End [setup_sim7080] */
         #elif (BUILD_MODEM_TYPE == BUILD_MODEM_DIGI_XBEE_WIFI) || \
             (BUILD_MODEM_TYPE == BUILD_MODEM_ESPRESSIF_ESP32)
 
@@ -1836,9 +1855,12 @@ void setup() {
         modemPhy.setWiFiPwd(epc_WiFiPwd,false);
         dataLogger.attachModem(modemPhy);
         //modemPhy.setModemLED(modemLEDPin);
-        //Mayfly 1 v 0.5?
+
         void checkModemBaud();
         #endif //// not !BUILD_MODEM_FACTORY
+        if (BT_MAYFLY_0_5==boardType) {
+            modemPhy.setPowerPin(modemVccPin_mayfly_0_5 );
+        }
     #endif // BUILD_MODEM
 
 #endif  // UseModem_Module

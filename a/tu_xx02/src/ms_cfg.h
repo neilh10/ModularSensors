@@ -46,7 +46,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #if defined WINGBOARD_KNH002
 //This supports RS485 1.9W and STC3100
 //#define USE_STC3100_DD 1
-#define MAYFLY_BAT_STC3100 1
+//#define MAYFLY_BAT_STC3100 1
 // Only one of NOT both KellerAcculevel and KellerNanolevel as share same ADDR
 //#define KellerAcculevel_ACT 1
 // KellerAcculevel units can be 1 (meter) 2 (feet)
@@ -86,9 +86,9 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 //Actual Modem to build for 
 //#define BUILD_MODEM_TYPE BUILD_MODEM_DIGI_XBEE_WIFI
 //cc #define BUILD_MODEM_TYPE BUILD_MODEM_DIGI_XBEE_CELLULAR_TRANSPARENT
-//cc 
-#define BUILD_MODEM_TYPE BUILD_MODEM_ESPRESSIF_ESP32 
-// cc #define BUILD_MODEM_TYPE  BUILD_MODEM_SIM_COM_SIM7080
+//cc #define BUILD_MODEM_TYPE BUILD_MODEM_ESPRESSIF_ESP32 
+// cc 
+#define BUILD_MODEM_TYPE  BUILD_MODEM_SIM_COM_SIM7080
 //cc #define BUILD_MODEM_TYPE BUILD_MODEM_FACTORY
 
 #if BUILD_MODEM_TYPE ==  BUILD_MODEM_FACTORY 
@@ -162,7 +162,10 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 //#define  USE_PUB_UBIDOTS 1
 
 // Required for TinyGsmClient.h
+#if BUILD_MODEM_TYPE != BUILD_MODEM_SIM_COM_SIM7080
+//Unusually #undef BUILD_MODEM_SIM_COM_SIM7080
 #define TINY_GSM_MODEM_XBEE
+#endif 
 
 // The APN for the gprs connection, unnecessary for WiFi
 #define APN_CDEF "VZWINTERNET"
