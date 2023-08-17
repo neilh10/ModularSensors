@@ -160,10 +160,14 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 //#define  USE_PUB_UBIDOTS 1
 
 // Required for TinyGsmClient.h
+#if USE_MODEM==  USE_CELL_SIMCON_SIM7080
+#define APN_CDEF "iot0119.com.attz"
+#else 
 #define TINY_GSM_MODEM_XBEE
 
 // The APN for the gprs connection, unnecessary for WiFi
 #define APN_CDEF "VZWINTERNET"
+#endif 
 
 // The WiFi access point  never set to real, as should be set by config.
 #define WIFIID_CDEF "ArthurGuestSsid"

@@ -50,6 +50,14 @@
 //  Include the libraries required for any data logger
 // ==========================================================================
 /** Start [includes] */
+// Specify one of the following
+#define USE_CELL_DIGI_LTE_XBM3 1
+#define USE_CELL_SIMCON_SIM7080 2
+#define USE_WIFI_DIGI_S6B 3
+#define USE_WIFI_ENVIRODIY_ESP32 4
+
+//#define USE_MODEM USE_WIFI_DIGI_S6B
+#define USE_MODEM USE_CELL_SIMCON_SIM7080
 //https://monitormywatershed.org/sites/intg_test01/
 #include "ms_cfg.h"  //must be before ms_common.h & Arduino.h
 
@@ -133,6 +141,9 @@ const int8_t sensorPowerPin = sensorPowerPin_DEF;  // MCU pin controlling main s
 // in either bypass or transparent mode, each with pros and cons
 // The Telit based Digi XBees (LTE Cat1) can only use this mode.
 // Create a reference to the serial port for the modem
+HardwareSerial& modemSerial = Serial1;  // Use hardware serial if possible
+#define modemSerHw modemSerial
+/* StreamDebugger setup through xx_DEBUG_DEEP
 HardwareSerial& modemSerial = modemSerial_Upstream_DEF;  // Use hardware serial if possible
 #if defined STREAMDEBUGGER_DBG
 #include <StreamDebugger.h>
@@ -141,6 +152,7 @@ StreamDebugger modemDebugger(modemSerial, STANDARD_SERIAL_OUTPUT);
 #else
 #define modemSerHw modemSerial
 #endif  // STREAMDEBUGGER_DBG
+*/
 
 // Modem Pins - Describe the physical pin connection of your modem to your board
 // NOTE:  Use -1 for pins that do not apply
@@ -152,14 +164,7 @@ const int8_t modemSleepRqPin = modemSleepRqPin_DEF;    // MCU pin for modem slee
 const int8_t modemLEDPin = redLED;    // MCU pin connected an LED to show modem
                                       // status (-1 if unconnected)
 
-// Specify one of the following
-#define USE_CELL_DIGI_LTE_XBM3 1
-#define USE_CELL_SIMCON_SIM7080 2
-#define USE_WIFI_DIGI_S6B 3
-#define USE_WIFI_ENVIRODIY_ESP32 4
 
-//#define USE_MODEM USE_WIFI_DIGI_S6B
-#define USE_MODEM USE_WIFI_ENVIRODIY_ESP32
 
 #if USE_MODEM == USE_CELL_DIGI_LTE_XBM3
 #warning Specified USE_CELL_DIGI_LTE_XBM3
@@ -187,7 +192,7 @@ DigiXBeeCellularTransparent modemPhy = modemXBCT;
 
 // Network connection information
 const char* apn =
-    "hologram";  // APN connection name, typically Hologram unless you have a
+    "iot0119.com.attz";  // APN connection name, typically Hologram unless you have a
                  // different provider's SIM card. Change as needed
 const int32_t   modemBaud   = modemBaud_Upstream_DEF ;   // Default 9600?
 const bool useCTSforStatus  = false;  // Flag to use the XBee CTS pin for status
@@ -196,7 +201,7 @@ SIMComSIM7080 modem7080(&modemSerHw, modemVccPin, modemStatusPin,
                         modemSleepRqPin, apn);
 // Create an extra reference to the modem by a generic name
 SIMComSIM7080 modemPhy = modem7080;
-#define MODEM_DEF F("Modem LTE SIM7080"))
+#define MODEM_DEF (F("Modem LTE SIM7080"))
 /** End [sim_com_sim7080] */
 #elif USE_MODEM == USE_WIFI_DIGI_S6B
 #warning Specified USE_WIFI_DIGI_S6B
@@ -621,6 +626,25 @@ void setup() {
     modemPhy.gsmModem.sendAT(GF("+UART_CUR?"));
     modemPhy.gsmModem.waitResponse();     
     /** End [setup_esp] */
+#elif USE_MODEM == USE_CELL_SIMCON_SIM7080 
+    modemSerial.begin(modemBaud);
+    modemPhy.setModemWakeLevel(HIGH);   // ModuleFun Bee inverts the signal
+    modemPhy.setModemResetLevel(HIGH);  // ModuleFun Bee inverts the signal
+    Serial.println(F("Waking modem and setting Cellular Carrier Options..."));
+    modemPhy.modemWake();  // NOTE:  This will also set up the modem
+    modemPhy.gsmModem.setBaud(modemBaud);   // Make sure we're *NOT* auto-bauding!
+    modemPhy.gsmModem.setNetworkMode(38);   // set to LTE only
+                                        // 2 Automatic
+                                        // 13 GSM only
+                                        // 38 LTE only
+                                        // 51 GSM and LTE only
+    modemPhy.gsmModem.setPreferredMode(1);  // set to CAT-M
+                                        // 1 CAT-M
+                                        // 2 NB-IoT
+                                        // 3 CAT-M and NB-IoT
+
+    Serial.println(F("SIM7080 left on for NIST time sync"));
+
 #endif  //USE_WIFI_ENVIRODIY_ESP32    
 #if defined WIO_TERMINAL 
     SerialStd.println(F("Setting up modemPhy as RTL8270 WiFiClient..."));
