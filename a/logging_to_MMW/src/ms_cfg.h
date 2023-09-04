@@ -54,7 +54,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define MFName_DEF "Mayfly"
 //#define HwVersion_DEF MFVersion_DEF
 #define HwName_DEF MFName_DEF
-#define CONFIGURATION_DESCRIPTION_STR "Maylfy1.1 DigiWiFi Xbee 4 Temperature to MMW"
+#define CONFIGURATION_DESCRIPTION_STR "Maylfy SIM7080G Temperature to MMW"
 
 #define USE_MS_SD_INI 1
 //#define USE_PS_EEPROM 1
@@ -136,7 +136,8 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #if defined logger2Mult
 #define loggingInterval_CDEF_MIN (loggingInterval_Fast_MIN * logger2Mult)
 #else
-#define loggingInterval_CDEF_MIN 15
+// Normally 15minutes but this is a test build
+#define loggingInterval_CDEF_MIN 2 
 #endif  // logger2Mult
 // Maximum logging setting allowed
 #define loggingInterval_MAX_CDEF_MIN 6 * 60

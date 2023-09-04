@@ -546,10 +546,10 @@ void setup() {
     dataLogger.setLoggerPins(wakePin, sdCardSSPin, sdCardPwrPin, wakePin,
                              greenLED);
     dataLogger.setLoggerID("logmmw");
-    dataLogger.setLoggingInterval(2);
-    dataLogger.setSendEveryX(6); //Default 2
+    dataLogger.setLoggingInterval(2); //loggingInterval_CDEF_MIN
+    dataLogger.setSendEveryX(1); //Default 2
     dataLogger.setSendOffset(0);
-    dataLogger.setPostMax_num(18);
+    dataLogger.setPostMax_num(20);
     delay(500);
     // Begin the logger
     dataLogger.begin();
