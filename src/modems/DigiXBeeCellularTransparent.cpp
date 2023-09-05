@@ -179,9 +179,14 @@ bool DigiXBeeCellularTransparent::extraModemSetup(void) {
         /** Disable remote manager, USB Direct, and LTE PSM
          * NOTE:  LTE-M's PSM (Power Save Mode) sounds good, but there's no easy
          * way on the LTE-M Bee to wake the cell chip itself from PSM, so we'll
-         * use the Digi pin sleep instead. */
+         * use the Digi pin sleep instead. 
+         * NJH - investigate DO Bit 3 PSM, supposed to work with Pin SLEEP but need to handle TinyGsmClientXbee.h:gprsDisconnectImpl
+         * See manual Pg138 Power Save Mode*/
         gsmModem.sendAT(GF("DO"), 0);
         success &= gsmModem.waitResponse(TGWRIDT+0x0C) == 1;
+        /* Need to ensure Reset destination for IP when starting up */
+        gsmModem.changeSettingIfNeeded(GF("DL"), String(GF("0.0.0.0")));
+        gsmModem.changeSettingIfNeeded(GF("DE"), 0);  // destination port 
         /** Ask data to be "packetized" and sent out with every new line (0x0A)
          * character. */
         gsmModem.sendAT(GF("TD0A"));
