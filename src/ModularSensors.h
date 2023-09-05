@@ -19,7 +19,7 @@
  * of the envirodiy master branch that it is based on. 
  * An hypen '-' and alpha number for tracking this fork's release 
  */
-#define MODULAR_SENSORS_VERSION "0.34.1-abd"
+#define MODULAR_SENSORS_VERSION "0.34.1-abe"
 
 // To get all of the base classes for ModularSensors, include LoggerBase.
 // NOTE:  Individual sensor definitions must be included separately.

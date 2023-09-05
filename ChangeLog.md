@@ -8,7 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ***
 
 
-## [Unreleased0.34.1-abd]
+## [released0.34.1-abe]
+Bug fix release
+### Changed
+
+### Added
+
+### Removed
+
+### Fixed
+  https://github.com/neilh10/TinyGSM/issues/2 TinyGSM 0.11.7-aab
+  
+## [released0.34.1-abd]
 Bug fix release
 ### Changed
 
