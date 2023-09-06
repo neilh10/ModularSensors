@@ -36,7 +36,9 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 //    Include the base required libraries
 // ==========================================================================
 #include "ms_cfg.h"  //must be before ms_common.h & Arduino.h
-
+#if defined TINY_GSM_MODEM_XBEE
+#error for SIM7080G don't define TINY_GSM_MODEM_XBEE
+#endif 
 // Use  MS_DBG()
 #ifdef MS_TU_XX_DEBUG
 #undef MS_DEBUGGING_STD
@@ -346,7 +348,7 @@ const int32_t modemBaud =
                                     // status
 
 // Network connection information
-const char* apn = "xxxxx";  // APN for GPRS connection
+const char* apn = APN_CDEF;  // APN for GPRS connection
 
 // Create the modem object
 SIMComSIM7080 modem7080(&modemSerial, modemVccPin, modemStatusPin,

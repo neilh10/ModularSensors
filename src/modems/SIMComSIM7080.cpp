@@ -98,7 +98,7 @@ void SIMComSIM7080::setApn(const char* newAPN, bool copyId) {
     uint8_t newAPN_sz = strlen(newAPN);
     _apn              = newAPN;
     // TODO: njh test setAPN CopyID functons
-
+    MS_DBG(F("\nsetAPN "),_apn);
     if (copyId) {
         /* Do size checks, allocate memory for the LoggerID, copy it there
          *  then set assignment.
