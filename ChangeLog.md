@@ -7,7 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ***
 
-
 ## [Unreleased]
 
 ### Changed
@@ -17,9 +16,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Fixed
-- Fixed GitHub actions for pull requests from forks.
 
-***
+## [released0.34.1-abe]
+Bug fix release
+### Changed
+
+### Added
+
+### Removed
+
+### Fixed
+  https://github.com/neilh10/TinyGSM/issues/2 TinyGSM 0.11.7-aab
+  
+## [released0.34.1-abd]
+Bug fix release
+### Changed
+
+### Added
+    #142 enhancement to list time for LTE to connect to internet
+### Removed
+
+### Fixed
+    Fix [neilh10/ModularSensors#129](https://github.com/neilh10/ModularSensors/issues/129) SeqNumber roll-over set to 5
+    Fix  https://github.com/neilh10/ModularSensors/issues/141  DIgi LTE XB3 sleep doesn't change Airplane mode, only sleep req pin
+    Expects to pull in TinGSM release with WR to NVRAM only at startup.
+    Internal DiGiLTE XB3 setting _user and _pwd to 0
 
 
 ## [0.34.0]
