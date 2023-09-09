@@ -80,6 +80,9 @@
 #define MS_DEBUGGING_STD "DigiXBeeCellularTransparent"
 #endif
 
+#ifdef MS_DIGIXBEECELLULARTRANSPARENT_DEBUG_DEEP
+#define MS_DEBUGGING_STD "DigiXBeeCellularTransparent"
+#endif
 /** @ingroup modem_digi_cellular */
 /**@{*/
 
@@ -97,7 +100,7 @@
 // Included Dependencies
 #include "ModSensorDebugger.h"
 #undef MS_DEBUGGING_STD
-#include "ModemTypes.h"
+//#include "ModemTypes.h"
 #include "TinyGsmClient.h"
 #undef TINY_GSM_MODEM_HAS_WIFI
 #include "DigiXBee.h"
@@ -212,6 +215,7 @@ class DigiXBeeCellularTransparent : public DigiXBee {
     const char* _user = nullptr;
     const char* _pwd = nullptr;
 
+    uint16_t updateModemMetadata_cnt = 0;
 
     // Az extension
     char* _apn_buf = nullptr;  // Pointer to updated buffer
