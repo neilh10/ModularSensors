@@ -37,7 +37,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 // ==========================================================================
 #include "ms_cfg.h"  //must be before ms_common.h & Arduino.h
 #if defined TINY_GSM_MODEM_XBEE
-#error for SIM7080G don't define TINY_GSM_MODEM_XBEE
+#error for SIM7080G dont define TINY_GSM_MODEM_XBEE
 #endif 
 // Use  MS_DBG()
 #ifdef MS_TU_XX_DEBUG
