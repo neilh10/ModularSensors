@@ -182,18 +182,8 @@ SoftwareSerial_ExtInts softSerial1(softSerialRx, softSerialTx);
 // Extra hardware and software serial ports are created in the "Settings for
 // Additional Serial Ports" section
 HardwareSerial& modemSerial = Serial1;  // Use hardware serial if possible
-// AltSoftSerial &modemSerial = altSoftSerialPhy;  // For software serial if
-// needed NeoSWSerial &modemSerial = neoSSerial1;  // For software serial if
-// needed Use this to create a modem if you want to monitor modem communication
-// through a secondary Arduino stream.  Make sure you install the StreamDebugger
-// library! https://github.com/vshymanskyy/StreamDebugger
-#if defined STREAMDEBUGGER_DBG
-#include <StreamDebugger.h>
-StreamDebugger modemDebugger(modemSerial, STANDARD_SERIAL_OUTPUT);
-#define modemSerHw modemDebugger
-#else
+//Stream debugger through MS_xxx_DEBUG_DEEP
 #define modemSerHw modemSerial
-#endif  // STREAMDEBUGGER_DBG
 
 // Modem Pins - Describe the physical pin connection of your modem to your board
 #define MODEM_VCC_CE_PIN 18
@@ -1570,7 +1560,10 @@ void setup() {
     default: break;
         PRINTOUT(F("Modem config ERR** "),mdmType);
     };
-
+    #if defined DIGI_RSSI_UUID
+    //Enable as active instation
+    loggerModemPhyInst->setMetadataPolling(MODEM_RSSI_ENABLE_BITMASK);
+    #endif //DIGI_RSSI_UUID
     if (BT_MAYFLY_0_5==boardType) {
         loggerModemPhyInst->setPowerPin(modemVccPin_mayfly_0_5 );
     }
