@@ -184,18 +184,7 @@ SoftwareSerial_ExtInts softSerial1(softSerialRx, softSerialTx);
 // Extra hardware and software serial ports are created in the "Settings for
 // Additional Serial Ports" section
 HardwareSerial& modemSerial = Serial1;  // Use hardware serial if possible
-// AltSoftSerial &modemSerial = altSoftSerialPhy;  // For software serial if
-// needed NeoSWSerial &modemSerial = neoSSerial1;  // For software serial if
-// needed Use this to create a modem if you want to monitor modem communication
-// through a secondary Arduino stream.  Make sure you install the StreamDebugger
-// library! https://github.com/vshymanskyy/StreamDebugger
-/* use deep_dbg #if defined STREAMDEBUGGER_DBG
-#include <StreamDebugger.h>
-StreamDebugger modemDebugger(modemSerial, STANDARD_SERIAL_OUTPUT);
-#define modemSerHw modemDebugger
-#else */
 #define modemSerHw modemSerial
-//#endif  // STREAMDEBUGGER_DBG
 
 // Modem Pins - Describe the physical pin connection of your modem to your board
 #define MODEM_VCC_CE_PIN 18
@@ -1699,8 +1688,6 @@ void setup() {
  #if defined MAYFLY_BAT_STC3100
     //Setsup Sensor for battery read. FUT local V ADC
     // Could be warm boot in which case the STC3100 is alreading running
-    #warning checking STC3100
-    delay(10);
     if(!stc3100_phy.setup()){
         Serial.println(F("STC3100 Not detected!"));
     } else {
