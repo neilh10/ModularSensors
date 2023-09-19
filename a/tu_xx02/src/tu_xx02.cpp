@@ -203,7 +203,7 @@ const int8_t modemLEDPin = redLED;  // MCU pin connected an LED to show modem
 const int8_t I2CPower = -1;  // sensorPowerPin; Needs to remain on if any IC powered like STC3100/KNH002
                              // off (-1 if unconnected)
 
-#if defined UseModem_Module
+#if defined BUILD_MODEM_TYPE
 
 #if BUILD_MODEM_TYPE == BUILD_MODEM_DIGI_XBEE_CELLULAR_TRANSPARENT
 /** Start [digi_xbee_cellular_transparent] */
@@ -386,7 +386,7 @@ Variable* modemPhyRssi_calc =
 #else //no others BUILD_MODEM
 #error NEED TO DEFINE A BUILD_MODEM
 #endif //BUID_MODEM
-#endif // UseModem_Module
+#endif // BUILD_MODEM_TYPE
 
 // ==========================================================================
 // Create a reference to the serial port for modbus
@@ -1146,7 +1146,7 @@ Variable* variableList[] = {
     new Modem_RSSI(&loggerModemPhyInst, DIGI_RSSI_UUID),
     #else
     new Modem_RSSI(&modemPhy,  DIGI_RSSI_UUID),
-    #endif
+    #endif //BUILD_MODEM_TYPE
 
 
     //modemPhyRssi_calc,
@@ -1354,11 +1354,11 @@ void unusedBitsMakeSafe() {
     #else 
     PORT_SAFE(22);
     #endif
-#if defined  UseModem_Module
+#if defined  BUILD_MODEM_TYPE
     PORT_HIGH(23);  // Xbee DTR modemSleepRqPin LOW until Modem takes over
  #else 
     PORT_SAFE(23);
- #endif //UseModem_Module
+ #endif //BUILD_MODEM_TYPE
     // Analog from here on
     // PORT_SAFE(24);//A0 ECData1
     PORT_SAFE(25);  // A1
@@ -1530,7 +1530,7 @@ void checkModemBaud () {
     modemPhy.gsmModem.sendAT(GF("+UART_CUR?"));
     modemPhy.gsmModem.waitResponse();     
     /** End [setup_esp] */
-#endif  //USE_WIFI_ENVIRODIY_ESP32   
+#endif  // BUILD_MODEM_TYPE
 
  } // checkModemBaud
 
@@ -1649,12 +1649,12 @@ void setup() {
     Serial.print(F("ModularSensors version "));
     Serial.println(MODULAR_SENSORS_VERSION);
 
-#if defined UseModem_Module
+#if defined BUILD_MODEM_TYPE
     Serial.print(F("TinyGSM Library version "));
     Serial.println(TINYGSM_VERSION);
 #else
     Serial.println(F("TinyGSM - none"));
-#endif
+#endif //BUILD_MODEM_TYPE
 
     unusedBitsMakeSafe();
     dataLogger.startFixedWatchdog();
@@ -1722,10 +1722,10 @@ void setup() {
 #endif
 
 // Start the serial connection with the modem
-#if defined UseModem_Module
+#if defined BUILD_MODEM_TYPE
     MS_DEEP_DBG("***modemSerial.begin");
     modemSerial.begin(modemBaud);
-#endif  // UseModem_Module
+#endif  // BUILD_MODEM_TYPE
 
 #if defined(CONFIG_SENSOR_RS485_PHY)
     // Start the stream for the modbus sensors; all currently supported modbus
@@ -1763,7 +1763,7 @@ void setup() {
 
     bms.printBatteryThresholds();
 
-#ifdef UseModem_Module
+#ifdef BUILD_MODEM_TYPE
     #if BUILD_MODEM_TYPE == BUILD_MODEM_FACTORY
     //Instaniate modem  
     LoggerModemFactory  mdmFactory;
@@ -1850,9 +1850,9 @@ void setup() {
         if (BT_MAYFLY_0_5==boardType) {
             modemPhy.setPowerPin(modemVccPin_mayfly_0_5 );
         }
-    #endif // BUILD_MODEM
+    #endif // BUILD_MODEM_TYPE==
 
-#endif  // UseModem_Module
+#endif  // defined BUILD_MODEM_TYPE
 
     // Begin the logger
     MS_DBG(F("---dataLogger.begin "));
@@ -1868,7 +1868,7 @@ void setup() {
                         ps_ram.app.provider.s.ed.registration_token,
                         ps_ram.app.provider.s.ed.sampling_feature);
 
-#endif //BUILD_MODEM_
+#endif //BUILD_MODEM_TYPE ==
 
     EnviroDIYPOST.setDIYHost(ps_ram.app.provider.s.ed.cloudId);
     EnviroDIYPOST.setQuedState(true);
@@ -1904,7 +1904,7 @@ void setup() {
 
 // Sync the clock  if we have good battery else assume set
 #define LiIon_BAT_REQ BM_PWR_HEAVY_REQ 
-#if defined UseModem_Module && !defined NO_FIRST_SYNC_WITH_NIST
+#if defined BUILD_MODEM_TYPE && !defined NO_FIRST_SYNC_WITH_NIST
 
     // The comms module  is supported and its expected to be configured.
     // ToDo Test - there may be a runtime use case where it exists but shouldn't be used?
@@ -1926,7 +1926,7 @@ void setup() {
         MS_DBG(F("Skipped sync with NIST as not enough power "), bms.getBatteryVm1(),
            F("Req"), LiIon_BAT_REQ );
     }
-#endif  // UseModem_Module
+#endif  // BUILD_MODEM_TYPE
     // List start time, if RTC invalid will also be initialized
     PRINTOUT(F("Local Time "),
              dataLogger.formatDateTime_ISO8601(dataLogger.getNowLocalEpoch()));
@@ -1993,13 +1993,13 @@ void setup() {
         true);  // true = wait for internal housekeeping after write
     dataLogger.setBatHandler(&isBatteryChargeGoodEnough);
 
-#if defined UseModem_Module && !defined NO_FIRST_SYNC_WITH_NIST
+#if defined BUILD_MODEM_TYPE && !defined NO_FIRST_SYNC_WITH_NIST
     if (batteryCheck(LiIon_BAT_REQ, false,4)) {
         dataLogger_do(LOGGER_RELIABLE_POST);
     } else {
 //needs testing        dataLogger_do(LOGGER_NEW_READING); 
     }
-#endif // UseModem_Module && !NO_FIRST_SYNC_WITH_NIST
+#endif // BUILD_MODEM_TYPE && !NO_FIRST_SYNC_WITH_NIST
 #if defined MS_TTY_USER_INPUT
     tu2setup();
 #endif //

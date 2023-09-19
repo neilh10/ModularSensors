@@ -45,7 +45,7 @@ const char SEND_OFFSET_MIN_pm[] EDIY_PROGMEM    = "SEND_OFFSET_MIN";
 const char INA219M_MA_MULT_pm[] EDIY_PROGMEM     = "INA219M_MA_MULT";
 const char INA219M_V_THRESHLOW_pm[] EDIY_PROGMEM = "INA219M_V_THRESHLOW";
 
-#if defined UseModem_Module
+#if defined BUILD_MODEM_TYPE
 const char PROVIDER_MMW_pm[] EDIY_PROGMEM           = "PROVIDER_MMW";
 
 const char CLOUD_ID_pm[] EDIY_PROGMEM           = "CLOUD_ID";
@@ -78,7 +78,7 @@ const char PROVIDER_UBIDOTS_pm[] EDIY_PROGMEM       = "PROVIDER_UBIDOTS";
 //KEY_STRINGS
 const char UB_AUTH_TOKEN_pm[] EDIY_PROGMEM = "UB_AUTH_TOKEN";
 const char UB_DEVICE_ID_pm[] EDIY_PROGMEM   = "UB_DEVICE_ID";
-#endif // UseModem_Module
+#endif // BUILD_MODEM_TYPE
 
 const char SENSORS_pm[] EDIY_PROGMEM = "SENSORS";
 const char index_pm[] EDIY_PROGMEM   = "index";
@@ -305,7 +305,7 @@ static void epcParser() {
     Logger::setLoggerTimeZone(epc.app.msc.s.time_zone);
 
     /// Used  in uSD print epc.app.msc.s.geolocation_id
-    #if defined UseModem_Module
+    #if defined BUILD_MODEM_TYPE
     PRINTOUT(F("NETWORK type: "),  epc_network);
     PRINTOUT(F("NETWORK apn: "),  epc_apn);
     PRINTOUT(F("NETWORK WiFiId : "),  epc_WiFiId);
@@ -315,7 +315,7 @@ static void epcParser() {
     PRINTOUT(F("NETWORK SEND_OFFSET_MIN"),epc.app.msn.s.sendOffset_min);
     PRINTOUT(F("NETWORK POST_MAX_NUM"),epc.app.msn.s.postMax_num);
     PRINTOUT(F("NETWORK SEND_QUE_SZ_NUM"),epc.app.msn.s.sendQueSz_num);
-    #endif // UseModem_Module
+    #endif // BUILD_MODEM_TYPE
 
     #if defined USE_PUB_MMW
     //[Provider_MMW]
@@ -776,7 +776,7 @@ static int inihUnhandledFn(const char* section, const char* name,
         }
     } else if (strcmp_P(section, NETWORK_pm) == 0) {
         // NETWORK PARTS
-#if defined UseModem_Module
+#if defined BUILD_MODEM_TYPE
         if (strcmp_P(name, apn_pm) == 0) {
             #if defined USE_PS_EEPROM
             epc.app.msn.s.network_type=MODEMT_LTE_DIGI_CATM1; //modemTypesCurrent_t 
@@ -863,7 +863,7 @@ static int inihUnhandledFn(const char* section, const char* name,
             epc.app.msn.s.sendQueSz_num = sendQueSz_num_local;
             MS_DBG(F("NETWORK Set SEND_QUE_SZ_NUM: "),sendQueSz_num_local);
         } else
-#endif // UseModem_Module
+#endif // BUILD_MODEM_TYPE
         {
             SerialStd.print(F("NETWORK tbd "));
             SerialStd.print(name);
@@ -1028,7 +1028,7 @@ void localAppStorageInit()
     strcpy_P((char*)epc.app.msc.s.geolocation_id,
                 (char*)F("Factory default"));
 
-    #if defined UseModem_Module
+    #if defined BUILD_MODEM_TYPE
     epc.app.msn.s.network_type= MODEMT_NONE;
     strcpy_P((char*)epc.app.msn.s.apn,(char*)F(MSCN_APN_DEF_STR));
     strcpy_P((char*)epc.app.msn.s.WiFiId,(char*)F(MSCN_WIFIID_DEF_STR));  
@@ -1072,7 +1072,7 @@ void localAppStorageInit()
         epc.app.provider.s.ub.uuid[uuid_lp].name[0] = PROVID_NULL_TERMINATOR;
         epc.app.provider.s.ub.uuid[uuid_lp].value[0] = PROVID_NULL_TERMINATOR;
     }
-    #endif //  UseModem_Module
+    #endif //  BUILD_MODEM_TYPE
 } // localAppStorageInit()
 
 void readAvrEeprom() {
@@ -1137,7 +1137,7 @@ void readAvrEeprom() {
 
     MS_DBG(F("Common: sz="), epc.app.msc.sz);
 
-#if defined UseModem_Module
+#if defined BUILD_MODEM_TYPE
     // read EEPROM Network app.msn.s that maps from .ini [NETWORK] 
     PRINTOUT(F("From eeprom Network: Network Type="),epc.app.msn.s.network_type,
             F("\n APN="),(char*)epc.app.msn.s.apn, 
@@ -1148,7 +1148,7 @@ void readAvrEeprom() {
             F(" POST_MAX_NUM="),epc.app.msn.s.postMax_num,
             F(" SEND_QUE_SZ_NUM="),epc.app.msn.s.sendQueSz_num   
             );
-#endif //defined UseModem_Module
+#endif //defined BUILD_MODEM_TYPE
 
     // List values for PROVIDER_XX 
 #if defined USE_PUB_MMW

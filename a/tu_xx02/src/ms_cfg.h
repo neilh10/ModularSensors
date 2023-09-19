@@ -102,7 +102,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #elif BUILD_MODEM_TYPE == BUILD_MODEM_SIM_COM_SIM7080
 #define CONFIG_EXT "LTE SIM7080"
 #else 
-#define CONFIG_EXT "OtherModem"
+#define CONFIG_EXT "No Modem"
 #endif
 #define CONFIGURATION_DESCRIPTION_STR "LT500/Modbus TO MMW " CONFIG_EXT
 
@@ -148,8 +148,8 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 
 
 // Supports DigiXBeeCellularTransparent & DigiXBeeWifi
-#define UseModem_Module 1
-#if UseModem_Module 
+//#define UseModem_Module 1
+#if defined BUILD_MODEM_TYPE 
 // The Modem is used to push data and also sync Time
 // In standalong logger, no internet, Modem can be required at factor to do a
 // sync Time Normally enable both of the following. In standalone, disable
@@ -182,7 +182,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 //Manage Internet - common for all providers
 #define MNGI_COLLECT_READINGS_DEF 1
 #define MNGI_SEND_OFFSET_MIN_DEF 0
-#endif  // UseModem_Module 
+#endif  // defined BUILD_MODEM_TYPE 
 
 // This might need revisiting
 #define ARD_ANLAOG_MULTIPLEX_PIN A6
@@ -285,12 +285,12 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 //#define MaximDS3231_TEMPF_UUID "MaximDS3231_TEMPF_UUID"
 #endif  // ENVIRODIY_MAYFLY_TEMPERATURE
 
-#if defined UseModem_Module
+#if defined BUILD_MODEM_TYPE
 // tested Digi LTE
 // tested Digi S6B 
 #define DIGI_RSSI_UUID "DIGI_RSSI_UUID"
 //#define Modem_SignalPercent_UUID    "SignalPercent_UUID"
-#endif  // UseModem_Module
+#endif  // BUILD_MODEM_TYPE
 
 #define ProcessorStats_ACT 1
 #if defined ProcessorStats_ACT

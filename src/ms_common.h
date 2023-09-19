@@ -146,9 +146,9 @@ typedef struct {
 #define mModularSensorsCommon_t(p1)
 #endif  // USE_PS_modularSensorsCommon)
 
-#if defined UseModem_Module
+#if defined BUILD_MODEM_TYPE
 #define USE_PS_modularSensorsNetwork 1
-#endif  // UseModem_Module
+#endif  // BUILD_MODEM_TYPE
 #if defined(USE_PS_modularSensorsNetwork)
 //MSCN_TYPE_XXX is the Network Type modem  - modemTypesCurrent_t 
 /*#define MSCN_TYPE_NONE 0
@@ -209,9 +209,9 @@ typedef struct {
 #endif  // USE_PS_modularSensorsNetwork
 
 //******
-#if defined UseModem_Module
+#if defined BUILD_MODEM_TYPE
 #define USE_PS_Provider 1
-#endif  // UseModem_Module
+#endif  // BUILD_MODEM_TYPE
 //******
 //Provider types supported
 #define PROVID_TYPE_NONE    0x00
