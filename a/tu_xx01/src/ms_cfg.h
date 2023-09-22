@@ -1,6 +1,6 @@
 /*****************************************************************************
 ms_cfg.h_LT5_Mdbus_wireless - ModularSensors Config - MMW _LT5/Modbus +LTE/WiFi
-Status 2201004: 0.33.1.aac 
+Status 230922: 0.34.1.aca 
 Written By:  Neil Hancock www.envirodiy.org/members/neilh20/
 Development Environment: PlatformIO
 Hardware Platform(s): EnviroDIY Mayfly Arduino Datalogger+RS485 Wingboard
@@ -83,14 +83,15 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define BUILD_MODEM_DIGI_XBEE_CELLULAR_TRANSPARENT 3
 #define BUILD_MODEM_SIM_COM_SIM7080 4
 #define BUILD_MODEM_FACTORY 5
-//Actual Modem to build for 
+
+//Next line specify only one, actual Modem to build for 
 //#define BUILD_MODEM_TYPE BUILD_MODEM_DIGI_XBEE_WIFI
-//cc #define BUILD_MODEM_TYPE BUILD_MODEM_DIGI_XBEE_CELLULAR_TRANSPARENT
-//cc #define BUILD_MODEM_TYPE BUILD_MODEM_ESPRESSIF_ESP32 
-// cc 
+//#define BUILD_MODEM_TYPE BUILD_MODEM_DIGI_XBEE_CELLULAR_TRANSPARENT
+//#define BUILD_MODEM_TYPE BUILD_MODEM_ESPRESSIF_ESP32  
 //#define BUILD_MODEM_TYPE  BUILD_MODEM_SIM_COM_SIM7080
 #define BUILD_MODEM_TYPE BUILD_MODEM_FACTORY
 
+// Define the Modem Description
 #if BUILD_MODEM_TYPE ==  BUILD_MODEM_FACTORY 
 #define CONFIG_EXT "Digi WiFi S6/LTE XB3-C-A2"
 #elif BUILD_MODEM_TYPE == BUILD_MODEM_DIGI_XBEE_WIFI
@@ -147,9 +148,8 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define loggingInterval_MAX_CDEF_MIN 6 * 60
 
 
-// Supports DigiXBeeCellularTransparent & DigiXBeeWifi
-//#define UseModem_Module 1
 #if defined BUILD_MODEM_TYPE 
+// Supports Modems
 // The Modem is used to push data and also sync Time
 // In standalong logger, no internet, Modem can be required at factor to do a
 // sync Time Normally enable both of the following. In standalone, disable
@@ -161,9 +161,8 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 //#define USE_PUB_TSMQTT   1
 //#define  USE_PUB_UBIDOTS 1
 
-// Required for TinyGsmClient.h
 #if BUILD_MODEM_TYPE != BUILD_MODEM_SIM_COM_SIM7080
-//Unusually #undef BUILD_MODEM_SIM_COM_SIM7080
+// Required for TinyGsmClient.h - except SIM7080G
 #define TINY_GSM_MODEM_XBEE
 #endif 
 
