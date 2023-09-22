@@ -160,7 +160,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #if BUILD_MODEM_TYPE != BUILD_MODEM_SIM_COM_SIM7080
 // Required for TinyGsmClient.h - except SIM7080G
 #define TINY_GSM_MODEM_XBEE
-#endif 
+#endif // BUILD_MODEM_TYPE !=
 
 // The APN for the gprs connection, unnecessary for WiFi
 #define APN_CDEF "VZWINTERNET"

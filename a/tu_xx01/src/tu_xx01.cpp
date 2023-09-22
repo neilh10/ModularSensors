@@ -7,7 +7,7 @@ Orginially Written By:  Sara Damiano (sdamiano@stroudcenter.org)
 Development Environment: PlatformIO
 Hardware Platform: EnviroDIY Mayfly Arduino Datalogger
 Software License: BSD-3.
-  Copyright (c) 2022, Neil Hancock
+  Copyright (c) 2023, Neil Hancock
   Copyright (c) 2020, Trout Unlimited, Stroud Water Research Center (SWRC)
   and the EnviroDIY Development Team
 
@@ -1146,9 +1146,6 @@ Variable* variableList[] = {
     #else
     new Modem_RSSI(&modemPhy,  DIGI_RSSI_UUID),
     #endif //BUILD_MODEM_TYPE
-
-
-    //modemPhyRssi_calc,
 #endif  // DIGI_RSSI_UUID
 
 

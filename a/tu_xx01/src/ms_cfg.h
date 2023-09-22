@@ -104,7 +104,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define CONFIG_EXT "LTE SIM7080"
 #else 
 #define CONFIG_EXT "No Modem"
-#endif
+#endif // BUILD_MODEM_TYPE ==
 #define CONFIGURATION_DESCRIPTION_STR "LT500/Modbus TO MMW " CONFIG_EXT
 
 
@@ -164,7 +164,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #if BUILD_MODEM_TYPE != BUILD_MODEM_SIM_COM_SIM7080
 // Required for TinyGsmClient.h - except SIM7080G
 #define TINY_GSM_MODEM_XBEE
-#endif 
+#endif // BUILD_MODEM_TYPE !=
 
 // The APN for the gprs connection, unnecessary for WiFi
 #define APN_CDEF "VZWINTERNET"
@@ -181,7 +181,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 //Manage Internet - common for all providers
 #define MNGI_COLLECT_READINGS_DEF 1
 #define MNGI_SEND_OFFSET_MIN_DEF 0
-#endif  // defined BUILD_MODEM_TYPE 
+#endif  // BUILD_MODEM_TYPE 
 
 // This might need revisiting
 #define ARD_ANLAOG_MULTIPLEX_PIN A6
