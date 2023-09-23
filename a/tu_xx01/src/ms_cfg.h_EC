@@ -74,7 +74,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 //Assume Mayfly, and version determined on boot See mcuBoardVersion_
 //#define MFName_DEF "Mayfly"
 //#define HwName_DEF MFName_DEF
-#define CONFIGURATION_DESCRIPTION_STR "Electrical Conductivity MMW Digi WiFi S6/LTE XB3-C-A2"
+#define CONFIGURATION_DESCRIPTION_STR "Electrical Conductivity"
 
 // no BUILD_MODEM_TYPE 
 

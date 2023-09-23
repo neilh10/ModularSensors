@@ -1455,6 +1455,7 @@ void  managementSensorsPoll() {
 
 // ==========================================================================
 // Checks available power on battery.
+#if defined BUILD_MODEM_TYPE 
 void checkModemBaud () {
 #if BUILD_MODEM_TYPE == BUILD_MODEM_ESPRESSIF_ESP32
     /** Start [setup_esp] */
@@ -1526,9 +1527,10 @@ void checkModemBaud () {
     modemPhy.gsmModem.sendAT(GF("+UART_CUR?"));
     modemPhy.gsmModem.waitResponse();     
     /** End [setup_esp] */
-#endif  // BUILD_MODEM_TYPE
+#endif  // BUILD_MODEM_TYPE ==
 
  } // checkModemBaud
+ #endif // BUILD_MODEM_TYPE 
 
 // ==========================================================================
 // Checks available power on battery.
