@@ -1,6 +1,6 @@
 /*****************************************************************************
 ms_cfg.h_LT5KA_wireless - ModularSensors Config - MMW _LT5 Acculevel/modbus +LTE/WiFi
-Status 220330: 0.32.2 
+Status 230922: 0.34.1.aca 
 Written By:  Neil Hancock www.envirodiy.org/members/neilh20/
 Development Environment: PlatformIO
 Hardware Platform(s): EnviroDIY Mayfly Arduino Datalogger+RS485 Wingboard
@@ -20,7 +20,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 // Local default defitions here
 
 //**************************************************************************
-// This configuration is for a standard Mayfly0.5b
+// This configuration is for a standard Mayfly0.5b or 1.x
 // Sensors Used - two std to begin then
 //#define AnalogProcEC_ACT 1
 // Power Availability monitoring decisions use LiIon Voltge,
@@ -58,6 +58,8 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define MAYFLY_BAT_CHOICE MAYFLY_BAT_STC3100
 // FUT #define MAYFLY_BAT_CHOICE  MAYFLY_BAT_DIGI
 
+//Only define 1 below . SENSIRION_SHT4X is on Mayfly 1.x
+#define SENSIRION_SHT4X_UUID
 //#define ASONG_AM23XX_UUID 1
 
 //Two heavy sensors with power useage
@@ -67,11 +69,40 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 // Carrier board for Digi XBEE LTE CAT-M1 and jumper from battery
 // Digi WiFi S6 plugged in directly
 // For debug: C4 removed, strap for AA2/Vbat AA3/SolarV,
-#define MFVersion_DEF "v0.5b"
+//#define MFVersion_DEF "v0.5b"
 #define MFName_DEF "Mayfly"
 #define HwVersion_DEF MFVersion_DEF
 #define HwName_DEF MFName_DEF
-#define CONFIGURATION_DESCRIPTION_STR "LT500/SDI12+Acculevel/Modbus Digi WiFi S6/LTE XB3-C-A2 MMW"
+
+// Definitions of Modems
+#define BUILD_MODEM_DIGI_XBEE_WIFI 1
+#define BUILD_MODEM_ESPRESSIF_ESP32 2
+#define BUILD_MODEM_DIGI_XBEE_CELLULAR_TRANSPARENT 3
+#define BUILD_MODEM_SIM_COM_SIM7080 4
+#define BUILD_MODEM_FACTORY 5
+
+//Next line specify only one, actual Modem to build for 
+//#define BUILD_MODEM_TYPE BUILD_MODEM_DIGI_XBEE_WIFI
+//#define BUILD_MODEM_TYPE BUILD_MODEM_DIGI_XBEE_CELLULAR_TRANSPARENT
+//#define BUILD_MODEM_TYPE BUILD_MODEM_ESPRESSIF_ESP32  
+//#define BUILD_MODEM_TYPE  BUILD_MODEM_SIM_COM_SIM7080
+#define BUILD_MODEM_TYPE BUILD_MODEM_FACTORY
+
+// Define the Modem Description
+#if BUILD_MODEM_TYPE ==  BUILD_MODEM_FACTORY 
+#define CONFIG_EXT "Digi WiFi S6/LTE XB3-C-A2"
+#elif BUILD_MODEM_TYPE == BUILD_MODEM_DIGI_XBEE_WIFI
+#define CONFIG_EXT "Digi WIFI"
+#elif BUILD_MODEM_TYPE == BUILD_MODEM_ESPRESSIF_ESP32
+#define CONFIG_EXT "ESP32-wroom"
+#elif BUILD_MODEM_TYPE == BUILD_MODEM_DIGI_XBEE_CELLULAR_TRANSPARENT
+#define CONFIG_EXT "LTE Digi XBC3"
+#elif BUILD_MODEM_TYPE == BUILD_MODEM_SIM_COM_SIM7080
+#define CONFIG_EXT "LTE SIM7080"
+#else 
+#define CONFIG_EXT "No Modem"
+#endif
+#define CONFIGURATION_DESCRIPTION_STR "LT500/SDI12+Acculevel/Modbus TO MMW " CONFIG_EXT
 
 #define USE_MS_SD_INI 1
 #define USE_PS_EEPROM 1
@@ -113,9 +144,8 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define loggingInterval_MAX_CDEF_MIN 6 * 60
 
 
-// Supports DigiXBeeCellularTransparent & DigiXBeeWifi
-#define UseModem_Module 1
-#if UseModem_Module 
+#if defined BUILD_MODEM_TYPE 
+// Supports Modems
 // The Modem is used to push data and also sync Time
 // In standalong logger, no internet, Modem can be required at factor to do a
 // sync Time Normally enable both of the following. In standalone, disable
@@ -127,8 +157,10 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 //#define USE_PUB_TSMQTT   1
 //#define  USE_PUB_UBIDOTS 1
 
-// Required for TinyGsmClient.h
+#if BUILD_MODEM_TYPE != BUILD_MODEM_SIM_COM_SIM7080
+// Required for TinyGsmClient.h - except SIM7080G
 #define TINY_GSM_MODEM_XBEE
+#endif // BUILD_MODEM_TYPE !=
 
 // The APN for the gprs connection, unnecessary for WiFi
 #define APN_CDEF "VZWINTERNET"
@@ -145,7 +177,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 //Manage Internet - common for all providers
 #define MNGI_COLLECT_READINGS_DEF 1
 #define MNGI_SEND_OFFSET_MIN_DEF 0
-#endif  // UseModem_Module 
+#endif  // defined BUILD_MODEM_TYPE 
 
 // This might need revisiting
 #define ARD_ANLAOG_MULTIPLEX_PIN A6
@@ -221,7 +253,11 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define INA219M_VOLT_UUID "INA219_VOLT_UUID"
 #endif  // INA219_PHY_ACT
 
-#if defined ASONG_AM23XX_UUID
+#if defined SENSIRION_SHT4X_UUID
+#define SENSIRION_SHT4X_Air_Temperature_UUID "Air_Temperature_UUID"
+//#define SENSIRION_SHT4X_Air_TemperatureF_UUID "Air_TemperatureF_UUID"
+#define SENSIRION_SHT4X_Air_Humidity_UUID "Air_Humidity_UUID"
+#elif defined ASONG_AM23XX_UUID 
 #define ASONG_AM23_Air_Temperature_UUID "Air_Temperature_UUID"
 #define ASONG_AM23_Air_TemperatureF_UUID "Air_TemperatureF_UUID"
 #define ASONG_AM23_Air_Humidity_UUID "Air_Humidity_UUID"
@@ -233,11 +269,12 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 //#define MaximDS3231_TEMPF_UUID "MaximDS3231_TEMPF_UUID"
 #endif  // ENVIRODIY_MAYFLY_TEMPERATURE
 
-#if defined UseModem_Module
-// This seems to be de-stabilizing Digi S6B
+#if defined BUILD_MODEM_TYPE
+// tested Digi LTE
+// tested Digi S6B 
 #define DIGI_RSSI_UUID "DIGI_RSSI_UUID"
 //#define Modem_SignalPercent_UUID    "SignalPercent_UUID"
-#endif  // UseModem_Module
+#endif  // BUILD_MODEM_TYPE
 
 #define ProcessorStats_ACT 1
 #if defined ProcessorStats_ACT
