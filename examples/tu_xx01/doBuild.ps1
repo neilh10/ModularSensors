@@ -57,9 +57,9 @@ if (Test-Path -Path $envirodiy_dir) {
 }
 pio run --target clean
 
-# 100.1% (used 130166 bytes from 130048 bytes)
-#$hext = "_LT5KA_wireless"
-#Do-Build
+
+$hext = "_LT5KA_DigiLteXB3"
+Do-Build
 
 $hext = "_LT5_Mdbus_wireless"
 Do-Build
