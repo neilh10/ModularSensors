@@ -57,7 +57,6 @@ if (Test-Path -Path $envirodiy_dir) {
 }
 pio run --target clean
 
-
 $hext = "_LT5KA_DigiLteXB3"
 Do-Build
 
