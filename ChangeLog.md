@@ -16,7 +16,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Fixed
+## [released0.34.1-aca]
+Incremental functionality ~ LTE SIM7080G & WIFI ESP32-Wroom
+### Changed
+Digi LTE use Sleep Pin, before was airplane mode.
+Digi S6 Wifi merged with enviroDIY(develop), 
+and changes propogated forward BUILD_MODEM_TYPE
+Chnaged how sleeps - possible caused #137
+Moved SAMD51 sleep to seperate section (LoggerBase.cpp)
+Local time used for everything local - uSD. Was being done before, now very visible in setFileTimestamp()
+Build _LT5KA_DigiLteXB3 changed from _wireless - only support Digi LTE XB3 MODEM_DIGI_XBEE_CELLULAR_TRANSPARENT
+removed Build hex output "_LT5KA_wireless" as exceeds flash by 118bytes 100.1% (used 130166 bytes from 130048 bytes)
 
+### Added
+Added support for modems enviroDIY WiFi ESP32-wroom and SIM7080G
+  ~ Wifi password  and apn set in ms_cfg.ini
+  ~ seperate builds
+#142 Monitor LTE time to connect
+Better WIO_TERMINAL - though still reseting.
+For modems buidling with xx_DEBUG_DEEP outputs AT paramters
+
+### Removed
+
+### Fixed
+#129 SeqNumber roll-over
+#137 Watchdog interrupt shows during sleep 
 ## [released0.34.1-abe]
 Bug fix release
 ### Changed
