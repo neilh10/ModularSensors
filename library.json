@@ -179,16 +179,6 @@
       "platforms": "atmelavr, atmelsam"
     },
     {
-      "name": "BMP388_DEV",
-      "owner": "MartinL1",
-      "version": "https://github.com/MartinL1/BMP388_DEV.git",
-      "version_note": "~1.0.9",
-      "note": "An Arduino compatible, non-blocking, I2C/SPI library for the Bosch BMP388 barometer.",
-      "authors": ["Martin Lindupp"],
-      "frameworks": "arduino",
-      "platforms": "atmelavr, atmelsam"
-    },
-    {
       "name": "DHT sensor library",
       "owner": "adafruit",
       "library id": "19",
