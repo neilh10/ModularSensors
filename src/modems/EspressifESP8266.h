@@ -177,6 +177,7 @@
 #include "ModSensorDebugger.h"
 #undef MS_DEBUGGING_STD
 #include "TinyGsmClient.h"
+#include "ModemTypes.h"
 #include "LoggerModem.h"
 
 #ifdef MS_ESPRESSIFESP8266_DEBUG_DEEP
@@ -262,6 +263,21 @@ class EspressifESP8266 : public loggerModem {
     bool        ESPwaitForBoot(void);
     const char* _ssid;
     const char* _pwd;
+
+    //uint16_t updateModemMetadata_cnt = 0;
+
+    // Access Management
+    char* _ssid_buf = NULL;
+    char* _pwd_buf  = NULL;
+    
+public: 
+    //bool updateModemMetadata(void) override; //tbd
+    
+    void   setWiFiId(const char* WiFiId, bool copyId = false);
+    void   setWiFiPwd(const char* WiFiPwd, bool copyId = false);
+    String getWiFiId(void);
+    String getWiFiPwd(void);
+
 };
 
 /**

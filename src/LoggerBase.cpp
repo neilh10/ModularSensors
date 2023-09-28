@@ -7,7 +7,7 @@
  * @brief Implements the Logger class.
  */
 
-#include <ModularSensors.h>   // Include the main header for ModularSensors
+#include <ModularSensors.h>   // Needed for the version number
 #include "dataPublisherBase.h"
 
 /**
@@ -20,6 +20,7 @@
 #include <EnableInterrupt.h>
 // For all i2c communication, including with the real time clock
 #include <Wire.h>
+
 
 #if defined BOARD_SDQ_QSPI_FLASH
 // This works as a static instance and allows initializer for
@@ -55,14 +56,22 @@ volatile bool Logger::isLoggingNow = false;
 volatile bool Logger::isTestingNow = false;
 volatile bool Logger::startTesting = false;
 
+// For SAMD or processors with internal RTC, there may also be an external RTC
+// that keeps time through power off. 
+// The internal RTC is zero_sleep_rtc  name traceable to SAMD21/Arduino ZERO
+// Any external RTC is named as rtcExtPhy. The Mayfly only has the external RTC
 // Initialize the RTC for the SAMD boards
-#if defined(ARDUINO_ARCH_SAMD)  || defined(ARDUINO_SAMD_ZERO)
+#if defined(ARDUINO_ARCH_SAMD) || defined(ARDUINO_SAMD_ZERO)
 // RTCZero internal registers based on year 2000/20yk
 // "Epoch19yk" seconds from 1900, using  "struct tm", mktime, gmtime
-RTC_INT_CLASS zero_sleep_rtc;
-#define log_zero_sleep_rtc zero_sleep_rtc
+RTC_INT_CLASS Logger::zero_sleep_rtc;
+//RTC_INT_CLASS zero_sleep_rtc;
+//RTCZero Logger::zero_sleep_rtc;
+#define zr zero_sleep_rtc
 //For time being assume ony internal RTC - zero_sleep_rtc  name to be changed later
-#define rtcExtPhy log_zero_sleep_rtc
+#define rtcExtPhy zero_sleep_rtc
+//SAMD51 has two Alarms and requires an ID, SAMD21 had one Alarm
+#define RTC_ALM_ID 0
 #endif
 
 #if defined USE_RTCLIB
@@ -328,6 +337,7 @@ void Logger::attachModem(loggerModem* modem) {
     _logModem = modem;
 }
 
+
 // Takes advantage of the modem to synchronize the clock
 bool Logger::syncRTC() {
     bool success = false;
@@ -403,7 +413,7 @@ void Logger::publishDataToRemotes(void) {
     MS_DBG(F("Sending out remote data."));
 
     for (uint8_t i = 0; i < MAX_NUMBER_SENDERS; i++) {
-        if (dataPublishers[i] != NULL) {
+        if (dataPublishers[i] != nullptr) {
             _dataPubInstance = i;
             PRINTOUT(F("\nSending data to ["), i, F("]"),
                      dataPublishers[i]->getEndpoint());
@@ -530,7 +540,7 @@ void Logger::setNowUTCEpoch(uint32_t ts) {
 #elif defined ARDUINO_ARCH_SAMD
 
 uint32_t Logger::getNowUTCEpoch(void) {
-    uint32_t currentEpochTime = log_zero_sleep_rtc.now().unixtime();
+    uint32_t currentEpochTime = zero_sleep_rtc.now().unixtime();
     if (!isRTCSane(currentEpochTime)) {
         PRINTOUT(F("Bad time, resetting clock."), currentEpochTime, " ",
                  formatDateTime_ISO8601(currentEpochTime), " Setting to ",
@@ -541,7 +551,7 @@ uint32_t Logger::getNowUTCEpoch(void) {
     return currentEpochTime;
 }
 void Logger::setNowUTCEpoch(uint32_t ts) {
-    log_zero_sleep_rtc.adjust(DateTime(ts));
+    zero_sleep_rtc.adjust(DateTime(ts));
 }
 uint32_t Logger::getNowLocalEpoch(void) {
     return (uint32_t)(getNowUTCEpoch() + (_loggerRTCOffset * HOURS_TO_SECS));
@@ -554,7 +564,12 @@ uint32_t Logger::getNowLocalEpoch(void) {
 // The DateTime object constructor requires the number of seconds from
 // January 1, 2000 (NOT 1970) as input, so we need to subtract.
 DateTime Logger::dtFromEpoch(uint32_t epochTime) {
+    #if defined __AVR__
     DateTime dt(epochTime - EPOCH_TIME_OFF);
+    #else
+    //SeeedArduinoRTC lib assumes Epoch
+    DateTime dt(epochTime);
+    #endif 
     return dt;
 }
 
@@ -596,8 +611,7 @@ String Logger::formatDateTime_ISO8601(DateTime& dt) {
     return dateTimeStr;
 }
 
-
-// This converts an epoch time (unix time) into a ISO8601 formatted string
+// This converts an epoch time (unix time) into a ISO8601 formatted string.
 // It assumes the supplied date/time is in the LOGGER's timezone
 String Logger::formatDateTime_ISO8601(uint32_t epochTimeTz) {
     // Create a DateTime object from the epochTime
@@ -709,13 +723,13 @@ void Logger::markTime(void) {
 // rate
 uint8_t Logger::checkInterval(void) {
     uint8_t retval = CIA_NOACTION;
-#if defined(ARDUINO_AVR_ENVIRODIY_MAYFLY)
     uint32_t checkTime = getNowLocalEpoch();
+    int modulus_time_sec =checkTime % (_loggingIntervalMinutes * 60);
     MS_DBG(F("Current Epoch local Timestamp:"), checkTime, F("->"),
            formatDateTime_ISO8601(checkTime));
     MS_DBG(F("Logging interval in seconds:"), (_loggingIntervalMinutes * 60));
     MS_DBG(F("Mod of Logging Interval:"),
-           checkTime % (_loggingIntervalMinutes * 60));
+           modulus_time_sec);
 
     if (_sendOffset_act) {
         // A Timer is counting down to perform delayed Post Readings
@@ -729,14 +743,13 @@ uint8_t Logger::checkInterval(void) {
         }
     }
 
-    if (checkTime % (_loggingIntervalMinutes * 60) == 0) {
+    if (modulus_time_sec < 59 ) {
         // Update the time variables with the current time
         markTime();
         MS_DBG(F("Take Sensor readings. Epoch:"), Logger::markedLocalEpochTime);
 
         // Check what actions for this time period
         retval |= CIA_NEW_READING;
-
         if (1 < _sendEveryX_num) {
             _sendEveryX_cnt++;
             if (_sendEveryX_cnt >= _sendEveryX_num) {
@@ -812,20 +825,6 @@ uint8_t Logger::checkInterval(void) {
         alertOff();
         delay(25);
     }
-#else  // ARDUINO_ARCH_SAMD
-       // Assume that have slept for the right amount of time
-    markTime();
-    DateTime rtcExtNowDt = rtcExtPhy.now();
-    // const char *DateFmt = "YYMMDD:hhmmss";- caused reboot
-    // rtcExtNowDt.toString((char *)DateFmt) const char *DateFmt =
-    // "YY-MM-DD:hhmmss"; uint32_t rtcExtNowTzSec = rtcExtNowDt.unixtime()+
-    // ((int32_t)getTZOffset()*HOURS_TO_SECS);
-    MS_DBG(F("Logging epoch time marked:"), Logger::markedLocalEpochTime, " ",
-           Logger::formatDateTime_ISO8601(Logger::markedLocalEpochTime), "extRtc",
-           rtcExtNowDt.timestamp(DateTime::TIMESTAMP_FULL));
-    //  - caused reboot
-    retval = true;
-#endif
     return retval;
 }
 
@@ -967,7 +966,7 @@ inline uint16_t dumpFreeRam(uint16_t maxCount)
     }
     PRINTOUT(F("\nFree ram never allocated between (bytes dec)"),nu_cnt,F("and"),fr_cnt);
     return fr_cnt;
-} //dumpFreeRam(
+} //dumpFreeRam
 #else 
 inline uint16_t dumpFreeRam(uint16_t maxCount) {return 0;}
 #endif //MS_DUMP_FREE_RAM
@@ -981,9 +980,11 @@ int16_t freeRamCalcLb() {
 inline uint16_t freeRamCnt() {return 0;} 
 inline uint16_t dumpFreeRam(uint16_t maxCount) {return 0;}
 #endif // __AVR__
+
 // Puts the system to sleep to conserve battery life.
 // This DOES NOT sleep or wake the sensors!!
-void Logger::systemSleep(uint8_t sleep_min) {
+#if defined(__AVR__)
+void Logger::systemSleep(uint8_t sleep_min) { //__AVR__
 #if defined MS_SAMD_DS3231 || not defined ARDUINO_ARCH_SAMD
     // Don't go to sleep unless there's a wake pin!
     if (_mcuWakePin < 0) {
@@ -1012,61 +1013,8 @@ void Logger::systemSleep(uint8_t sleep_min) {
     // on next match
     rtcExtPhy.clearINTStatus();
     PRINTOUT(F("Going to sleep. Ram("),freeRamLb(),F("/"),freeRamCnt(),F(")  ZZzzz..."));
-#elif defined ARDUINO_ARCH_SAMD
-
-    // Make sure interrupts are enabled for the clock
-    NVIC_EnableIRQ(RTC_IRQn);       // enable RTC interrupt
-    NVIC_SetPriority(RTC_IRQn, 0);  // highest priority
-
-    // Alarms on the RTC built into the SAMD21 appear to be identical to
-    // those in the DS3231.  See more notes below. We're setting the alarm
-    // seconds to 59 and then seting it to go off whenever the seconds match
-    // the 59.  I'm using 59 instead of 00 because there seems to be a bit
-    // of a wake-up delay
-    uint16_t local_secs;
-    uint32_t targetWakeup_secs;
-    uint32_t timeNow_secs;
-    uint32_t adjust_secs;
-    if (0 == sleep_min) {
-        local_secs = (_loggingIntervalMinutes * 60);
-    } else {
-        local_secs = (sleep_min * 60);
-    }
-    // zero_sleep_rtc.setAlarmSeconds(local_secs);
-    timeNow_secs      = getNowUTCEpoch();
-    targetWakeup_secs = timeNow_secs + local_secs;
-    adjust_secs       = targetWakeup_secs % 60;
-    targetWakeup_secs -= adjust_secs;
-    MS_DBG("Setting alarm (", local_secs, "+", timeNow_secs, ") on RTC @",
-           targetWakeup_secs, " ", formatDateTime_ISO8601(targetWakeup_secs),
-           "\n  adj=", adjust_secs, " fm now=", timeNow_secs,
-           " Awake=", timeNow_secs - wakeUpTime_secs);
-    /*MS_DBG("Setting alarm (", local_secs, "+", timeNow_secs, ") on RTC @",
-           targetWakeup_secs, " ", formatDateTime_ISO8601(targetWakeup_secs),
-           " adj=", adjust_secs, " fm now=", timeNow_secs,
-           " Awake=", timeNow_secs - wakeUpTime_secs);   */
-//Enable for SAMD51 - slightly different than SAMD21
-
-#define RTC_ALM_ID 0
-/*    log_zero_sleep_rtc.setAlarm(RTC_ALM_ID,(targetWakeup_secs));
-    log_zero_sleep_rtc.enableAlarm(RTC_ALM_ID,RTC_SAMD51::MATCH_HHMMSS);
-    log_zero_sleep_rtc.attachInterrupt(alarmMatch);*/
-    DateTime timeNow = log_zero_sleep_rtc.now();   
-    DateTime timeAlm = log_zero_sleep_rtc.alarm(RTC_ALM_ID);   
-    PRINTOUT("  now   DDHHMMSS ",timeNow.day(),timeNow.hour(),timeNow.minute(),timeNow.second());
-    PRINTOUT("  alarm DDHHMMSS ",timeAlm.day(),timeAlm.hour(),timeAlm.minute(),timeAlm.second());
-
-#define zsr log_zero_sleep_rtc
-    /*MS_DBG("Alm:", zsr.getAlarmYear(), zsr.getAlarmMonth(), zsr.getAlarmDay(),
-           "-", zsr.getAlarmHours(), ":", zsr.getAlarmMinutes(), ":",
-           zsr.getAlarmSeconds());*/
-    // Assume max is an hour - need to revisit
-    //log_zero_sleep_rtc.enableAlarm(RTC_ALM_ID,log_zero_sleep_rtc.MATCH_MMSS);
-    delay(100); //Debug output
-    // Send one last message before shutting down serial ports
-    PRINTOUT(F("Going to sleep. Ram("),freeRamCalcLb(),F("/"),freeRamCnt(),F(")  ZZzzz..."));
 #endif
-    //delay(200); //Debug output
+
 // Wait until the serial ports have finished transmitting
 // This does not clear their buffers, it just waits until they are finished
 // TODO(SRGDamia1):  Make sure can find all serial ports
@@ -1076,7 +1024,7 @@ void Logger::systemSleep(uint8_t sleep_min) {
 #if defined DEBUGGING_SERIAL_OUTPUT
     DEBUGGING_SERIAL_OUTPUT.flush();  // for debugging
 #endif
-    delay(100); //Debug output
+
     // Stop any I2C connections
     // This function actually disables the two-wire pin functionality and
     // turns off the internal pull-up resistors.
@@ -1109,56 +1057,15 @@ void Logger::systemSleep(uint8_t sleep_min) {
 #ifndef USE_TINYUSB
     USBDevice.detach();
 #endif
-    //nh dbg restoreUSBDevice = true;
-
-    //debug
-    timeNow_secs = log_zero_sleep_rtc.now().unixtime();
-    PRINTOUT("Wake1 in ",targetWakeup_secs-timeNow_secs);
-    delay(10);
+    restoreUSBDevice = true;
     // }
     // Disable systick interrupt:  See
     // https://www.avrfreaks.net/forum/samd21-samd21e16b-sporadically-locks-and-does-not-wake-standby-sleep-mode
-    //nh dbg keep print going SysTick->CTRL &= ~SysTick_CTRL_TICKINT_Msk;
+    SysTick->CTRL &= ~SysTick_CTRL_TICKINT_Msk;
     // Now go to sleep
-    //However in with USB attached may not truly sleep.
-    //
-    bool sleeping=true;
-    do {
-
-#if defined(MS_LOGGERBASE_DEBUG) || defined(MS_LOGGERBASE_SLEEP_DEBUG)
-    // Maintens MS_DEBUGGING_STD output, but current is 13mA/SAMD51
     SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
-#else
-    // This drops the current to 3.3mA/SAMD51, however Debug output doesn't
-    // recover.
-    uint8_t rd_delay = 10;
-    /* Sleep Posibilities
-    PM_SLEEPCFG_SLEEPMODE_STANDBY 3.3mA Can wake and run
-    PM_SLEEPCFG_SLEEPMODE_HIBERNATE 3.1mA reset on int.watchdig
-    PM_SLEEPCFG_SLEEPMODE_BACKUP 3.1mA requires recovery
-    PM_SLEEPCFG_SLEEPMODE_OFF  2.9mA requires reset from ? watchdog*/
-    uint8_t sleepMode_req = PM_SLEEPCFG_SLEEPMODE_STANDBY;
-    // uint8_t sleepMode_req  = PM_SLEEPCFG_SLEEPMODE_HIBERNATE;
-    // PM->STDBYCFG.FASTWKUP =0; default
-    PM->SLEEPCFG.bit.SLEEPMODE = sleepMode_req;
-    do {
-        if (PM->SLEEPCFG.bit.SLEEPMODE != sleepMode_req) break;
-    } while (--rd_delay);  // Wait for it to take
-#endif
     __DSB();
     __WFI();
-
-        timeNow_secs = log_zero_sleep_rtc.now().unixtime();
-        if (targetWakeup_secs <= timeNow_secs) 
-        {
-            sleeping =false;
-        } else {
-            Serial.print(" X"); //nh print here?
-            Serial.print((int32_t)targetWakeup_secs-(int32_t)timeNow_secs); //count 
-            delay(1000);
-        }
-
-    } while (sleeping);
 
 #elif defined ARDUINO_ARCH_AVR
 
@@ -1200,7 +1107,8 @@ void Logger::systemSleep(uint8_t sleep_min) {
 
     // Set the sleep enable bit.
     sleep_enable();
- 
+
+    int sleep_cnt=0;
 #if defined ARDUINO_ARCH_AVR
     //Assuming an external RTC which activates processor aka Mayfly
     // There maybe intermediate interrupts eg Watchdog, that are ignored
@@ -1213,7 +1121,7 @@ void Logger::systemSleep(uint8_t sleep_min) {
         // Actually put the processor into sleep mode.
         // This must happen after the SE bit is set.
         sleep_cpu();
-
+        sleep_cnt++;
 #endif
     // ---------------------------------------------------------------------
 
@@ -1292,22 +1200,462 @@ void Logger::systemSleep(uint8_t sleep_min) {
     //disableInterrupt(_mcuWakePin); moved up disable
 
 #elif defined ARDUINO_ARCH_SAMD
-    // nh dbg log_zero_sleep_rtc.disableAlarm(RTC_ALM_ID);
+    // not needed zero_sleep_rtc.disableAlarm(RTC_ALM_ID);
 #endif
 
     // Wake-up message
     wakeUpTime_secs = getNowLocalEpoch();
-    PRINTOUT(F("\n... zzzZZ Awake @"), formatDateTime_ISO8601(wakeUpTime_secs)
- #if defined ARDUINO_ARCH_SAMD   
-    ,targetWakeup_secs, timeNow_secs
-#endif
-    );
-    delay(100);
+    PRINTOUT(F("\n... zzzZZ Awake @"),sleep_cnt, formatDateTime_ISO8601(wakeUpTime_secs) );
+    watchDogTimer.debugInfo();  // enable watchdog indications
+    watchDogTimer.resetWatchDog();
+
     // The logger will now start the next function after the systemSleep
     // function in either the loop or setup
 }
 
 
+// end Logger::systemSleep AVR
+#else // !__AVR__
+#define serialBaudDebugDef 115200 
+#define SerialStd STANDARD_SERIAL_OUTPUT
+// https://www.avrfreaks.net/forum/samd21-samd21e16b-sporadically-locks-and-does-not-wake-standby-sleep-mode
+void lowpower_disable_ints(void) {
+// Wio Terminal
+// This is working through the specific schematic to turn off specific parts
+// then turning them back on and verifying they are correctly initialized
+
+
+// Wait until the serial ports have finished transmitting
+// This does not clear their buffers, it just waits until they are finished
+// TODO(SRGDamia1):  Make sure can find all serial ports
+#if defined(STANDARD_SERIAL_OUTPUT)
+    STANDARD_SERIAL_OUTPUT.flush();  // for debugging
+    //STANDARD_SERIAL_OUTPUT.end(); doesn't work
+#endif
+#if defined DEBUGGING_SERIAL_OUTPUT
+    DEBUGGING_SERIAL_OUTPUT.flush();  // for debugging
+#endif
+#if defined USB_SERIALSTD 
+//tbd - need to detect if USB connected, to determine if needed to restor
+#if defined(USE_TINYUSB)
+//??
+        //USBDevice.detach();
+#elif defined(USBCON)
+//??
+        //USBDevice.detach();
+#endif //USE_TINYUSB
+#endif // USB_SERIALSTD 
+
+    // Stop any I2C connections
+    // This function actually disables the two-wire pin functionality and
+    // turns off the internal pull-up resistors.
+    Wire.end();
+
+//Wio Terminal has two I2Cs
+// I2C0  RPI/U3 ID_SD & ID_SC,  internal LIS3DHTR, ATECC608 
+// I2C1  RPI/U3 GPIO2/SDA1 & GPIO3/SCL1
+// I2C0_SCL has pullups 4.7K,R14 & R13. so no interal pullups 
+//#define PIN_WIRE0_SLEEP  
+// Now force the I2C pins to LOW
+// I2C devices have a nasty habit of stealing power from the SCL and SDA pins...
+// This will only work for the "main" I2C/TWI interface
+#if defined PIN_WIRE0_SLEEP
+#ifdef  PIN_WIRE_SDA
+    pinMode(SDA, OUTPUT);
+    digitalWrite(SDA, LOW);
+#endif
+#ifdef PIN_WIRE_SCL
+    pinMode(SCL, OUTPUT);
+    digitalWrite(SCL, LOW);
+#endif
+#endif //PIN_WIRE1_SLEEP
+
+#if defined WIO_TERMINAL
+#pragma message ("Low Power for WIO_TERMINAL") 
+  // in ordfder of variant.h 
+  // LED
+  // TX/RX - can be switched with ROLE
+  // Digital and Analog Arduino pins
+  // RPI BCM Connector - no action
+  // FPC Connector - no action 
+  // RPI Analog Iverlay - no action
+  // USB - PIN_USB_HOST_ENABLE (for power)
+  //Button_1 _2 _3 - cct pullup 4.7K  no action
+  //SWITCH_X _Z _Y  _B _U pulled up 100K - no action
+
+  // IRQ0  PC20 From RTL8720D - 
+  pinMode(IRQ0,  INPUT_PULLUP); //?
+  //Buzzer_CTR - Output control, Q4 driver, pulled down
+  //pinMode(BUZZER_CTR,  INPUT_PULLDOWN);
+
+  //MIC_INPUT - no action
+
+  //GCLK - debug leave
+  //Serial1 sercom2
+  //Serial2 sercon1
+  // I2C WIRE sercom3 - pulled up ext
+  // I2C WIRE1 sercom4 -pulled up?
+  //    GYROSCOPE - no external pull U5 LIS3DHTR PIN_WRE1_SCL _SDA 
+  //  
+  //pinMode(GYROSCOPE_INT1,  INPUT_PULLUP); // Push-Pull - no action 
+
+  // micro SD socket 
+  //SDCARD_SPI/SPI2  _SCK_PIN _SS_PIN _MOSI  _MISO _DET
+  //  SDCARD_DET_PIN is pulled high with 100K
+  pinMode(SDCARD_SS_PIN,  INPUT_PULLUP);
+  pinMode(SDCARD_DET_PIN,  INPUT);
+
+  //LCD
+  //SPI LCD_SCK _CS  _MOSI_ MISOC  
+  //    LCD_D/C 
+  //    LCD_RESET  - Pulled hihg 4.7K
+  //    LCD_BACKLIGHT=LOW  off
+
+  pinMode(LCD_SS_PIN,   INPUT_PULLUP);
+  pinMode(LCD_SCK_PIN,  INPUT_PULLDOWN);
+  pinMode(LCD_MISO_PIN, INPUT_PULLDOWN);
+  pinMode(LCD_MOSI_PIN, INPUT_PULLDOWN);
+  pinMode(LCD_RESET,    INPUT);
+  //Something causes to go from 6.0 to 6.5mA
+  /*pinMode(LCD_DC,       INPUT_PULLDOWN); //??
+  pinMode(LCD_XL,       INPUT_PULLDOWN);  
+  pinMode(LCD_YU,       INPUT_PULLDOWN);  
+  pinMode(LCD_XR,       INPUT_PULLDOWN);  
+  pinMode(LCD_YD,       INPUT_PULLDOWN); */
+
+  pinMode(LCD_BACKLIGHT, OUTPUT);
+  digitalWrite(LCD_BACKLIGHT, LOW);
+
+  //Turn off WiFi RTL8720D_CHIP_PU = LOW
+ // pinMode(RTL8720D_CHIP_PU, OUTPUT);
+ // digitalWrite(RTL8720D_CHIP_PU, LOW);
+  // For power off, should other pins be low
+  // RTL8720D_TXD _RXD
+  // RTL8720D_SPI  _MISO_PIN _MOSI_PIN _SCK_PIN _SS_PIN  
+  //RTL8720D_GPIO0    //low
+
+  //QSPI  W25Q32JVZPIM
+  // PIN_QSPI_CS _SCK _IO0  _IO1 _IO2 _IO3
+  // PIN_QSPI_CS  should be high, 
+  pinMode(PIN_QSPI_CS,  INPUT_PULLUP);
+  // others are high impedance, so could pulled weakly low to hold them
+  pinMode(PIN_QSPI_SCK, INPUT_PULLDOWN);
+  pinMode(PIN_QSPI_IO0, INPUT_PULLDOWN);
+  pinMode(PIN_QSPI_IO1, INPUT_PULLDOWN);
+  pinMode(PIN_QSPI_IO2, INPUT_PULLDOWN);
+  pinMode(PIN_QSPI_IO3, INPUT_PULLDOWN);
+
+  //I2S sent to RPI - not used
+  //Light sensor - input normally pulled low through 10K
+  //ir sensors - output pulled low 
+
+ //U11 ATECC608/DNP  I2C0_SCL _SDA 
+ 
+//Power SW for RPI IO - outputs pulled low.
+//OUTPUT_CTR_5V 
+//OUTPUT_CTR_3V3
+
+#endif //WIO_TERMINAL
+    //Disable regular SysTick 
+    SysTick->CTRL &= ~(SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_ENABLE_Msk);
+
+    //some possible further actions
+    //tbd disable processor ADC
+    //tbd turn off brown out detector
+    //tbd 
+    // wiring.c turn off un-needed peripherals
+    // need int CLKS, CLK_APBAMASK_RTC 
+
+    /* for time being leave on
+    MCLK->APBAMASK.reg &= ~(MCLK_APBAMASK_SERCOM0 | MCLK_APBAMASK_SERCOM1 | MCLK_APBAMASK_TC0 | MCLK_APBAMASK_TC1);
+
+    //Need 
+    MCLK->APBBMASK.reg &= ~(MCLK_APBBMASK_SERCOM2 | MCLK_APBBMASK_SERCOM3 | MCLK_APBBMASK_TCC0 | MCLK_APBBMASK_TCC1 | MCLK_APBBMASK_TC3 | MCLK_APBBMASK_TC2);
+
+                        // 0x2000 bit appearrs to be always on;
+    MCLK->APBCMASK.reg &=  ~(MCLK_APBCMASK_TCC2 | MCLK_APBCMASK_TCC3 | MCLK_APBCMASK_TC4 | MCLK_APBCMASK_TC5 );
+
+    MCLK->APBDMASK.reg &= ~(MCLK_APBDMASK_DAC | MCLK_APBDMASK_SERCOM4 | MCLK_APBDMASK_SERCOM5 | MCLK_APBDMASK_ADC0 | MCLK_APBDMASK_ADC1 | MCLK_APBDMASK_TCC4
+            | MCLK_APBDMASK_TC6 | MCLK_APBDMASK_TC7 | MCLK_APBDMASK_SERCOM6 | MCLK_APBDMASK_SERCOM7);
+    */
+    // Turn off free running Cycle Count Register in DWT_CTRL
+    DWT->CTRL &= ~DWT_CTRL_CYCCNTENA_Msk;
+
+} // lowpower_disable_ints
+
+void lowpower_enable_ints(void) {
+    //Re-enable clocks in the order that they are needed
+    SysTick_Config( SystemCoreClock / 1000 );
+    //Data Watchpoint and Trace Unit - 
+    // Seperate core arm_cortexm4_processor_trm_100166_0001_00_en Technical Ref Manual.pdf
+    // This is needed by protocols: OneWire
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+
+    //tbd also need to look at enable what was disabled 
+    // \framework-arduino-samd-seeed\cores\arduino\main.cpp init.cpp:init()
+#if defined PIN_WIRE0_SLEEP
+// Re-start the I2C interface
+#ifdef PIN_WIRE_SDA
+    pinMode(SDA, INPUT_PULLUP);  // set as input with the pull-up on
+#endif
+#ifdef PIN_WIRE_SCL
+    pinMode(SCL, INPUT_PULLUP);
+#endif
+#endif // PIN_WIRE1_SLEEP
+    Wire.begin();
+    // Eliminate any potential extra waits in the wire library
+    // These waits would be caused by a readBytes or parseX being called
+    // on wire after the Wire buffer has emptied.  The default stream
+    // functions - used by wire - wait a timeout period after reading the
+    // end of the buffer to see if an interrupt puts something into the
+    // buffer.  In the case of the Wire library, that will never happen and
+    // the timeout period is a useless delay.
+    Wire.setTimeout(0);    
+
+#if defined USB_SERIALSTD 
+    // Reattach the USB after waking - doest work
+    //if (restoreUSBDevice) 
+    {
+
+#if defined(USE_TINYUSB)
+        //??Adafruit_TinyUSB_Core_init();
+        //??tinyusb_task();
+        //USBDevice.attach();
+#elif defined(USBCON)
+        //USBDevice.init();
+        //USBDevice.attach();
+#endif //USE_TINYUSB
+        #if 0
+        uint32_t startTimer = millis();
+        while (!SERIAL_PORT_USBVIRTUAL && ((millis() - startTimer) < 1000L)) {
+            // wait
+        }
+        SerialStd.begin(serialBaudDebugDef);
+        #endif //0
+    }
+#else  // USB_SERIALSTD 
+    //This ensures that the ports are all setup as well
+    STANDARD_SERIAL_OUTPUT.begin(serialBaudDebugDef);
+#endif // USB_SERIALSTD 
+
+}  // lowpower_enable_ints
+
+#if 0
+#define print_mc_status() print_act_status()
+
+void print_rtc_time_field(uint32_t time_value) {
+    //Serial.print("Time ");
+    SerialStd.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.bit.YEAR );
+    SerialStd.print("/");
+    SerialStd.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.bit.MONTH );
+    SerialStd.print("/");
+    SerialStd.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.bit.DAY );
+    SerialStd.print(" ");
+    SerialStd.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.bit.HOUR );
+    SerialStd.print(":");
+    SerialStd.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.bit.MINUTE );
+    SerialStd.print(":");
+    SerialStd.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.bit.SECOND );        
+ }
+void print_act_status(void) {
+
+    SerialStd.print("Alm ");
+    //SerialStd.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.reg,HEX);
+    print_rtc_time_field(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.reg);
+    SerialStd.print(" Match ");
+    //SerialStd.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].ALARM.reg,HEX);
+    SerialStd.print(RTC->MODE2.Mode2Alarm[RTC_ALM_ID].MASK.bit.SEL ,HEX);
+
+    SerialStd.print(" Ctl ");
+    SerialStd.print(RTC->MODE2.CTRLA.reg ,HEX);
+    SerialStd.print(" Mhz=");
+    SerialStd.print(SystemCoreClock/1000000); 
+    uint32_t nvicPriority= NVIC_GetPriorityGrouping();
+    SerialStd.print(" NVIC ");
+    SerialStd.println(nvicPriority);
+
+#if 0 //defined USB_SERIALSTD
+    SerialStd.print("Check actIRQ:");
+    int intlp;
+    for (intlp=0; intlp< PERIPH_COUNT_IRQn; intlp++)
+    {
+        if (NVIC_GetEnableIRQ((IRQn_Type)intlp)) {
+            SerialStd.print(" ");
+            SerialStdUSB.print(intlp);
+        }
+    }
+    SerialStd.print(" TotChecked=");
+    SerialStd.println(intlp);
+    delay(100);
+#endif //USB_SERIALSTD
+ 
+}
+#else 
+#define print_mc_status() 
+#endif 
+
+// Use this to indicate a debug value
+void flash_builtinLed(int count, int space_ms)
+{
+    for (int lpcnt = count; lpcnt > 0; lpcnt--)
+    {
+        digitalWrite(LED_BUILTIN, HIGH); // Show we're awake again
+        delay(space_ms);
+        digitalWrite(LED_BUILTIN, LOW);
+        delay(space_ms);
+    }
+} // flash_redLed
+
+
+void Logger::systemSleep(uint8_t sleep_min) { //SAMDx
+    //For SAMDx using the built in USB  it simulates sleep. 
+    //   So far haven't figure out how to restore USB after sleep
+    // If it is built to use the Serial1 then it actually sleeps
+
+    // Make sure interrupts are enabled for the clock
+    NVIC_EnableIRQ(RTC_IRQn);       // enable RTC interrupt
+    NVIC_SetPriority(RTC_IRQn, 0);  // highest priority
+
+    // Alarms on the RTC built into the SAMD21/51 are set to every minute
+    // The setting of the internal RTC alarm time that wakes up the processor
+    // is set an intialization. 
+    // An option is ARCH_SAMD_SET_RTC_EACH_ALARM but hasn't found to work
+    uint32_t timeNow_secs = getNowUTCEpoch();
+    uint32_t targetWakeup_secs;
+    targetWakeup_secs = timeNow_secs + RTC_ALARM_SEC;
+#if 0
+
+    uint16_t local_secs;
+
+    uint32_t adjust_secs;
+    if (0 == sleep_min) {
+        local_secs = (_loggingIntervalMinutes * 60);
+    } else {
+        local_secs = (sleep_min * 60);
+    }
+
+    targetWakeup_secs = timeNow_secs + local_secs;
+    adjust_secs       = targetWakeup_secs % 60;
+    targetWakeup_secs -= adjust_secs;
+    MS_DBG("Setting alarm (", local_secs, "+", timeNow_secs, ") on RTC @",
+           targetWakeup_secs, " ", formatDateTime_ISO8601(targetWakeup_secs),
+           "\n  adj=", adjust_secs, " fm now=", timeNow_secs,
+           " Awake=", timeNow_secs - wakeUpTime_secs);
+#endif //0
+    #if defined ARCH_SAMD_SET_RTC_EACH_ALARM
+    DateTime timeNow = zero_sleep_rtc.now();   
+    DateTime timeAlm = zero_sleep_rtc.alarm(RTC_ALM_ID);   
+    PRINTOUT("  now   DDHHMMSS ",timeNow.day(),timeNow.hour(),timeNow.minute(),timeNow.second());
+    PRINTOUT("  alarm DDHHMMSS ",timeAlm.day(),timeAlm.hour(),timeAlm.minute(),timeAlm.second());
+
+    /*MS_DBG("Alm:", zr.getAlarmYear(), zr.getAlarmMonth(), zr.getAlarmDay(),
+           "-", zr.getAlarmHours(), ":", zr.getAlarmMinutes(), ":",
+           zr.getAlarmSeconds());*/
+    // Assume max is an hour - need to revisit
+    //zero_sleep_rtc.enableAlarm(RTC_ALM_ID,zero_sleep_rtc.MATCH_MMSS);
+    #endif //ARCH_SAMD_SET_RTC_EACH_ALARM
+    delay(100); //Debug output
+    // Send one last message before shutting down serial ports
+    PRINTOUT(F("Going to sleep. Ram("),freeRamCalcLb(),F("/"),freeRamCnt(),F(") SAM ZZzzz..."));
+    print_mc_status();
+
+    bool sleeping=true;
+    // Disable the watch-dog timer
+    watchDogTimer.disableWatchDog();
+
+    // Sleep code from ArduinoLowPowerClass::sleep()
+
+    //debug
+    #if defined ARCH_SAMD_SET_RTC_EACH_ALARM
+    timeNow_secs = zero_sleep_rtc.now().unixtime();
+    PRINTOUT("Wake1 in ",targetWakeup_secs-timeNow_secs);
+    delay(10);
+    #endif // ARCH_SAMD_SET_RTC_EACH_ALARM
+
+#if !defined USB_NOSLEEP 
+
+    lowpower_disable_ints();
+    // Now go to sleep
+    //However in with USB attached may not truly sleep.
+
+    //do {
+    uint8_t rd_delay = 50;
+#if 0// defined(MS_LOGGERBASE_DEBUG) || defined(MS_LOGGERBASE_SLEEP_DEBUG)
+    // Maintens MS_DEBUGGING_STD output, but current is 13mA/SAMD51
+    SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
+#else 
+    SCB->SCR &= ~SCB_SCR_SLEEPDEEP_Msk;
+#endif
+
+	#if defined(__SAMD51__) 
+    #if defined WIO_TERMINAL
+    // This works - with _STANDBY Serial1 doesn't recover
+    #define MS_SLEEPCFG_MODE PM_SLEEPCFG_SLEEPMODE_IDLE2 
+    //#define MS_SLEEPCFG_MODE PM_SLEEPCFG_SLEEPMODE_STANDBY
+    #else
+    // Adafruit Express M4
+    #define MS_SLEEPCFG_MODE PM_SLEEPCFG_SLEEPMODE_STANDBY
+    #endif //WIO_TERMINAL
+    PM->SLEEPCFG.reg = (MS_SLEEPCFG_MODE & PM_SLEEPCFG_MASK );
+    do {
+        if (PM->SLEEPCFG.reg == (MS_SLEEPCFG_MODE & PM_SLEEPCFG_MASK )) break;
+    } while (--rd_delay);  // Wait for it to take
+	#else
+
+    /* SAMD21 Slightly different 
+    PM_SLEEPCFG_SLEEPMODE_STANDBY 3.3mA Can wake and run
+    PM_SLEEPCFG_SLEEPMODE_HIBERNATE 3.1mA reset on int.watchdig
+    PM_SLEEPCFG_SLEEPMODE_BACKUP 3.1mA requires recovery
+    PM_SLEEPCFG_SLEEPMODE_OFF  2.9mA requires reset from ? watchdog*/
+    #define MS_SLEEPCFG_MODE  PM_SLEEPCFG_SLEEPMODE_STANDBY
+    // #define MS_SLEEPCFG_MODE PM_SLEEPCFG_SLEEPMODE_HIBERNATE
+    // PM->STDBYCFG.FASTWKUP =0; default
+    PM->SLEEPCFG.bit.SLEEPMODE = MS_SLEEPCFG_MODE;
+    do {
+        if (PM->SLEEPCFG.bit.SLEEPMODE != sleepMode_req) break;
+    } while (--rd_delay);  // Wait for it to take
+    #endif
+
+    __DSB();
+    __WFI();
+
+    // ---------------------------------------------------------------------
+    // -- The portion below this happens on wake up, after any wake ISR's --
+    lowpower_enable_ints();
+
+#else // USB_NOSLEEP
+    //Simulate sleep until time expires
+    sleeping=true;
+    do {
+
+        timeNow_secs = zero_sleep_rtc.now().unixtime();
+        if (targetWakeup_secs <= timeNow_secs) 
+        {
+            sleeping =false;
+        }  else {
+            //SerialStd.print(" t="); //nh print here?
+            //SerialStd.print((int32_t)targetWakeup_secs-(int32_t)timeNow_secs); //count 
+            delay(200);
+        }
+
+    } while (sleeping);
+#endif //USB_NOSLEEP
+
+    // Re-enable the watch-dog timer
+    watchDogTimer.enableWatchDog();
+
+    // Wake-up message
+    wakeUpTime_secs = getNowLocalEpoch();
+    PRINTOUT(F("\n... zzzZZ SAM Awake @"), formatDateTime_ISO8601(wakeUpTime_secs)
+#if defined ARDUINO_ARCH_SAMD  & defined ARCH_SAMD_SET_RTC_EACH_ALARM
+    ,targetWakeup_secs, timeNow_secs
+#endif //ARDUINO_ARCH_SAMD
+    );
+    flash_builtinLed(10,500); //Power measurement
+    // The logger will now start the next function after the systemSleep
+    // function in either the loop or setup
+} //Logger::systemSleep SAMD
+#endif //__AVR__
 // ===================================================================== //
 // Public functions for logging data to an SD card
 // ===================================================================== //
@@ -1436,30 +1784,31 @@ bool Logger::initializeSDCard(void) {
     return SDextendedInit(retVal);
 }
 
-void Logger::setFileTimestampTz(File fileToStamp, uint8_t stampFlag) {
-    //DateTime markedDt(Logger::markedEpochTime - EPOCH_TIME_OFF);
-    DateTime markedDtTz(getNowLocalEpoch()- EPOCH_TIME_DTCLASS );
-
-    MS_DEEP_DBG(F("setFTTz"),markedDtTz.year(),markedDtTz.month(), markedDtTz.date(),
-        markedDtTz.hour(), markedDtTz.minute(), markedDtTz.second());
-    bool crStat = fileToStamp.timestamp(
-        stampFlag, markedDtTz.year(), markedDtTz.month(), markedDtTz.date(),
-        markedDtTz.hour(), markedDtTz.minute(), markedDtTz.second());
-    if (!crStat) {
-        PRINTOUT(F("setFTTz err for "), markedDtTz.year(), markedDtTz.month(),
-                 markedDtTz.date(), markedDtTz.hour(), markedDtTz.minute(),
-                 markedDtTz.second());
-    }
-}
 
 // Protected helper function - This sets a timestamp on a file
-void Logger::setFileTimestamp(File fileToStamp, uint8_t stampFlag) {
-    fileToStamp.timestamp(stampFlag, dtFromEpoch(getNowLocalEpoch()).year(),
-                          dtFromEpoch(getNowLocalEpoch()).month(),
-                          dtFromEpoch(getNowLocalEpoch()).date(),
-                          dtFromEpoch(getNowLocalEpoch()).hour(),
-                          dtFromEpoch(getNowLocalEpoch()).minute(),
-                          dtFromEpoch(getNowLocalEpoch()).second());
+void Logger::setFileTimestamp(File fileToStamp, uint8_t stampFlag, bool localTime) {
+    if (false == localTime) {
+        fileToStamp.timestamp(stampFlag, dtFromEpoch(getNowLocalEpoch()).year(),
+                            dtFromEpoch(getNowLocalEpoch()).month(),
+                            dtFromEpoch(getNowLocalEpoch()).date(),
+                            dtFromEpoch(getNowLocalEpoch()).hour(),
+                            dtFromEpoch(getNowLocalEpoch()).minute(),
+                            dtFromEpoch(getNowLocalEpoch()).second());
+    }else {
+
+        DateTime markedDtTz(getNowLocalEpoch()- EPOCH_TIME_DTCLASS );
+
+        MS_DEEP_DBG(F("setFTTz"),markedDtTz.year(),markedDtTz.month(), markedDtTz.date(),
+            markedDtTz.hour(), markedDtTz.minute(), markedDtTz.second());
+        bool crStat = fileToStamp.timestamp(
+            stampFlag, markedDtTz.year(), markedDtTz.month(), markedDtTz.date(),
+            markedDtTz.hour(), markedDtTz.minute(), markedDtTz.second());
+        if (!crStat) {
+            PRINTOUT(F("setFTTz err for "), markedDtTz.year(), markedDtTz.month(),
+                    markedDtTz.date(), markedDtTz.hour(), markedDtTz.minute(),
+                    markedDtTz.second());
+        }
+    }
 }
 
 
@@ -1483,14 +1832,14 @@ bool Logger::openFile(String& filename, bool createFile,
     if (logFile.open(charFileName, O_WRITE | O_AT_END)) {
         MS_DBG(F("Opened existing file:"), filename);
         // Set access date time
-        setFileTimestampTz(logFile, T_ACCESS);
+        setFileTimestamp(logFile, T_ACCESS, true);
         return true;
     } else if (createFile) {
         // Create and then open the file in write mode
         if (logFile.open(charFileName, O_CREAT | O_WRITE | O_AT_END)) {
             MS_DBG(F("Created new file:"), filename);
             // Set creation date time
-            setFileTimestampTz(logFile, T_CREATE);
+            setFileTimestamp(logFile, T_CREATE, true);
             // Write out a header, if requested
             if (writeDefaultHeader) {
                 // Add header information
@@ -1502,10 +1851,10 @@ bool Logger::openFile(String& filename, bool createFile,
                 MS_DBG('\n');
 #endif
                 // Set write/modification date time
-                setFileTimestampTz(logFile, T_WRITE);
+                setFileTimestamp(logFile, T_WRITE, true);
             }
             // Set access date time
-            setFileTimestampTz(logFile, T_ACCESS);
+            setFileTimestamp(logFile, T_ACCESS, true);
             return true;
         } else {
             // Return false if we couldn't create the file
@@ -1572,9 +1921,9 @@ bool Logger::logToSD(String& filename, String& rec) {
     PRINTOUT(rec);
 
     // Set write/modification date time
-    setFileTimestampTz(logFile, T_WRITE);
+    setFileTimestamp(logFile, T_WRITE, true);
     // Set access date time
-    setFileTimestampTz(logFile, T_ACCESS);
+    setFileTimestamp(logFile, T_ACCESS, true);
     // Close the file to save it
     logFile.close();
     return true;
@@ -1612,9 +1961,9 @@ bool Logger::logToSD(void) {
 #endif
 
     // Set write/modification date time
-    setFileTimestampTz(logFile, T_WRITE);
+    setFileTimestamp(logFile, T_WRITE, true);
     // Set access date time
-    setFileTimestampTz(logFile, T_ACCESS);
+    setFileTimestamp(logFile, T_ACCESS, true);
     // Close the file to save it
     logFile.close();
     return true;
@@ -1744,12 +2093,16 @@ void Logger::begin(VariableArray* inputArray) {
 }
 
 #if defined ARDUINO_ARCH_SAMD
-// nh this needs to be invoked for some reaon
+// This needs to be invoked to enable interrupt processing
+bool alarmUpdate_sema=false;
 void alarmMatch(uint32_t flag)
 {
- 
+    //Need the handler for RTC_SAMD51 interrupt handling
+    alarmUpdate_sema= true;
+    // This is intterrupt level, so becautious
+#if defined DBG_LOGGERBASE_ALARM_MATCH_PRINT
     Serial.print("Alarm Match! ");
-    DateTime now = log_zero_sleep_rtc.now();
+    DateTime now = zero_sleep_rtc.now();
     Serial.print(now.year(), DEC);
     Serial.print('/');
     Serial.print(now.month(), DEC);
@@ -1762,6 +2115,7 @@ void alarmMatch(uint32_t flag)
     Serial.print(':');
     Serial.print(now.second(), DEC);
     Serial.println();
+ #endif // DBG_LOGGERBASE_ALARM_MATCH_PRINT
 }
 #endif // ARDUINO_ARCH_SAMD
 
@@ -1772,14 +2126,13 @@ void Logger::begin() {
 
     MS_DBG(F(
         "Setting up a watch-dog timer to fire after 5minutes after loggingInterval"),_loggingIntervalMinutes);
-    //This setup is really about how long subsystems could take to initialize.
     watchDogTimer.setupWatchDog(((uint32_t)_loggingIntervalMinutes+5)*60);
     // Enable the watchdog
     watchDogTimer.enableWatchDog();
 
 #if defined ARDUINO_ARCH_SAMD
     MS_DBG(F("Beginning internal real time clock"));
-    log_zero_sleep_rtc.begin(); //Soft start, preserve good time
+    zero_sleep_rtc.begin(); //Soft start, preserve good time
 #endif
     watchDogTimer.resetWatchDog();
 
@@ -1903,7 +2256,7 @@ void Logger::begin() {
 #else  // no external _RTC
        // If Power-on Reset Rcause.Bit0 have
        // specific processing
-#define zr log_zero_sleep_rtc
+
     if (true)//((0 == zr.now().year()) && (1 == zr.now().month()) && (1 == zr.now().day())) 
     {
         // Assume Wio Terminal - init to DEFAULT
@@ -1924,15 +2277,20 @@ void Logger::begin() {
     PRINTOUT(F("Current localized logger time is:"),
              formatDateTime_ISO8601(getNowLocalEpoch()));
 
-#if defined ARDUINO_ARCH_SAMD
+//#define ARCH_SAMD_SET_RTC_EACH_ALARM
+#if defined ARDUINO_ARCH_SAMD & !defined ARCH_SAMD_SET_RTC_EACH_ALARM
     //set an alarm to go off every 1minute, keeps time accurate.
     DateTime now = zr.now();
-    DateTime alarm = DateTime(now.year(), now.month(), now.day(), now.hour(), now.minute(), 0 );
+    DateTime alarm = DateTime(now.year(), now.month(), now.day(), now.hour(), now.minute(), RTC_ALARM_SEC );
     // The SAMD51 has two hardware alarms
 
     zr.setAlarm(RTC_ALM_ID,alarm);
-    zr.attachInterrupt(alarmMatch);
+    zr.attachInterrupt(alarmMatch); //Need for internal RTC_SAMD51 processing
     zr.enableAlarm(RTC_ALM_ID, zr.MATCH_SS); // match Every minute 
+    PRINTOUT(F("Set RTC Alarm Every Miunute")); 
+    // This is needed by protocols: OneWire
+    // DWT->CTRL &= ~DWT_CTRL_CYCCNTENA_Msk;
+
 #endif // ARDUINO_ARCH_SAMD
 
     // Reset the watchdog

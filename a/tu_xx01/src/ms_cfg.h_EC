@@ -1,6 +1,6 @@
 /*****************************************************************************
 ms_cfg.h_EC  - ModularSensors Configuration - tgt relative _EC
-Status: 220219: updated to use comms but not tested
+Status: 230922: 0.34.1.aca updated but not tested
 
 Written By:  Neil Hancock www.envirodiy.org/members/neilh20/
 Development Environment: PlatformIO
@@ -21,7 +21,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 // Local default defitions here
 
 //**************************************************************************
-// This configuration is for a standard Mayfly0.5b
+// This configuration is for a standard Mayfly0.5b or 1.x
 // Sensors Used - two std to begin then
 #define AnalogProcEC_ACT 1
 // Power Availability monitoring decisions use LiIon Voltge,
@@ -31,7 +31,6 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 // MAYFLY_BAT_STC3100  sensor IC on RS485 WINGBOARD_KNH002
 // MAYFLY_BAT_DIGI Digi Modem LTE with onboard battery measurement
 // Choices applied to define MAYFLY_BAT_xx 1) Stc3100 2) ExternVolage_ACT 3) Digi Mode 4) MAYFLY_BAT_A6
-
 #define MAYFLY_BAT_A6 4
 //#define MAYFLY_BAT_AA0 2
 //FUT #define MAYFLY_BAT_DIGI 3
@@ -75,7 +74,9 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 //Assume Mayfly, and version determined on boot See mcuBoardVersion_
 //#define MFName_DEF "Mayfly"
 //#define HwName_DEF MFName_DEF
-#define CONFIGURATION_DESCRIPTION_STR "Electrical Conductivity MMW Digi WiFi S6/LTE XB3-C-A2"
+#define CONFIGURATION_DESCRIPTION_STR "Electrical Conductivity"
+
+// no BUILD_MODEM_TYPE 
 
 #define USE_MS_SD_INI 1
 #define USE_PS_EEPROM 1
@@ -117,39 +118,8 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define loggingInterval_MAX_CDEF_MIN 6 * 60
 
 
-// Supports DigiXBeeCellularTransparent & DigiXBeeWifi
-#define UseModem_Module 1
-#if UseModem_Module 
-// The Modem is used to push data and also sync Time
-// In standalong logger, no internet, Modem can be required at factor to do a
-// sync Time Normally enable both of the following. In standalone, disable
-// UseModem_PushData.
-#define UseModem_PushData 1
-//Select buildtime Publishers  supported. 
-// The persisten resources (EEPROM) are allocated as a baselevel no matter what options 
-#define USE_PUB_MMW      1
-//#define USE_PUB_TSMQTT   1
-//#define  USE_PUB_UBIDOTS 1
+// No Supports Modems
 
-// Required for TinyGsmClient.h
-#define TINY_GSM_MODEM_XBEE
-
-// The APN for the gprs connection, unnecessary for WiFi
-#define APN_CDEF "VZWINTERNET"
-
-// The WiFi access point  never set to real, as should be set by config.
-#define WIFIID_CDEF "WiFiIdDef"
-// NULL for none, or  password for connecting to WiFi,
-#define WIFIPWD_CDEF "WiFiPwdDef"
-#define MMW_TIMER_POST_TIMEOUT_MS_DEF 5000L
-//POST PACING ms 0-15000
-#define MMW_TIMER_POST_PACING_MS_DEF 100L
-//Post MAX Num - is num of MAX num at one go. 0 no limit
-//#define MMWGI_POST_MAX_RECS_MUM_DEF 100 //ms_common.h
-//Manage Internet - common for all providers
-#define MNGI_COLLECT_READINGS_DEF 1
-#define MNGI_SEND_OFFSET_MIN_DEF 0
-#endif  // UseModem_Module 
 
 // This might need revisiting
 #define ARD_ANLAOG_MULTIPLEX_PIN A6
@@ -229,7 +199,11 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define INA219M_VOLT_UUID "INA219_VOLT_UUID"
 #endif  // INA219_PHY_ACT
 
-#if defined ASONG_AM23XX_UUID
+#if defined SENSIRION_SHT4X_UUID
+#define SENSIRION_SHT4X_Air_Temperature_UUID "Air_Temperature_UUID"
+//#define SENSIRION_SHT4X_Air_TemperatureF_UUID "Air_TemperatureF_UUID"
+#define SENSIRION_SHT4X_Air_Humidity_UUID "Air_Humidity_UUID"
+#elif defined ASONG_AM23XX_UUID 
 #define ASONG_AM23_Air_Temperature_UUID "Air_Temperature_UUID"
 #define ASONG_AM23_Air_TemperatureF_UUID "Air_TemperatureF_UUID"
 #define ASONG_AM23_Air_Humidity_UUID "Air_Humidity_UUID"
@@ -240,12 +214,6 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define MaximDS3231_TEMP_UUID "MaximDS3231_TEMP_UUID"
 //#define MaximDS3231_TEMPF_UUID "MaximDS3231_TEMPF_UUID"
 #endif  // ENVIRODIY_MAYFLY_TEMPERATURE
-
-#if defined UseModem_Module
-// This seems to be de-stabilizing Digi S6B
-//#define DIGI_RSSI_UUID "DIGI_RSSI_UUID"
-//#define Modem_SignalPercent_UUID    "SignalPercent_UUID"
-#endif  // UseModem_Module
 
 #define ProcessorStats_ACT 1
 #if defined ProcessorStats_ACT

@@ -44,7 +44,7 @@ if (-not (Test-Path -Path $dest_dir)) {
     throw  "The file does not exist $dest_dir"
 }
 
-$envirodiy_dir = ".pio\libdeps\mayfly"
+$envirodiy_dir = ".pio\libdeps\mayfly\EnviroDIY_ModularSensors"
 #Remove-item $envirodiy_dir -Recurse -Force
 if (Test-Path -Path $envirodiy_dir) {
     Write-Output  "Removing $envirodiy_dir to refresh for build`n"
@@ -57,27 +57,26 @@ if (Test-Path -Path $envirodiy_dir) {
 }
 pio run --target clean
 
-
-$hext = "_LT5KA_wireless"
+$hext = "_LT5KA_DigiLteXB3"
 Do-Build
 
 $hext = "_LT5_Mdbus_wireless"
 Do-Build
 
-$hext = "_LT5_SDI12_wireless"
-Do-Build
+#$hext = "_LT5_SDI12_wireless"
+#Do-Build
 
 $hext = "_nano"
 Do-Build
 
-$hext = "_mmw_test"
-Do-Build
+#$hext = "_mmw_test"
+#Do-Build
 
-$hext = "_ts_test"
-Do-Build
+#$hext = "_ts_test"
+#Do-Build
 
-$hext = "_ub_test"
-Do-Build
+#$hext = "_ub_test"
+#Do-Build
 
 $hext = "_EC"
 Do-Build

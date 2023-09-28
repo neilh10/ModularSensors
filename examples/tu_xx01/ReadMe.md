@@ -2,7 +2,7 @@
 
 These can be built with 
 in shell step to exampes\tu_xx01
-.\doMe.ps1  <release_num>   eg .\doMe.ps1 0.33.1.aac  .hex are put in ../../../releases
+.\doMe.ps1  <release_num>   eg .\doMe.ps1 0.34.1.aca  .hex are put in ../../../releases
 
 This sketch uses 
 a) ms_cfg.ini where  all the MMW UUID keys are added. This enables scaling multiple Mayflys with same software.  

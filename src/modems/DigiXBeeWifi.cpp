@@ -10,19 +10,13 @@
 // Included Dependencies
 #include "DigiXBeeWifi.h"
 #include "LoggerModemMacros.h"
-//#define USE_NTP 1
-#if defined USE_NTP
-#include "NTPClientTinyGsm.h"
-// WiFiUDP ntpUDP;
-// NTPClient timeClient(ntpUDP);
-NTPClient timeClient();
-#endif  // USE_NTP
 
 // Constructor/Destructor
 DigiXBeeWifi::DigiXBeeWifi(Stream* modemStream, int8_t powerPin,
                            int8_t statusPin, bool useCTSStatus,
                            int8_t modemResetPin, int8_t modemSleepRqPin,
-                           const char* ssid, const char* pwd)
+                           const char* ssid, const char* pwd,
+                           bool maintainAssociation)
     : DigiXBee(powerPin, statusPin, useCTSStatus, modemResetPin,
                modemSleepRqPin),
 #ifdef MS_DIGIXBEEWIFI_DEBUG_DEEP
@@ -33,7 +27,8 @@ DigiXBeeWifi::DigiXBeeWifi(Stream* modemStream, int8_t powerPin,
 #endif
       gsmClient(gsmModem),
       _ssid(ssid),
-      _pwd(pwd) {
+      _pwd(pwd),
+      _maintainAssociation(maintainAssociation) {
 }
 
 DigiXBeeWifi::DigiXBeeWifi(Stream* modemStream, int8_t powerPin,
@@ -57,20 +52,52 @@ DigiXBeeWifi::~DigiXBeeWifi() {}
 MS_IS_MODEM_AWAKE(DigiXBeeWifi);
 MS_MODEM_WAKE(DigiXBeeWifi);
 
-// MS_MODEM_CONNECT_INTERNET(DigiXBeeWifi); has instability
-// See https://github.com/neilh10/ModularSensors/issues/125             
-bool DigiXBeeWifi::connectInternet(uint32_t maxConnectionTime) { 
-    MS_START_DEBUG_TIMER                                          
-    MS_DBG(F("\nDigiXbee Attempting to connect to WiFi network..."));      
-    if (!(gsmModem.isNetworkConnected())) {                       
-        if (!gsmModem.waitForNetwork(maxConnectionTime)) {        
-            PRINTOUT(F("... WiFi connection failed"));            
-            return false;                                         
-        }                                                         
-     }                                                            
-    MS_DBG(F("... WiFi connected after"), MS_PRINT_DEBUG_TIMER, 
-               F("milliseconds!"));                             
-        return true;                                            
+
+// This is different MS_MODEM_CONNECT_INTERNET in that it doesn't attempt to
+// resend credentials
+bool DigiXBeeWifi::connectInternet(uint32_t maxConnectionTime) {
+    bool success = true;
+
+    /** Power up, if necessary */
+    bool wasPowered = true;
+    if (_millisPowerOn == 0) {
+        modemPowerUp();
+        wasPowered = false;
+    }
+
+    /** Check if the modem was awake, wake it if not */
+    bool wasAwake = isModemAwake();
+    if (!wasAwake) {
+        MS_DBG(F("Waiting for modem to boot after power on ..."));
+        while (millis() - _millisPowerOn < _wakeDelayTime_ms) { /** wait */
+        }
+        MS_DBG(F("Waking up the modem to connect to the internet ..."));
+        success &= modemWake();
+    } else {
+        MS_DBG(F("Modem was already awake and should be ready."));
+    }
+
+    if (success) {
+        MS_START_DEBUG_TIMER
+        MS_DBG(F("\nAttempting to connect to WiFi without sending new "
+                 "credentials..."));
+        if (!(gsmModem.isNetworkConnected())) {
+            if (!gsmModem.waitForNetwork(maxConnectionTime)) {
+                PRINTOUT(F("... WiFi connection failed"));
+                success = false;
+            }
+        }
+        MS_DBG(F("... WiFi"),_ssid_buf,F("connected after"), MS_PRINT_DEBUG_TIMER,
+               F("milliseconds!"));
+    }
+    if (!wasPowered) {
+        MS_DBG(F("Modem was powered to connect to the internet!  "
+                 "Remember to turn it off when you're done."));
+    } else if (!wasAwake) {
+        MS_DBG(F("Modem was woken up to connect to the internet!   "
+                 "Remember to put it to sleep when you're done."));
+    }
+    return success;
 }
 MS_MODEM_IS_INTERNET_AVAILABLE(DigiXBeeWifi);
 
@@ -82,31 +109,33 @@ bool DigiXBeeWifi::extraModemSetup(void) {
     /** First run the TinyGSM init() function for the XBee. */
     MS_DBG(F("Initializing the XBee..."));
     success &= gsmModem.init();
-    if (!success) { MS_DBG(F("Failed init")); }
+    if (!success) { MS_DBG(F("Failed TinyGSM init")); }
     gsmClient.init(&gsmModem);
     _modemName = gsmModem.getModemName();
     /** Then enter command mode to set pin outputs. */
-    // MS_DBG(F("Putting XBee into command mode..."));
     if (gsmModem.commandMode()) {
-        {
-            String  xbeeSnLow,xbeeSnHigh;//XbeeDevHwVer,XbeeFwVer;
-            gsmModem.getSeries();
-            _modemName = gsmModem.getModemName();
-            gsmModem.sendAT(F("SL"));  // Request Module MAC/Serial Number Low
-            gsmModem.waitResponse(TGWRIDW+0x01,1000, xbeeSnLow);
-            gsmModem.sendAT(F("SH"));  // Request Module MAC/Serial Number High
-            gsmModem.waitResponse(TGWRIDW+0x02,1000, xbeeSnHigh);
-            _modemSerialNumber = xbeeSnHigh+xbeeSnLow;
-            gsmModem.sendAT(F("HV"));  // Request Module Hw Version
-            gsmModem.waitResponse(TGWRIDW+0x03,1000, _modemHwVersion);
-            gsmModem.sendAT(F("VR"));  // Firmware Version
-            gsmModem.waitResponse(TGWRIDW+0x04,1000, _modemFwVersion);
-            PRINTOUT(F("XbeeWiFi internet comms with"),_modemName, 
-                 F("Mac/Sn "), _modemSerialNumber,F("HwVer"),_modemHwVersion, F("FwVer"), _modemFwVersion);
-        }
-        // Leave all unused pins disconnected. Use the PR command to pull all of
-        // the inputs on the device high using 40 k internal pull-up resistors.
-        // You do not need a specific treatment for unused outputs.
+        String xbeeSnLow;
+        String xbeeSnHigh;
+        gsmModem.getSeries();
+        _modemName = gsmModem.getModemName();
+        gsmModem.sendAT(F("SL"));  // Request Module MAC/Serial Number Low
+        gsmModem.waitResponse(TGWRIDW+0x01,1000, xbeeSnLow);
+        gsmModem.sendAT(F("SH"));  // Request Module MAC/Serial Number High
+        gsmModem.waitResponse(TGWRIDW+0x02,1000, xbeeSnHigh);
+        _modemSerialNumber = xbeeSnHigh+xbeeSnLow;
+        gsmModem.sendAT(F("HV"));  // Request Module Hw Version
+        gsmModem.waitResponse(TGWRIDW+0x03,1000, _modemHwVersion);
+        gsmModem.sendAT(F("VR"));  // Firmware Version
+        gsmModem.waitResponse(TGWRIDW+0x04,1000, _modemFwVersion);
+        PRINTOUT(F("Digi XBee"), _modemName, F("Mac/SN"), xbeeSnHigh, xbeeSnLow,
+                 F("HwVer"), _modemHwVersion, F("FwVer"), _modemFwVersion);
+
+        bool changesMade = false;
+
+        // Leave all unused pins disconnected. Use the PR command to pull
+        // all of the inputs on the device high using 40 k internal pull-up
+        // resistors. You do not need a specific treatment for unused
+        // outputs.
         //   Mask Bit Description
         // 1 0001  0 TH11 DIO4
         // 1 0002  1 TH17 DIO3
@@ -124,83 +153,220 @@ bool DigiXBeeWifi::extraModemSetup(void) {
         // 1 2000 13 TH12 DIO7/-CTR
         // 0 4000 14 TH02 DIO13/DOUT
         //   3D3F
-        gsmModem.sendAT(GF("PR"), "3D3F");
-        success &= gsmModem.waitResponse(TGWRIDW+0x05) == 1;
-        if (!success) { MS_DBG(F("Fail PR "), success); }
-#if !defined MODEMPHY_NEVER_SLEEPS
-#define XBEE_SLEEP_SETTING 1
-//#define XBEE_SLEEP_ASSOCIATE 200
-#define XBEE_SLEEP_ASSOCIATE 100
-#else
-#define XBEE_SLEEP_SETTING 0
-#define XBEE_SLEEP_ASSOCIATE 40
-#endif  // MODEMPHY_NEVER_SLEEPS
+        bool changedRP = gsmModem.changeSettingIfNeeded(GF("PR"), "3D3F");
+        changesMade |= changedRP;
+        if (changedRP) {
+            MS_DBG(F("Pullups now 3D3F"));
+        } else {
+            MS_DBG(F("Pullups 3D3F"));
+        }
+
+
         // To use sleep pins they physically need to be enabled.
-        // Set DIO8 to be used for sleep requests
-        // NOTE:  Only pin 9/DIO8/DTR can be used for this function
-        gsmModem.sendAT(GF("D8"), XBEE_SLEEP_SETTING);
-        success &= gsmModem.waitResponse(TGWRIDW+0x06) == 1;
-        // Turn on status indication pin - it will be HIGH when the XBee is
-        // awake NOTE:  Only pin 13/ON/SLEEPnot/DIO9 can be used for this
-        // function
-        gsmModem.sendAT(GF("D9"), XBEE_SLEEP_SETTING);
-        success &= gsmModem.waitResponse(TGWRIDW+0x07) == 1;
-        if (!success) { MS_DBG(F("Fail D9 "), success); } /**/
-        // /#endif //MODEMPHY_USE_SLEEP_PINS_SETTING
-        // Turn on CTS pin - it will be LOW when the XBee is ready to receive
-        // commands This can be used as proxy for status indication if the true
-        // status pin is not accessible NOTE:  Only pin 12/DIO7/CTS can be used
-        // for this function
-        /*gsmModem.sendAT(GF("D7"),1);
-        success &= gsmModem.waitResponse(TGWRIDW+0x00) == 1;
-        if (!success) {MS_DBG(F("Fail D7 "),success);}*/
-        // Turn on the associate LED (if you're using a board with one)
-        // NOTE:  Only pin 15/DIO5 can be used for this function
-        // gsmModem.sendAT(GF("D5"),1);
-        // success &= gsmModem.waitResponse(TGWRIDW+0x00) == 1;
-        // Turn on the RSSI indicator LED (if you're using a board with one)
-        // NOTE:  Only pin 6/DIO10/PWM0 can be used for this function
-        // gsmModem.sendAT(GF("P0"),1);
-        // success &= gsmModem.waitResponse(TGWRIDW+0x00) == 1;
-        // Set to TCP mode
-        gsmModem.sendAT(GF("IP"), 1);
-        success &= gsmModem.waitResponse(TGWRIDW+0x08) == 1;
-        if (!success) { MS_DBG(F("Fail IP "), success); }
+        /** Enable pin sleep functionality on `DIO8` if a pin is assigned.
+         * NOTE: Only the `DTR_N/SLEEP_RQ/DIO8` pin (9 on the bee socket) can be
+         * used for this pin sleep/wake. */
+        bool new_settingDI08 = (_modemSleepRqPin >= 0);
+        bool changedD8 = gsmModem.changeSettingIfNeeded(GF("D8"),
+                                                        new_settingDI08);
+        changesMade |= changedD8;
+        if (changedD8) {
+            MS_DBG(F("DTR_N/SLEEP_RQ/DIO8 changed"),new_settingDI08);
+        } else {
+            MS_DBG(F("DTR_N/SLEEP_RQ/DIO8"),new_settingDI08);
+        }
 
-        // Put the XBee in pin sleep mode in conjuction with D8=1
-        MS_DBG(F("Setting Sleep Options..."));
-        gsmModem.sendAT(GF("SM"), XBEE_SLEEP_SETTING);
-        success &= gsmModem.waitResponse(TGWRIDW+0x09) == 1;
-        // Disassociate from network for lowest power deep sleep
-        // 40 - Aay associated with AP during sleep - draws more current
-        // (+10mA?) 100 -Cyclic sleep ST specifies time before reutnring to
-        // sleep 200 - SRGD magic number
-        gsmModem.sendAT(GF("SO"), XBEE_SLEEP_ASSOCIATE);
-        success &= gsmModem.waitResponse(TGWRIDW+0x0a) == 1;
+        /** Enable status indication on `DIO9` if a pin is assigned - it will be
+         * HIGH when the XBee is awake.
+         * NOTE: Only the `ON/SLEEP_N/DIO9` pin (13 on the bee socket) can be
+         * used for direct status indication. */
+        bool new_settingDI09 =_statusPin >= 0;
+        bool changedD9 = gsmModem.changeSettingIfNeeded(GF("D9"),
+                                                        new_settingDI09);
+        changesMade |= changedD9;
+        if (changedD9) {
+            MS_DBG(F("DIO9 how"),new_settingDI09);
+        } else {
+            MS_DBG(F("DIO9"),new_settingDI09);
+        }
 
-        MS_DBG(F("Setting Wifi Network Options..."));
+        /** Enable CTS on `DIO7` if a pin is assigned - it will be `LOW` when
+         * it is clear to send data to the XBee.  This can be used as proxy for
+         * status indication if that pin is not readable.
+         * NOTE: Only the `CTS_N/DIO7` pin (12 on the bee socket) can be used
+         * for CTS. */
+        bool new_settingDI07 = (_statusPin >= 0 && !_statusLevel);
+        bool changedD7 = gsmModem.changeSettingIfNeeded(
+            GF("D7"), new_settingDI07);
+        changesMade |= changedD7;
+        if (changedD7) {
+            MS_DBG(F("CTS_N/DIO7 now"),new_settingDI07);
+        } else {
+            MS_DBG(F("CTS_N/DIO7"),new_settingDI07);
+        }
+
+        /** Enable association indication on `DIO5` - this is should be
+         * directly attached to an LED if possible.
+         * - Solid light indicates no connection
+         * - Single blink indicates connection
+         * - double blink indicates connection but failed TCP link on last
+         * attempt
+         *
+         * NOTE: Only the `Associate/DIO5` pin (15 on the bee socket) can be
+         * used for this function. */
+        gsmModem.changeSettingIfNeeded(GF("D5"), 0);
+        /* Not connected on Mayfly
+        bool changedD5 = gsmModem.changeSettingIfNeeded(GF("D5"), 1);
+        changesMade |= changedD5;
+        if (changedD5) {
+            MS_DBG(F("Associate/DIO5 changed to"), 1);
+        } else {
+            MS_DEEP_DBG(F("Associate/DIO5 not changed"));
+        }
+        */
+
+        /** Enable RSSI PWM output on `DIO10` - this should be directly
+         * attached to an LED if possible.  A higher PWM duty cycle (and
+         * thus brighter LED) indicates better signal quality. NOTE: Only
+         * the `DIO10/PWM0` pin (6 on the bee socket) can be used for this
+         * function. */
+        changesMade |= gsmModem.changeSettingIfNeeded(GF("D5"), 0);
+        /* Not connected on Mayfly - turnoff for power savings
+        bool changedP0 = gsmModem.changeSettingIfNeeded(GF("D5"), 1);
+        changesMade |= changedP0;
+        if (changedP0) {
+            MS_DBG(F("DIO10/PWM0 changed to"), 1);
+        } else {
+            MS_DEEP_DBG(F("ADIO10/PWM0 not changed"));
+        }
+        */
+
+        /** Put the XBee in pin sleep mode in conjuction with D8=1 */
+        // From the S6B User Guide:
+        // 0  - Normal. In this mode the device never sleeps.
+        // 1  - Pin Sleep. In this mode the device honors the SLEEP_RQ pin.
+        //      Set D8 (DIO8 Configuration) to the sleep request function: 1.
+        // 4  - Cyclic Sleep. In this mode the device repeatedly sleeps for the
+        // value specified by SP and spends ST time awake.
+        // 5  - Cyclic Sleep with Pin Wake. In this mode the device acts as in
+        // Cyclic Sleep but does not sleep if the SLEEP_RQ pin is inactive,
+        // allowing the device to be kept awake or woken by the connected
+        // system.
+        bool new_settingD8 =_modemSleepRqPin >= 0;
+        bool changedSM = gsmModem.changeSettingIfNeeded(GF("SM"),
+                                                        new_settingD8);
+        changesMade |= changedSM;
+        if (changedSM) {
+            MS_DBG(F("SleepD8 now"), new_settingD8);
+        } else {
+            MS_DBG(F("SleepD8"),new_settingD8);
+        }
+        // Disassociate from the network for the lowest power deep sleep.
+        // From S6B User Guide:
+        // 0x40 - Stay associated with AP during sleep. Draw more current
+        // (+10mA?) during sleep with this option enabled, but also avoid data
+        // loss. [0x40 = 64]
+        // 0x100 - For cyclic sleep, ST specifies the time before returning
+        // to sleep. With this bit set, new receptions from either the serial or
+        // the RF port do not restart the ST timer.  Current implementation does
+        // not support this bit being turned off. [0x100 = 256]
+        bool changedSO = gsmModem.changeSettingIfNeeded(
+            GF("SO"), _maintainAssociation ? "40" : "100");
+        changesMade |= changedSO;
+        if (changedSO) {
+            MS_DBG(F("SleepS0 now"),
+                   _maintainAssociation ? "0x40" : "0x100");
+        } else {
+            MS_DBG(F("SleepS0"), _maintainAssociation ? "0x40" : "0x100");
+        }
+
+        /** Write pin and sleep options to flash and apply them, if needed. */
+        /* Write changes once at end
+        if (changesMade) {
+            MS_DBG(F("Applying changes to pin and sleep options..."));
+            gsmModem.writeChanges();
+        } else {
+            MS_DBG(F("No pin or sleep option changes to apply"));
+        }
+        */
+
         // Put the network connection parameters into flash
+        // NOTE: This will write to the flash every time if there is a password
+        // set!
         success &= gsmModem.networkConnect(_ssid, _pwd);
         // Set the socket timeout to 10s (this is default)
         if (!success) {
-            MS_DBG(F("Fail Connect "), success);
+            MS_DBG(F("Fail Connect"), success);
             success = true;
         }
-        gsmModem.sendAT(GF("TM"), 64);
-        success &= gsmModem.waitResponse(TGWRIDW+0x0b) == 1;
-        //IPAddress newHostIp = IPAddress(0, 0, 0, 0); //default in NV
-        gsmModem.sendAT(GF("DL"), GF("0.0.0.0"));
-        success &= gsmModem.waitResponse(TGWRIDW+0x0b) == 1;
 
+        // Set to TCP mode
+        //changesMade        = false;
+        bool changedIPMode = gsmModem.changeSettingIfNeeded(GF("IP"), 1);
+        changesMade |= changedIPMode;
+        if (changedIPMode) {
+            MS_DBG(F("IP mode changed to 1"));
+        } else {
+            MS_DBG(F("IP mode 1"));
+        }
+
+
+        /** Set the socket timeout to 10s (this is default).*/
+        bool changedTM = gsmModem.changeSettingIfNeeded(GF("TM"), "64");
+        changesMade |= changedTM;
+        if (changedTM) {
+            MS_DBG(F("Socket timeout now 0x64"));
+        } else {
+            MS_DBG(F("Socket timeout 0x64"));
+        }
+
+        /** Set the destination IP to 0 (this is default). */
+        bool changedDL = gsmModem.changeSettingIfNeeded(GF("DL"),
+                                                        GF("0.0.0.0"));
+        changesMade |= changedDL;
+        if (changedDL) {
+            MS_DBG(F("Destination IP now 0.0.0.0"));
+        } else {
+            MS_DBG(F("Destination IP 0.0.0.0"));
+        }
+
+        /** Write all changes to flash and apply them. */
+        if (changesMade) {
+            MS_DBG(F("Updating Xbee Eeprom"));
+            success &= gsmModem.writeChanges();
+        } else {
+            MS_DBG(F("Xbee EEPROM setup"));
+        }
 
         if (success) {
-            MS_DBG(F("Setup Wifi Network "), _ssid);
+            MS_DBG(F("Successfully setup Wifi Network"), _ssid);
         } else {
             MS_DBG(F("Failed Setting WiFi"), _ssid);
         }
-        // Write changes to flash and apply them
-        gsmModem.writeChanges();
 
+#if 0
+        //Simple report
+        // Since this is the only time we're going to send the credentials,
+        // confirm that we can connect to the network and get both an IP and DNS
+        // address.
+        if (!(gsmModem.isNetworkConnected())) {
+            if (!gsmModem.waitForNetwork()) {
+                PRINTOUT(
+                    F("... Initial WiFi connection failed - resetting module"));
+                loggerModem::modemHardReset();
+                delay(50);
+                success = false;
+            } else {
+                PRINTOUT(F("... Initial WiFi connection succeeded!"));
+                success = true;
+            }
+        } else {
+            PRINTOUT(F("... Initial WiFi connection succeeded!"));
+            success = true;
+        }
+        gsmModem.exitCommand();
+
+#else
         // Scan for AI  last node join request
         uint16_t loops = 0;
         int16_t  ui_db;
@@ -289,12 +455,6 @@ bool DigiXBeeWifi::extraModemSetup(void) {
                     PRINTOUT(F("XbeeWifi init test PASSED"));
                 }
             }
-#if 0   // defined MS_DIGIXBEEWIFI_DEBUG
-        // as of 0.23.15 the modem as sensor has problems
-                int16_t rssi, percent;
-                getModemSignalQuality(rssi, percent);
-                MS_DBG(F("mdmSQ["),toAscii(rssi),F(","),percent,F("%]"));
-#endif  // MS_DIGIXBEEWIFI_DEBUG
             gsmModem.exitCommand();
         } 
         else 
@@ -312,22 +472,21 @@ bool DigiXBeeWifi::extraModemSetup(void) {
     }
 
     if (false == success) { PRINTOUT(F("Xbee '"), _modemName, F("' failed.")); }
-
+#endif // 
     return success;
 }
 
 
 void DigiXBeeWifi::disconnectInternet(void) {
-    // Ensure Wifi XBee IP socket torn down by forcing connection to localhost IP
-    // For A XBee S6B bug, then force restart
-    // Note: TinyGsmClientXbee.h:modemStop() had a hack for closing socket with Timeout=0 "TM0" for S6B disabled
+    // Ensure Wifi XBee IP socket torn down by forcing connection to
+    // localhost IP For A XBee S6B bug, then force restart.
 
-    String oldRemoteIp = gsmClient.remoteIP();
-    IPAddress newHostIp = IPAddress(127, 0, 0, 1); //localhost
-    gsmClient.connect(newHostIp,80);
-    //??gsmClient.modemConnect(newHostpP,80);// doesn't work
-    MS_DBG(gsmModem.getBeeName(), oldRemoteIp, F(" disconnectInternet set to "),gsmClient.remoteIP());
-    
+    String    oldRemoteIp = gsmClient.remoteIP();
+    IPAddress newHostIp   = IPAddress(127, 0, 0, 1);  // localhost
+    gsmClient.connect(newHostIp, 80);
+    MS_DBG(gsmModem.getBeeName(), oldRemoteIp, F("disconnectInternet set to"),
+           gsmClient.remoteIP());
+
     gsmModem.restart();
 }
 
@@ -342,71 +501,52 @@ uint32_t DigiXBeeWifi::getNISTTime(void) {
 
     gsmClient.stop();
 
-    // Try up to 12 times to get a timestamp from NIST
+    // Try up to 4 NIST IP addresses attempting to get a timestamp from NIST
 #if !defined NIST_SERVER_RETRYS
 #define NIST_SERVER_RETRYS 4
 #endif  // NIST_SERVER_RETRYS
-    String  nistIpStr;
-    __attribute__((unused)) uint8_t index = 0;
+
     for (uint8_t i = 0; i < NIST_SERVER_RETRYS; i++) {
-        // Must ensure that we do not ping the daylight more than once every 4
-        // seconds.  NIST clearly specifies here that this is a requirement for
-        // all software that accesses its servers:
+        // Must ensure that we do not ping the daylight servers more than once
+        // every 4 seconds.  NIST clearly specifies here that this is a
+        // requirement for all software that accesses its servers:
         // https://tf.nist.gov/tf-cgi/servers.cgi
         while (millis() < _lastNISTrequest + 4000) {
             // wait
         }
 
         // Make TCP connection
+        // Uses "TIME" protocol on port 37 NIST: This protocol is expensive,
+        // since it uses the complete tcp machinery to transmit only 32 bits
+        // of data. FUTURE Users are *strongly* encouraged to upgrade to the
+        // network time protocol (NTP), which is both more accurate and more
+        // robust.
         MS_DBG(F("\nConnecting to NIST daytime Server"));
         bool connectionMade = false;
 
-        // This is the IP address of time-e-wwv.nist.gov
+        // These are is the IP address of time-[a,b,c,d]-wwv.nist.gov
         // XBee's address lookup falters on time.nist.gov
-        // NOTE:  This "connect" only sets up the connection parameters, the TCP
-        // socket isn't actually opened until we first send data (the '!' below)
- 
-       // Uses "TIME" protocol on port 37 NIST: This protocol is expensive, since it
-        // uses the complete tcp machinery to transmit only 32 bits of data.
-        // FUTURE Users are *strongly* encouraged to upgrade to the network time protocol
-        // (NTP), which is both more accurate and more robust.*/
+
 #define TIME_PROTOCOL_PORT 37
 #define IP_STR_LEN 18
         const char ipAddr[NIST_SERVER_RETRYS][IP_STR_LEN] = {
-            {"132,163, 97, 1"},
+            {"132, 163, 97, 1"},
             {"132, 163, 97, 2"},
             {"132, 163, 97, 3"},
             {"132, 163, 97, 4"}};
         IPAddress ip1(132, 163, 97, 1);  // Initialize
-#if 0
-        gsmModem.sendAT(F("time-e-wwv.nist.gov"));
-        index = gsmModem.waitResponse(TGWRIDW+0x00,4000, nistIpStr);
-        nistIpStr.trim();
-        uint16_t nistIp_len = nistIpStr.length();
-        if ((nistIp_len < 7) || (nistIp_len > 20)) 
-        {
-            ip1.fromString(ipAddr[i]);
-            MS_DBG(F("Bad lookup"), nistIpStr, "'=", nistIp_len, F(" Using "),
-                   ipAddr[i]);
-        } else {
-            ip1.fromString(nistIpStr);
-            PRINTOUT(F("Good lookup mdmIP["), i, "/", NIST_SERVER_RETRYS,
-                   F("] '"), nistIpStr, "'=", nistIp_len);
-        }
-#else
         ip1.fromString(ipAddr[i]);
         PRINTOUT(F("NIST lookup mdmIP["), i, "/", NIST_SERVER_RETRYS,
-                   F("] with "), ip1);
-//                   F("] with "), ipAddr[i]);                   
-#endif 
+               F("] with "), ip1);
+
+        // NOTE:  This "connect" only sets up the connection parameters, the TCP
+        // socket isn't actually opened until we first send data (the '!' below)
         connectionMade = gsmClient.connect(ip1, TIME_PROTOCOL_PORT);
         // Need to send something before connection is made
         gsmClient.println('!');
 
         // Wait up to 5 seconds for a response
         if (connectionMade) {
-            // Wait so port can be opened
-            //delay((i + 1) * 100L);
             uint32_t start = millis();
             while (gsmClient && gsmClient.available() < 4 &&
                    millis() - start < 5000L) {
@@ -435,33 +575,17 @@ bool DigiXBeeWifi::getModemSignalQuality(int16_t& rssi, int16_t& percent) {
     bool success = true;
 
     // Initialize float variable
-    int16_t signalQual = -9999;
-    percent            = -9999;
-    rssi               = -9999;
+    int16_t signalQual = SENSOR_DEFAULT_I;
+    percent            = SENSOR_DEFAULT_I;
+    rssi               = SENSOR_DEFAULT_I;
 
-    // NOTE:  using Google doesn't work because there's no reply
-    MS_DBG(F("Opening connection to NIST to check connection strength..."));
-    // This is the IP address of time-c-g.nist.gov
-    // XBee's address lookup falters on time.nist.gov
-    // NOTE:  This "connect" only sets up the connection parameters, the TCP
-    // socket isn't actually opened until we first send data (the '!' below)
-    // IPAddress ip(132, 163, 97, 6);
-    // gsmClient.connect(ip, 37);
-    // Wait so NIST doesn't refuse us!
-    //while (millis() < _lastNISTrequest + 4000) {}
-    // Need to send something before connection is made
-    //gsmClient.println('!');
-    //uint32_t start = millis();
-    //delay(100);  // Need this delay!  Can get away with 50, but 100 is safer.
-    //while (gsmClient && gsmClient.available() < 4 && millis() - start < 5000L) {
-    //}
 
     // Assume measurement from previous connection
     // Get signal quality
     // NOTE:  We can't actually distinguish between a bad modem response, no
     // modem response, and a real response from the modem of no service/signal.
-    // The TinyGSM getSignalQuality function returns the same "no signal"
-    // value (99 CSQ or 0 RSSI) in all 3 cases.
+    // The TinyGSM getSignalQuality function returns the same "no signal" value
+    // (99 CSQ or 0 RSSI) in all 3 cases.
     MS_DBG(F("Getting signal quality:"));
     signalQual = gsmModem.getSignalQuality();
     MS_DBG(F("Raw signal quality:"), signalQual);
@@ -496,27 +620,35 @@ bool DigiXBeeWifi::updateModemMetadata(void) {
 #define XBEE_V_KEY 9999
     uint16_t volt_mV = XBEE_V_KEY;
 
+    MS_DBG(F("Modem polling settings:"), String(_pollModemMetaData, BIN));
+
     // if not enabled don't collect data
-    if (0 == loggerModem::_pollModemMetaData) {
-        MS_DBG(F("updateModemMetadata None to update"));
+    if (_pollModemMetaData == 0) {
+        MS_DBG(F("No modem metadata to update"));
         return false;
     }
-    // Enter command mode only once for temp and battery
-    MS_DBG(F("updateModemMetadata Entering Command Mode:"));
+
+    // Enter command mode only once
+    MS_DBG(F("Entering Command Mode to update modem metadata:"));
     success &= gsmModem.commandMode();
-    if (POLL_MODEM_META_DATA_RSSI & loggerModem::_pollModemMetaData) {
+
+    if ((_pollModemMetaData & MODEM_RSSI_ENABLE_BITMASK) ==
+            MODEM_RSSI_ENABLE_BITMASK ||
+        (_pollModemMetaData & MODEM_PERCENT_SIGNAL_ENABLE_BITMASK) ==
+            MODEM_PERCENT_SIGNAL_ENABLE_BITMASK) {
         // Assume a signal has already been established.
         // Try to get a valid signal quality
         // NOTE:  We can't actually distinguish between a bad modem response, no
         // modem response, and a real response from the modem of no
         // service/signal. The TinyGSM getSignalQuality function returns the
-        // same "no signal" value (99 CSQ or 0 RSSI) in all 3 cases. Try up to 5
-        // times to get a signal quality - that is, ping NIST 5 times and see if
-        // the value updates
+        // same "no signal" value (99 CSQ or 0 RSSI) in all 3 cases.
+
+        // Try up to 5 times to get a signal quality
         int8_t num_trys_remaining = 5;
         do {
             rssi = gsmModem.getSignalQuality();
-            MS_DBG(F("Raw signal quality("), num_trys_remaining, F("):"), rssi);
+            MS_DBG(F("Raw signal quality ("), num_trys_remaining, F("):"),
+                   rssi);
             if (rssi != 0 && rssi != SENSOR_DEFAULT_I) break;
             num_trys_remaining--;
         } while ((rssi == 0 || rssi == SENSOR_DEFAULT_I) && num_trys_remaining);
@@ -528,9 +660,14 @@ bool DigiXBeeWifi::updateModemMetadata(void) {
 
         loggerModem::_priorRSSI = rssi;
         MS_DBG(F("CURRENT RSSI:"), rssi);
+    } else {
+        MS_DBG(F("Polling for both RSSI and signal strength is disabled"));
     }
-    if (POLL_MODEM_META_DATA_VCC & loggerModem::_pollModemMetaData) {
-        // MS_DBG(F("Getting input voltage:"));
+
+
+    if ((_pollModemMetaData & MODEM_BATTERY_VOLTAGE_ENABLE_BITMASK) ==
+        MODEM_BATTERY_VOLTAGE_ENABLE_BITMASK) {
+        MS_DBG(F("Getting input voltage:"));
         volt_mV = gsmModem.getBattVoltage();
         MS_DBG(F("CURRENT Modem battery (mV):"), volt_mV);
         if (volt_mV != XBEE_V_KEY) {
@@ -540,15 +677,22 @@ bool DigiXBeeWifi::updateModemMetadata(void) {
             loggerModem::_priorBatteryVoltage =
                 static_cast<float>(SENSOR_DEFAULT_I);
         }
+    } else {
+        MS_DBG(F("Polling for modem battery voltage is disabled"));
     }
-    if (POLL_MODEM_META_DATA_TEMP & loggerModem::_pollModemMetaData) {
-        // MS_DBG(F("Getting chip temperature:"));
+
+    if ((_pollModemMetaData & MODEM_TEMPERATURE_ENABLE_BITMASK) ==
+        MODEM_TEMPERATURE_ENABLE_BITMASK) {
+        MS_DBG(F("Getting chip temperature:"));
         loggerModem::_priorModemTemp = getModemChipTemperature();
         MS_DBG(F("CURRENT Modem temperature(C):"),
                loggerModem::_priorModemTemp);
+    } else {
+        MS_DBG(F("Polling for modem chip temperature is disabled"));
     }
-    // Exit command modem
-    MS_DBG(F("updateModemMetadata Leaving Command Mode:"));
+
+    // Exit command mode
+    MS_DBG(F("Leaving Command Mode after updating modem metadata:"));
     gsmModem.exitCommand();
 
     ++updateModemMetadata_cnt;
@@ -562,132 +706,7 @@ bool DigiXBeeWifi::updateModemMetadata(void) {
 
     return success;
 }
-#if 0    // !defined USE_NTP
-// Get the time from NIST via TIME protocol (rfc868)
-uint32_t DigiXBeeWifi::getNISTTime(void) {
-    // bail if not connected to the internet
-    if (!isInternetAvailable()) {
-        MS_DBG(F("No internet connection, cannot connect to NIST."));
-        return 0;
-    }
 
-    /* Must ensure that we do not ping the daylight more than once every 4 seconds */
-    /* NIST clearly specifies here that this is a requirement for all software */
-    /* that accesses its servers:  https://tf.nist.gov/tf-cgi/servers.cgi */
-    while (millis() < _lastNISTrequest + 4000) {}
-
-    // Try up to 12 times to get a timestamp from NIST
-    for (uint8_t i = 0; i < 12; i++) {
-        // Must ensure that we do not ping the daylight more than once every 4
-        // seconds.  NIST clearly specifies here that this is a requirement for
-        // all software that accesses its servers:
-        // https://tf.nist.gov/tf-cgi/servers.cgi
-        while (millis() < _lastNISTrequest + 4000) {}
-
-        // Make TCP connection
-        MS_DBG(F("\nConnecting to NIST daytime Server"));
-        bool connectionMade = false;
-
-        // This is the IP address of time-e-wwv.nist.gov
-        // XBee's address lookup falters on time.nist.gov
-        // NOTE:  This "connect" only sets up the connection parameters, the TCP
-        // socket isn't actually opened until we first send data (the '!' below)
-        IPAddress ip(132, 163, 97, 6);
-        connectionMade = gsmClient.connect(ip, 37);
-        // Need to send something before connection is made
-        gsmClient.println('!');
-        // Need this delay!  Can get away with 50, but 100 is safer.
-        // delay(100);
-
-        // Wait up to 5 seconds for a response
-        if (connectionMade) {
-            uint32_t start = millis();
-            while (gsmClient && gsmClient.available() < 4 &&
-                   millis() - start < 5000L) {}
-
-            if (gsmClient.available() >= 4) {
-                MS_DBG(F("NIST responded after"), millis() - start, F("ms"));
-                byte response[4] = {0};
-                gsmClient.read(response, 4);
-                gsmClient.stop();
-                return parseNISTBytes(response);
-            } else {
-                MS_DBG(F("NIST Time server did not respond!"));
-                gsmClient.stop();
-            }
-        } else {
-            MS_DBG(F("Unable to open TCP to NIST!"));
-        }
-    }
-    else
-    {
-        MS_DBG(F("Unable to open TCP to NIST!"));
-    }
-    return 0;
-}
-#elif 0  // 1 == USE_NTP
-// Get the time from Http TIME protocol
-uint32_t DigiXBeeWifi::getNISTTime(void) {
-    uint32_t _currentEpoc = 0;
-    /* bail if not connected to the internet */
-    if (!isInternetAvailable()) {
-        MS_DBG(F("No internet connection, cannot connect to NIST."));
-        return 0;
-    }
-
-    /* Must ensure that we do not ping the daylight more than once every 4
-     * seconds
-     */
-    /* NIST clearly specifies here that this is a requirement for all software
-     */
-    /* that accesses its servers:  https://tf.nist.gov/tf-cgi/servers.cgi */
-    // while (millis() < _lastNISTrequest + 4000) {}
-
-    /* Make TCP connection */
-    MS_DBG(F("\nUsing HTP for time"));
-    // bool connectionMade = false;
-
-    /* This is the IP address of time-c-g.nist.gov */
-    /* XBee's address lookup falters on time.nist.gov */
-    // IPAddress ip(129, 6, 15, 30);
-    // connectionMade = gsmClient.connect(ip, 37, 15);
-    /* Wait again so NIST doesn't refuse us! */
-    // delay(4000L);
-    /* Need to send something before connection is made */
-    String ui_vers = gsmModem.sendATGetString(GF("VR"));
-    gsmModem.sendAT(GF("IP"), 0);  // Put in UDP mode
-    // gsmClient.println("ATP0");
-    // gsmClient.println("DL192.241.211.46");
-
-    /* Wait up to 5 seconds for a response */
-    // if (connectionMade)
-    {
-        uint32_t start = millis();
-        /*Look for
-        [00] HTTP/1.1 400 Bad Request
-        [27] Server: nginx/1.10.3 (Ubuntu)
-        [58] Date: Wed, 28 Aug 2019 22:50:25 GMT
-        [95] Content-Type: text/html
-        */
-        while (gsmClient && gsmClient.available() < 95 &&
-               millis() - start < 5000L) {}
-
-        if (gsmClient.available() >= 4) {
-            MS_DBG(F("Web responded after"), millis() - start, F("ms"));
-            byte response[101] = {
-                0};  // Needs to be larger enough for complete response
-            gsmClient.read(response, 100);
-
-            MS_DBG(F("<<< something fm gsmClient.read"));
-            MS_DBG(F("rsp"), response[58]);
-            // parseNISTBytes(response);
-        } else {
-            MS_DBG(F("HTTP server did not respond!"));
-        }
-    }
-    return _currentEpoc;
-}
-#endif   //
 
 // Az extensions
 void DigiXBeeWifi::setWiFiId(const char* newSsid, bool copyId) {
@@ -764,3 +783,5 @@ String DigiXBeeWifi::getWiFiPwd(void) {
 }
 //If needed can provide specific information
 //String DigiXBeeWifi::getModemDevId(void) {return "DigiXbeeWiFiId";}
+
+

@@ -10,6 +10,9 @@
 void setLoggerId(const char* newLoggerId, bool copyId = false,
                  uint8_t LoggerIdSize = NEW_LOGGERID_MAX_SIZE);
 
+/* Provides a method of getting battery voltage
+ to determine if enough power to continue
+*/
 bat_handler_atl _bat_handler_atl = NULL;
 
 void setBatHandler(bool (*bat_handler_atl)(lb_pwr_req_t reqBatState));
@@ -95,6 +98,9 @@ uint16_t _sendPacingDelay_mSec = SERIALIZE_sendPacingDelay_mSec;
 #endif  // LB_POSTMAX_NUM_DEF
     uint16_t _postMax_num = LB_POSTMAX_NUM_DEF; //See MMWGI_POST_MAX_RECS_MUM_DEF   
 
+// Time woken up
+uint32_t wakeUpTime_secs;
+
 public:
 void startFixedWatchdog() {
     //Fixed time for initialize.
@@ -111,7 +117,7 @@ public:
 bool parseIniSd(const char* ini_filename, ini_handler_atl485 handler_fn);
 bool parseIniFile(const char* ini_filename, ini_handler_atl485 unhandledFnReq);
 bool parseAndRename(const char ini_ext, const char* ini_filename, ini_handler_atl485 unhandledFnReq);
-void forceSysReset(uint8_t source, uint16_t simpleCheck);
+
 #ifdef USE_MS_SD_INI
 void setPs_cache(persistent_store_t* ps_ram);
 void printFileHeaderExtra(Stream* stream);
@@ -123,8 +129,7 @@ void        SDusbPoll(uint8_t sdActions);
 USE_RTCLIB* rtcExtPhyObj();
 #endif  // USE_RTCLIB
 static bool usbDriveActive(void);
-// Time woken up
-uint32_t wakeUpTime_secs;
+
 
 
 private:
@@ -154,6 +159,7 @@ const char* _samplingFeature;
 const char* _LoggerId_buf = NULL;
 
 public:
+void forceSysReset(uint8_t source, uint16_t simpleCheck);
 /**
  * @brief Process queued readings to send to remote if internet available.
  *
@@ -280,6 +286,7 @@ bool postLogOpen();
 bool postLogOpen(const char* postsLogNm_str);
 void postLogLine(uint32_t tmr_ms, int16_t rspParam);
 void postLogLine(const char *logMsg,bool addCR=true);
+// Macro to print to TTY and log on uSD 
 #define PRINT_LOGLINE_P(msg_parm) \
     char tttbuf[sizeof(msg_parm)+1]; \
     strcpy_P(tttbuf,msg_parm);\

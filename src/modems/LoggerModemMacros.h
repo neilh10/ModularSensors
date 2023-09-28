@@ -253,7 +253,7 @@
 #define MS_MODEM_CONNECT_INTERNET(specificModem)                             \
     bool specificModem::connectInternet(uint32_t maxConnectionTime) {        \
         bool success = true;                                                 \
-                                                                             \
+        MS_DBG(F("::connectInternet"));                                                                     \
         /** Power up, if necessary */                                        \
         bool wasPowered = true;                                              \
         if (_millisPowerOn == 0) {                                           \
@@ -278,8 +278,9 @@
             MS_START_DEBUG_TIMER                                             \
             MS_DBG(F("\nWaiting up to"), maxConnectionTime / 1000,           \
                    F("seconds for cellular network registration..."));       \
+            /*Set APN before attempting to connect */                        \
+            MS_MODEM_SET_APN                                                 \
             if (gsmModem.waitForNetwork(maxConnectionTime)) {                \
-                MS_MODEM_SET_APN                                             \
                 MS_DBG(F("... Connected after"), MS_PRINT_DEBUG_TIMER,       \
                        F("milliseconds."));                                  \
                 success = true;                                              \
@@ -392,7 +393,7 @@
             MS_START_DEBUG_TIMER                                             \
             MS_DBG(F("\nAttempting to connect to WiFi network..."));         \
             if (!(gsmModem.isNetworkConnected())) {                          \
-                MS_DBG(F("Sending credentials..."));                         \
+                MS_DBG(F("Sending credentials..."),_ssid, _pwd);              \
                 for (uint8_t i = 0; i < 5; i++) {                            \
                     if (gsmModem.networkConnect(_ssid, _pwd)) { break; }     \
                 }                                                            \

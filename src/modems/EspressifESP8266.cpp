@@ -79,14 +79,18 @@ bool EspressifESP8266::ESPwaitForBoot(void) {
 bool EspressifESP8266::modemWakeFxn(void) {
     bool success = true;
     if (_powerPin >= 0) {  // Turns on when power is applied
-        digitalWrite(_modemSleepRqPin, !_wakeLevel);
+        uint8_t pwrState= digitalRead(_powerPin);
+        MS_DBG(F("modemWakeFxn1"),_powerPin,pwrState,_modemSleepRqPin);
+        //digitalWrite(_modemSleepRqPin, !_wakeLevel);
+        digitalWrite(_powerPin, 1);
+        delay(1000);
         success &= ESPwaitForBoot();
         if (_modemSleepRqPin >= 0) {
             digitalWrite(_modemSleepRqPin, _wakeLevel);
         }
-        return success;
+        //return success;
     } else if (_modemResetPin >= 0) {
-        MS_DBG(F("Sending a reset pulse to pin"), _modemResetPin,
+        MS_DBG(F("modemWakeFxn2 Sending a reset pulse to pin"), _modemResetPin,
                F("to wake ESP8266 from deep sleep"));
         digitalWrite(_modemResetPin, LOW);
         delay(_resetPulse_ms);
@@ -96,16 +100,17 @@ bool EspressifESP8266::modemWakeFxn(void) {
         if (_modemSleepRqPin >= 0) {
             digitalWrite(_modemSleepRqPin, _wakeLevel);
         }
-        return success;
+        //return success;
     } else if (_modemSleepRqPin >= 0) {
-        MS_DBG(F("Setting pin"), _modemSleepRqPin,
+        MS_DBG(F("modemWakeFxn3 Setting pin"), _modemSleepRqPin,
                _wakeLevel ? F("HIGH") : F("LOW"),
                F("to wake ESP8266 from light sleep"));
         digitalWrite(_modemSleepRqPin, _wakeLevel);
         return success;
     } else {
-        return true;
+         MS_DBG(F("modemWakeFxn4 NoOp"));
     }
+    return success;
 }
 
 bool EspressifESP8266::modemSleepFxn(void) {
@@ -129,5 +134,84 @@ bool EspressifESP8266::extraModemSetup(void) {
     gsmModem.init();
     gsmClient.init(&gsmModem);
     _modemName = gsmModem.getModemName();
+
+    // ?? if (gsmModem.commandMode()) {
+    String modemInfo = gsmModem.getModemInfo();
+    MS_DBG(F("ESP32-WROOM  extra Initializing"),_modemName, modemInfo);
+
     return true;
+}
+
+// Az extensions
+void EspressifESP8266::setWiFiId(const char* newSsid, bool copyId) {
+    uint8_t newSsid_sz = strlen(newSsid);
+    _ssid              = newSsid;
+    if (copyId) {
+/* Do size checks, allocate memory for the LoggerID, copy it there
+ *  then set assignment.
+ */
+#define WIFI_SSID_MAX_sz 32
+        if (newSsid_sz > WIFI_SSID_MAX_sz) {
+            char* WiFiId2 = (char*)newSsid;
+            PRINTOUT(F("\n\r   LoggerModem:setWiFiId too long: Trimmed to "),
+                     newSsid_sz);
+            WiFiId2[newSsid_sz] = 0;  // Trim max size
+            newSsid_sz          = WIFI_SSID_MAX_sz;
+        }
+        if (NULL == _ssid_buf) {
+            _ssid_buf = new char[newSsid_sz + 2];  // Allow for trailing 0
+        } else {
+            PRINTOUT(F("\nLoggerModem::setWiFiId error - expected NULL ptr"));
+        }
+        if (NULL == _ssid_buf) {
+            // Major problem
+            PRINTOUT(F("\nLoggerModem::setWiFiId error -no buffer "),
+                     _ssid_buf);
+        } else {
+            strcpy(_ssid_buf, newSsid);
+            _ssid = _ssid_buf;
+            //_ssid2 =  _ssid_buf;
+        }
+        MS_DBG(F("\nsetWiFiId cp "), _ssid, " sz: ", newSsid_sz);
+    }
+}
+
+void EspressifESP8266::setWiFiPwd(const char* newPwd, bool copyId) {
+    uint8_t newPwd_sz = strlen(newPwd);
+    _pwd              = newPwd;
+
+    if (copyId) {
+/* Do size checks, allocate memory for the LoggerID, copy it there
+ *  then set assignment.
+ */
+#define WIFI_PWD_MAX_sz 63  // Len 63 printable chars + 0
+        if (newPwd_sz > WIFI_PWD_MAX_sz) {
+            char* pwd2 = (char*)newPwd;
+            PRINTOUT(F("\n\r   LoggerModem:setWiFiPwd too long: Trimmed to "),
+                     newPwd_sz);
+            pwd2[newPwd_sz] = 0;  // Trim max size
+            newPwd_sz       = WIFI_PWD_MAX_sz;
+        }
+        if (NULL == _pwd_buf) {
+            _pwd_buf = new char[newPwd_sz + 2];  // Allow for trailing 0
+        } else {
+            PRINTOUT(F("\nLoggerModem::setWiFiPwd error - expected NULL ptr"));
+        }
+        if (NULL == _pwd_buf) {
+            // Major problem
+            PRINTOUT(F("\nLoggerModem::setWiFiPwd error -no buffer "),
+                     _pwd_buf);
+        } else {
+            strcpy(_pwd_buf, newPwd);
+            _pwd = _pwd_buf;
+        }
+        MS_DEEP_DBG(F("\nsetWiFiPwd cp "), _ssid, " sz: ", newPwd_sz);
+    }
+}
+
+String EspressifESP8266::getWiFiId(void) {
+    return _ssid;
+}
+String EspressifESP8266::getWiFiPwd(void) {
+    return _pwd;
 }

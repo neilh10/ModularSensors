@@ -13,8 +13,10 @@
 //#include "LoggerModemMacros.h" NOT used, uniquely created in this file 
 #include <rpcWiFi.h>
 
+const char *modemNamStr = "RTL8720D";
+#define WIOTERM_MODEMNAME modemNamStr
 // Constructor
-WioTerminal_rpcwifi::WioTerminal_rpcwifi(/*Stream* modemStream,*/ 
+WioTerminal_rpcwifi::WioTerminal_rpcwifi(//Stream* modemStream, 
                                    const char* ssid, const char* pwd
                                    )
     : loggerModem(-1, -1, ESP8266update_STATUS_LEVEL, -1,
@@ -30,18 +32,21 @@ WioTerminal_rpcwifi::WioTerminal_rpcwifi(/*Stream* modemStream,*/
 #endif
       //gsmClient(gsmModem) 
       {
+    //_modemStream=modemStream;
     _ssid = ssid;
     _pwd  = pwd;
-
+    _modemName = WIOTERM_MODEMNAME;
     //_espSleepRqPin = espSleepRqPin;
     //_espStatusPin  = espStatusPin;
 
     //_modemStream = modemStream;
 }
-WioTerminal_rpcwifi::WioTerminal_rpcwifi(/*Stream* modemStream,*/ int8_t powerPin,
+WioTerminal_rpcwifi::WioTerminal_rpcwifi(//Stream* modemStream, 
+                        int8_t powerPin,
                         int8_t statusPin, int8_t modemResetPin,int8_t modemSleepRqPin, 
-                                   const char* ssid, const char* pwd, 
-                                   int8_t espSleepRqPin, int8_t espStatusPin)
+                                   const char* ssid, const char* pwd
+                                   //,int8_t espSleepRqPin, int8_t espStatusPin
+                                   )
     : loggerModem(powerPin, statusPin, ESP8266update_STATUS_LEVEL, modemResetPin,
                   ESP8266update_RESET_LEVEL, ESP8266update_RESET_PULSE_MS, modemSleepRqPin,
                   ESP8266update_WAKE_LEVEL, ESP8266update_WAKE_PULSE_MS,
@@ -55,13 +60,15 @@ WioTerminal_rpcwifi::WioTerminal_rpcwifi(/*Stream* modemStream,*/ int8_t powerPi
 #endif
       //gsmClient(gsmModem) 
       {
+    //_modemStream=modemStream; has to be created on connection        
     _ssid = ssid;
     _pwd  = pwd;
+    _modemName = WIOTERM_MODEMNAME;
 
-    _espSleepRqPin = espSleepRqPin;
-    _espStatusPin  = espStatusPin;
+    //_espSleepRqPin = espSleepRqPin;
+    //_espStatusPin  = espStatusPin;
 
-    //_modemStream = modemStream;
+    //_modemStream = loggerModem; // modemStream .Client Stream;
 }
 
 // Destructor
@@ -89,12 +96,16 @@ bool WioTerminal_rpcwifi::RTLwaitForBoot(void) {
     // sends out a boot log from the ROM on UART1 at 74880 baud.  We're not
     // going to worry about the odd baud rate since we're simply throwing the
     // characters away.
-    MS_DBG(F("Waiting for boot-up message from RTL8720"));
-    delay(200);  // It will take at least this long
+    MS_DBG(F("RTLwaitForBoot"));
+    delay(250);  // From DataSheet It will take at least this long
+#if 0
     uint32_t start   = millis();
     bool     success = false;
-    if (NULL == _modemStream) {return false;}
+    if (NULL == _modemStream) {
+        MS_DBG(F("RTL8720 modem stream not allocated"));
+        return false;}
     while (!_modemStream->available() && ((millis() - start) < 1000) ) {}
+    MS_DBG(F("RTL8720 modem available"));
     if (_modemStream->available()) {
         success = true;
         // Read the boot log to empty it from the serial buffer
@@ -104,6 +115,9 @@ bool WioTerminal_rpcwifi::RTLwaitForBoot(void) {
         }
     }
     return success;
+#else 
+    return true;
+#endif //modemStream
 }
 
 
@@ -111,16 +125,19 @@ bool WioTerminal_rpcwifi::RTLwaitForBoot(void) {
 // These can be functions of any type and must return a boolean
 bool WioTerminal_rpcwifi::modemWakeFxn(void) {
     bool success = true;
+
+
     if (_powerPin >= 0) {  // Turns on when power is applied
-        digitalWrite(_modemSleepRqPin, !_wakeLevel);
+        //?? digitalWrite(_modemSleepRqPin, !_wakeLevel);
         success &= RTLwaitForBoot();
-        if (_modemSleepRqPin >= 0) {
+        MS_DBG(F("RTL Booted ="),success);
+        /*if (_modemSleepRqPin >= 0) {
             digitalWrite(_modemSleepRqPin, _wakeLevel);
-        }
+        }*/
         return success;
     } else if (_modemResetPin >= 0) {
         MS_DBG(F("Sending a reset pulse to pin"), _modemResetPin,
-               F("to wake ESP8266 from deep sleep"));
+               F("to wake RTL from deep sleep"));
         digitalWrite(_modemResetPin, LOW);
         delay(_resetPulse_ms);
         digitalWrite(_modemResetPin, HIGH);
@@ -159,7 +176,7 @@ bool WioTerminal_rpcwifi::modemSleepFxn(void) {
     // Use this if you have an MCU pin connected to the ESP's reset pin to wake
     // from deep sleep We'll also put it in deep sleep before yanking power
     if (_modemResetPin >= 0 || _powerPin >= 0) {
-        MS_DBG(F("Requesting deep sleep for ESP8266"));
+        MS_DBG(F("Requesting deep sleep for RTL8720 -tbd not implemented"));
        bool retVal = true;// gsmModem.poweroff();
         if (_modemSleepRqPin >= 0) {
             digitalWrite(_modemSleepRqPin, !_wakeLevel);
@@ -239,6 +256,9 @@ bool WioTerminal_rpcwifi::extraModemSetup(void) {
     // // Set the wifi settings as default
     // // This will speed up connecting after resets
     // gsmModem.sendAT(GF("+CWJAP_DEF=\""), _ssid, GF("\",\""), _pwd, GF("\""));
+    if (WiFi.status() == WL_CONNECTED) {
+        MS_DBG(_ssid, " already connected :",WiFi.localIP());       
+    }
     WiFi.disconnect(true);
     uint16_t wifi_times = 1;
     #define WIFI_CONNECTION_ATTEMPTS 5
@@ -374,7 +394,7 @@ unsigned long WioTerminal_rpcwifi::sendNTPpacket(const char* address) {
 // Holders - need to be filled in
 // for streams somewhere there may be caller to .write(const uint8_t *buf, size_t size)
 bool WioTerminal_rpcwifi::modemWake(void) {
-    MS_DBG(F("modemWake")); 
+    MS_DBG(F("modemWake -trying for version")); 
     modemWakeFxn();
     MS_DBG(F("RTL8720 Firmware Version:"),  rpc_system_version());
     return true;
@@ -382,28 +402,39 @@ bool WioTerminal_rpcwifi::modemWake(void) {
 
 
 bool WioTerminal_rpcwifi::connectInternet(uint32_t maxConnectionTime) {
-    MS_DBG("connectInternet WiFi"); 
+    if (WiFi.status() == WL_CONNECTED) {
+        MS_DBG("connectInternet WiFi on");
+        return true;         
+    }
+    //MS_DBG("connectInternet WiFi atte"); 
+
     WiFi.disconnect(true);
     Serial.println("Waiting for WIFI connection...");
     delay(500);
     //Initiate connection
     WiFi.begin(_ssid, _pwd);
-#define CONNECT_RETRYS 20
-    uint16_t connect_try=CONNECT_RETRYS;
+#define CONNECT_RETRYS 10
+#define CONNECT_TRYS 20
+    int16_t connect_retry=CONNECT_RETRYS;
+    int16_t connect_try=CONNECT_TRYS;
     do {
         if (++connect_try > 20) {
             connect_try =0;
             WiFi.disconnect(true);
+            if ( --connect_retry <1) {
+                Serial.print("Retry failed, try again later");
+                return false;
+            }
             delay(500);
             WiFi.begin(_ssid, _pwd);
-            Serial.println("Retry");
+            Serial.print("Retry");
         } else {
             Serial.print(".");
         }
         delay(200);
     } while (WiFi.status() != WL_CONNECTED) ;
 
-    Serial.println("Connected.");
+    Serial.println(" Connected.");
     printStatus();    
     return true;
     }
@@ -428,7 +459,7 @@ void  WioTerminal_rpcwifi::printStatus() {
 
 
 
-void WioTerminal_rpcwifi::disconnectInternet(void) { MS_DBG("tbd need to disconnectInternet ");}
+void WioTerminal_rpcwifi::disconnectInternet(void) { MS_DBG("tbd disconnectInternet undefined");}
 
 //WiFi.RSSI()) + "db";
 bool  WioTerminal_rpcwifi::getModemSignalQuality(int16_t& rssi, int16_t& percent)

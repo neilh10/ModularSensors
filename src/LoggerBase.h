@@ -58,6 +58,8 @@
    #define RTC_INT_CLASS RTC_SAMD21
    #endif //__SAMD51__
    #define EPOCH_TIME_DTCLASS 0
+   //The Seconds Time that causes an Alarm
+   #define RTC_ALARM_SEC 59
 #elif defined(ARDUINO_ARCH_AVR) || defined(__AVR__)
 #include <Sodaq_DS3231.h>
 using namespace sodaq_DS3231_nm;
@@ -97,7 +99,7 @@ typedef enum {
     LB_PWR_END
 } lb_pwr_req_t;
 typedef bool (*bat_handler_atl)(lb_pwr_req_t reqBatState);
-// The largest number of variables from a single sensor
+
 
 /**
  * @brief The largest number of variables from a single sensor
@@ -730,7 +732,7 @@ class Logger {
      * *OR* a DS3231
      */
    // nh: static declaration has challanges, not sure value 
-   //static RTC_INT_CLASS  zero_sleep_rtc;
+   static RTC_INT_CLASS  zero_sleep_rtc;
 #endif
 
     /**
@@ -870,6 +872,7 @@ class Logger {
     static const uint8_t CIA_NEW_READING   = 0x01;
     static const uint8_t CIA_POST_READINGS = 0x02;
     static const uint8_t CIA_RLB_READINGS  = 0x04;  // store readings, no pub"
+    static const uint8_t CIA_NO_SLEEP      = 0x08;  // 
 
     /**
      * @brief Check if the MARKED time is an even interval of the logging rate -
@@ -1112,22 +1115,13 @@ class Logger {
     void generateAutoFileName(void);
 
     /**
-     * @brief Set a UTC time timestamp on a file. Depreciated 0.27.5
+     * @brief Set a timestamp on a file.
      *
      * @param fileToStamp The filename to change the timestamp of
      * @param stampFlag The "flag" of the timestamp to change - should be
      * T_CREATE, T_WRITE, or T_ACCESS
      */
-    void setFileTimestamp(File fileToStamp, uint8_t stampFlag);
-
-    /**
-     * @brief Set a local time timestamp on a file 
-     *
-     * @param fileToStamp The filename to change the timestamp of
-     * @param stampFlag The "flag" of the timestamp to change - should be
-     * T_CREATE, T_WRITE, or T_ACCESS
-     */
-    void setFileTimestampTz(File fileToStamp, uint8_t stampFlag);
+    void setFileTimestamp(File fileToStamp, uint8_t stampFlag, bool localTime=false);
 
     /**
      * @brief Open or creates a file, converting a string file name to a

@@ -1,18 +1,22 @@
 
-/* Status: Basic compile in ModularSensors directory - not calling MS
+/* Status: Basic compile in ModularSensors directory/context - not calling MS
 
  Name:		wioTerm_logger.cpp  from wioTerm_ntp.ino
  Sensors:
- Version:   2.0.0nh
+ Version:   2.0.1-nh
  Created:	9/7/2020 04:30:00 PM
  Author:	Jim Hamilton modified Neil Hancock Sept/7/2020
- Company:   Sannox Systems Pty Ltd
  Details:   Example of setting a rtc via ntp using the Wio Terminal
 
 ******* Updates *******
+Need to check for low power capability - turning off RTL and turning back on
+UM0401_RTL872xD_Datasheet_v3.4_watermark.pdf
+https://files.seeedstudio.com/products/102110419/Basic%20documents/UM0401_RTL872xD_Datasheet_v3.4_watermark.pdf
 
 Date:
-
+        2023-02-20 Reliable ntp and POST/MMW (though MMW seems touchy)
+        2023-02-19 Failing when turning off RTL. RTL stops responding when turned on
+        2023-02-18 POST but not reliably or powering off RTL
         2022-06-16 WioT Compiled
         2020-07-09
         + initial code 
@@ -61,7 +65,7 @@ uiHelper ui_display;
 
 
 #if defined RADIO_WIFI
-const char ssid[] = "ArthurTest"; // add your required ssid
+const char ssid[] = "ArthurGuestSsid"; // add your required ssid
 const char password[] = "Arthur8166";//"your-passowrd"; // add your own netywork password
 #endif // RADIO_WIFI
 
@@ -140,12 +144,13 @@ void setup() {
     // get the time via NTP (udp) call to time server
     // getNTPtime returns epoch UTC time adjusted for timezone but not daylight savings
     // time
-    devicetime = ntph.getNTPtime();
+    #define LOCAL_TZ  (-1*(8*60*60))
+    devicetime = ntph.getNTPtime()+ LOCAL_TZ; //Make PST for simplicity
     rtcPhy.adjust(devicetime);
     now_dt= rtcPhy.now();
 #endif // RADIO_WIFI
 
-    DateTime ccTimeTZ(__DATE__, __TIME__);
+
     // check if rtc has lost power i.e. battery not present or flat or new device
     now_dt = rtcPhy.now();
     //now_dt= bootTime_dt; //zero_sleep_rtc.getEpoch();
@@ -154,6 +159,7 @@ void setup() {
         Serial.print("RTC lost power, set the time to ");
         // When time needs to be set on a new device, or after a power loss, 
         //DateTime ntp_dt(devicetime);
+        DateTime ccTimeTZ(__DATE__, __TIME__);
         rtcPhy.adjust(ccTimeTZ);
         //zero_sleep_rtc.setTime(ccTimeTZ.hour(), ccTimeTZ.minute(), ccTimeTZ.second());
         //zero_sleep_rtc.setDate(ccTimeTZ.date(), ccTimeTZ.month(), ccTimeTZ.year() - 2000);
@@ -180,7 +186,7 @@ void setup() {
 
     // start millisdelays timers as required, adjust to suit requirements
     //updateDelay.start(12 * 60 * 60 * 1000); // update time via ntp every 12 hrs
-    #define UPDATE_MINUTES 0.5
+    #define UPDATE_MINUTES 1.0
     Serial.print("Update every mins: ");
     Serial.println(UPDATE_MINUTES);
     updateDelay.start(UPDATE_MINUTES*60* 1000); // Firstupdate time via ntp
@@ -200,21 +206,42 @@ void loop() {
     String timeNow;
 
     if (updateDelay.justFinished() || firstPass) { // delay loop
-        Serial.println();
+        //rpc_wifi_on();
+        //digitalWrite(RTL8720D_CHIP_PU, HIGH); //CHIP_EN high to enable
+        //Serial.print(" RTL8720 On ");
+        now_dt = rtcPhy.now();
+        timeNow = now_dt.timestamp(DateTime::TIMESTAMP_FULL);
+        Serial.println(timeNow);
+
         Serial.print(++readings_cnt);
+        Serial.print(":");
+        delay(250); //Tboot 200mS
+        Serial.print("RTL8720 Check :");
+        Serial.print( rpc_system_version());
+        //ntph.connectToWiFi(ssid, password);
         Serial.print(":");
         printFree();
         //Serial.print("]");
-#if defined RADIO_WIFI
+#define GET_NPT 1
+#if defined GET_NPT
         // update rtc time
-        devicetime = ntph.getNTPtime();
-        #else
-        devicetime = rtcPhy.now();
-        #endif //RADIO_WIFI
-        if (devicetime == 0) {
+        unsigned long timeNptTz_sec = ntph.getNTPtime()+LOCAL_TZ ;
+        now_dt = rtcPhy.now();
+        devicetime =now_dt.unixtime();
+        if (timeNptTz_sec   == 0) {
             Serial.println(" Failed to get time from network time server.");
+    
+        } else {
+            if (devicetime !=  timeNptTz_sec) {
+                Serial.print(" TimeUpdate difference=");
+                Serial.println(devicetime - timeNptTz_sec);
+            } else {
+                Serial.print(" TimeUpdate sucess.");
+            }
         }
-        else {
+        //else 
+#endif // GET_NPT
+        {
             //rtcPhy.adjust(DateTime(devicetime));
             //Serial.println("");
 
@@ -232,11 +259,18 @@ void loop() {
 
             ui_display.update3(now_dt.timestamp(DateTime::TIMESTAMP_FULL).c_str(),temperature_reading,humidity_reading,light_reading_raw );
         }
-        ntph.sendDataTuple(readings_cnt,timeNow);
+        if(!ntph.sendDataTuple(readings_cnt,timeNow)) {
+            Serial.println(" POST failed");
+        }
         if (firstPass) {
             firstPass = false;
         } else {
-        updateDelay.repeat(); // timer
+            //Serial.print(" RTL8720 Off ");
+            now_dt = rtcPhy.now();
+            timeNow = now_dt.timestamp(DateTime::TIMESTAMP_FULL);
+            Serial.println(timeNow);
+            //digitalWrite(RTL8720D_CHIP_PU, LOW); //CHIP_EN low to shutdiwn
+            updateDelay.repeat(); // timer
         }
     }
 }

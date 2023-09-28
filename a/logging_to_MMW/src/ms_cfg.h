@@ -54,7 +54,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define MFName_DEF "Mayfly"
 //#define HwVersion_DEF MFVersion_DEF
 #define HwName_DEF MFName_DEF
-#define CONFIGURATION_DESCRIPTION_STR "Maylfy Digi LTE XB3-C-A2 MMW"
+#define CONFIGURATION_DESCRIPTION_STR "Maylfy SIM7080G Temperature to MMW"
 
 #define USE_MS_SD_INI 1
 //#define USE_PS_EEPROM 1
@@ -75,7 +75,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define sensorPowerPin_DEF 22
 #define OneWireBus_DEF 6
 
-#define modemVccPin_DEF -2  // MCU pin controlling modem power
+#define modemVccPin_DEF 18  // Mayfly1.1 MCU pin controlling modem power
 #define modemSleepRqPin_DEF 23
 #define modemStatusPin_DEF  19  // MCU pin used to read modem status (-1 if not applicable)
 #define modemResetPin_DEF   20  // MCU pin connected to modem reset pin (-1 if unconnected)
@@ -89,7 +89,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 
 
 #define HwName_DEF "WioTerminal"
-#define CONFIGURATION_DESCRIPTION_STR "WioTerm WiFi Basic"
+#define CONFIGURATION_DESCRIPTION_STR "WioTerm WiFi 4 Temperature to MMW"
 
 #define USE_MS_SD_INI 1
 //#define USE_PS_EEPROM 1
@@ -106,9 +106,13 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define sdCardPwrPinDef   -1  //  MCU SD card power pin
 #define sdCardSSPinDef PIN_SPI2_SS //wioManual SD card chip select/slave select pin
 
-
+#if defined WIO_TERMINAL 
+#define sensorPowerPin_DEF -1 //WioT always on 
+#define OneWireBus_DEF 1  //WioT J4 Pin2 = D1
+#else 
 #define sensorPowerPin_DEF 22 //mayfly 
 #define OneWireBus_DEF 6  //mayfly 
+#endif //WIO_TERMINAL 
 
 #define modemVccPin_DEF -2  // wioT MCU pin controlling modem power
 //#define modemSleepRqPin_DEF 23 //mayfly 
@@ -119,8 +123,6 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 
 #endif //Board
 
-#define LOGGERID_DEF_STR "msLog01"
-#define NEW_LOGGERID_MAX_SIZE 40
 #define configIniID_DEF_STR "ms_cfg.ini"
 #define CONFIG_TIME_ZONE_DEF -8
 
@@ -134,7 +136,8 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #if defined logger2Mult
 #define loggingInterval_CDEF_MIN (loggingInterval_Fast_MIN * logger2Mult)
 #else
-#define loggingInterval_CDEF_MIN 15
+// Normally 15minutes but this is a test build
+#define loggingInterval_CDEF_MIN 2 
 #endif  // logger2Mult
 // Maximum logging setting allowed
 #define loggingInterval_MAX_CDEF_MIN 6 * 60
@@ -158,10 +161,14 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 //#define  USE_PUB_UBIDOTS 1
 
 // Required for TinyGsmClient.h
+#if USE_MODEM==  USE_CELL_SIMCON_SIM7080
+#define APN_CDEF "iot0119.com.attz"
+#else 
 #define TINY_GSM_MODEM_XBEE
 
 // The APN for the gprs connection, unnecessary for WiFi
 #define APN_CDEF "VZWINTERNET"
+#endif 
 
 // The WiFi access point  never set to real, as should be set by config.
 #define WIFIID_CDEF "ArthurGuestSsid"
@@ -183,9 +190,21 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 //#define SENSOR_CONFIG_GENERAL 1
 //#define KellerAcculevel_ACT 1
 // Defaults for data.envirodiy.org
-//Test08
+#define NEW_LOGGERID_MAX_SIZE 40
+#if 0
+#error see seperate ms_cfg_xxx.h
+//Test08 https://monitormywatershed.org/sites/tu_rc_test08/
+#define LOGGERID_DEF_STR "test08"
+
 #define registrationToken_UUID "0cf7c40a-232e-457d-87d6-cea5c0757fec"
 #define samplingFeature_UUID   "236c674b-69b9-43af-b0d6-33d67b870ecc"
 #define SEQUENCE_NUMBER_UUID   "8c57835f-a32f-4d62-82dc-0ba09f04cf52"
+#if defined WIO_TERMINAL 
+#define TEMPERATURE_A_UUID     "03e7b375-97a7-4423-a3f0-1d822d8b19b9"
+#define TEMPERATURE_B_UUID     "c62fcd8a-406e-4fe1-87d9-ff3dca8e1b90"
+#define TEMPERATURE_C_UUID     "8849814d-1603-4a2f-861f-f31ae68cccf3"
+#define TEMPERATURE_D_UUID     "08646cc3-c5de-414c-af65-c795b2dcac24"
+#endif //WIO_TERMINAL
 #define BAT_VOLTAGE_UUID       "3bebd4a3-8b54-4f92-ba55-5fd2fd021358"
+#endif
 #endif  // ms_cfg_h

@@ -138,6 +138,7 @@
 #include "ModSensorDebugger.h"
 #undef MS_DEBUGGING_STD
 #include "TinyGsmClient.h"
+#include "ModemTypes.h"
 #include "LoggerModem.h"
 
 #ifdef MS_SIMCOMSIM7080_DEBUG_DEEP
@@ -215,6 +216,14 @@ class SIMComSIM7080 : public loggerModem {
 
  private:
     const char* _apn;
+    // Az extension
+    char* _apn_buf = nullptr;  // Pointer to updated buffer
+ public:
+    // Az Extensions
+    void     setApn(const char* APN, bool copyId = false);
+    String   getApn(void);
+    //uint32_t getTimeNTP(void);
+    //updateModemMetadata(void) override;
 };
 /**@}*/
 #endif  // SRC_MODEMS_SIMCOMSIM7080_H_

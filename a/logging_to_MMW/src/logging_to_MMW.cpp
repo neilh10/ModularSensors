@@ -1,25 +1,41 @@
 /** =========================================================================
- * @file logging_to_MMW.ino
+ * @file logging_to_MMW.cpp
  * @brief Mayfly & WioT logging data and publishing to Monitor My Watershed 
  *
  * @author Neil Hancock port to Wio Terminal
  * @author Sara Geleskie Damiano <sdamiano@stroudcenter.org>
- * @copyright (c) 2017-2022 Stroud Water Research Center (SWRC)
+ * @copyright (c) 2017-2023 Stroud Water Research Center (SWRC)
  *                          and the EnviroDIY Development Team
- *            This example is published under the BSD-3 license.
+ *            This code is published under the BSD-3 license.
  *
  * Build Environment: Visual Studios Code with PlatformIO
- * Hardware Platform: EnviroDIY Mayfly Arduino Datalogger
+ * Hardware Platform set in platformio.ini
+ * default_envs =seeed_wio_terminal  OR mayfly
+ * 
+* Tasks: 
+ * * MS soak test  ie reliable
+ * * use ms_cfg.ini
+ * * DS18 Temperature logger  into J5/D0 d1 3V3 - Seeed SKU 101990578
+ *    Right hand J5 D1=PB09
+ * * WiFi subsystem, post to MMW - complete
+ * * WiFi subystem, get accurate wall time, ntp/udp - complete
+ * * Uses USB port for programming/monitoring. Option Serial1 UART for low power debug 
+ * * Lower power when using Serial1 UART
+ * 
+ * Future
+ * * Noise Level  internal micrcophone 
+ *
+ * 
+ * 2023 Feb 21 WioT Power Measured USB Stick on USB-C
+ *  USB active with WiFi 54mA, startup is 100mA
+ * with lowpower WiFi/RTL87280 is unreliable
  *
  * DISCLAIMER:
  * THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
  * ======================================================================= */
 
 // ==========================================================================
-//  Defines for the Arduino IDE
-//  NOTE:  These are ONLY needed to compile with the Arduino IDE.
-//         If you use PlatformIO, you should set these build flags in your
-//         platformio.ini
+//  Defines for TinyGSM
 // ==========================================================================
 /** Start [defines] */
 #ifndef TINY_GSM_RX_BUFFER
@@ -34,7 +50,17 @@
 //  Include the libraries required for any data logger
 // ==========================================================================
 /** Start [includes] */
+// Specify one of the following
+#define USE_CELL_DIGI_LTE_XBM3 1
+#define USE_CELL_SIMCON_SIM7080 2
+#define USE_WIFI_DIGI_S6B 3
+#define USE_WIFI_ENVIRODIY_ESP32 4
+
+//#define USE_MODEM USE_WIFI_DIGI_S6B
+#define USE_MODEM USE_CELL_SIMCON_SIM7080
+//https://monitormywatershed.org/sites/intg_test01/
 #include "ms_cfg.h"  //must be before ms_common.h & Arduino.h
+
 // The Arduino library is needed for every Arduino program.
 #include <Arduino.h>
 
@@ -63,7 +89,7 @@ const char git_usr[] = PIO_SRC_USR;
 #else
 const char git_usr[] = "usr";
 #endif
-
+#include "ms_cfg_intg_test01.h"
 // The name of this program file
 // Logger ID, also becomes the prefix for the name of the data file on SD card
 const char* LoggerID          = LOGGERID_DEF_STR;
@@ -76,12 +102,25 @@ const uint8_t loggingIntervaldef = loggingInterval_CDEF_MIN;
 const int8_t timeZone = CONFIG_TIME_ZONE_DEF;  
 // NOTE:  Daylight savings time will not be applied!  Please use standard time!
 
+// Serial Debug Output routing
+// For Mayfly its always a Serial though this connects with a USB chip
+// For WioT it can be built in USB Serial or UART Serial1 that requires an FTDI or similar debug port.
+// This is routed through the platformio.ino 
+// Generally
+// STANDARD_SERIAL_OUTPUT defined in  ModSensorDebugger.h
+// if STANDARD_SERIAL_OUTPUT is Serial then its USB
+// for USB requires special handling for USBDevice Driver
+// else could be Serial1 - com1 etc
+
+#define SerialStd STANDARD_SERIAL_OUTPUT
+
 // Set the input and output pins for the logger
 // NOTE:  Use -1 for pins that do not apply
 const int32_t serialBaud = serialBaudDebugDef;  // Baud rate for debugging
 const int8_t  greenLED   = greenLEDPinDef;
 const int8_t  redLED     = redLEDPinDef; 
 const int8_t  buttonPin  = buttonPinDef; // Pin for debugging mode (ie, button pin)
+//const int8_t  buttonWakePin  = -1; // Pin for debugging mode (ie, button pin)
 const int8_t  wakePin    = wakePinDef ;  // MCU interrupt/alarm pin to wake from sleep
 // Mayfly 0.x D31 = A7
 // Set the wake pin to -1 if you do not want the main processor to sleep.
@@ -95,23 +134,132 @@ const int8_t sensorPowerPin = sensorPowerPin_DEF;  // MCU pin controlling main s
 // ==========================================================================
 //  Wifi/Cellular Modem Options
 // ==========================================================================
-#if 1 //defined WIO_TERMINAL 
-/** Start [WIO_TERMINAL_COMMS] */
-// For WIO_TERMINAL that has WiFi and BT
-#include <modems/WioTerminal_rpcwifi.h>
-//Has an API not serial
-//#include "ntpHelper.h"
-
+#if defined(ARDUINO_AVR_ENVIRODIY_MAYFLY)
+/** Start [digi_xbee_cellular_transparent] */
+// For any Digi Cellular XBee's
+// NOTE:  The u-blox based Digi XBee's (3G global and LTE-M global) can be used
+// in either bypass or transparent mode, each with pros and cons
+// The Telit based Digi XBees (LTE Cat1) can only use this mode.
 // Create a reference to the serial port for the modem
-//HardwareSerial& modemSerial = modemSerial_Upstream_DEF;  // Use hardware serial if possible
-//HardwareSerial& modemSerial = NULL;  
-
-//WioTerminal_rpcwifi.cpp rpcWifi.h WiFi.h class client
-
-//const int32_t   modemBaud   = modemBaud_Upstream_DEF ;   // All XBee's use 9600 by default
+HardwareSerial& modemSerial = Serial1;  // Use hardware serial if possible
+#define modemSerHw modemSerial
+/* StreamDebugger setup through xx_DEBUG_DEEP
+HardwareSerial& modemSerial = modemSerial_Upstream_DEF;  // Use hardware serial if possible
+#if defined STREAMDEBUGGER_DBG
+#include <StreamDebugger.h>
+StreamDebugger modemDebugger(modemSerial, STANDARD_SERIAL_OUTPUT);
+#define modemSerHw modemDebugger
+#else
+#define modemSerHw modemSerial
+#endif  // STREAMDEBUGGER_DBG
+*/
 
 // Modem Pins - Describe the physical pin connection of your modem to your board
 // NOTE:  Use -1 for pins that do not apply
+const int8_t modemVccPin    = modemVccPin_DEF;    // MCU pin controlling modem power
+const int8_t modemStatusPin = modemStatusPin_DEF; // MCU pin used to read modem status
+
+const int8_t modemResetPin  = modemResetPin_DEF;     // MCU pin connected to modem reset pin
+const int8_t modemSleepRqPin = modemSleepRqPin_DEF;    // MCU pin for modem sleep/wake request
+const int8_t modemLEDPin = redLED;    // MCU pin connected an LED to show modem
+                                      // status (-1 if unconnected)
+
+
+
+#if USE_MODEM == USE_CELL_DIGI_LTE_XBM3
+#warning Specified USE_CELL_DIGI_LTE_XBM3
+/** Start [digi_xbee_cellular_transparent] */
+#include <modems/DigiXBeeCellularTransparent.h>
+
+// Network connection information
+const char* apn = "xxxxx";  // The APN for the gprs connection
+const int32_t   modemBaud   = modemBaud_Upstream_DEF ;   // All XBee's use 9600 by default
+const bool useCTSforStatus  = true;  // Flag to use the XBee CTS pin for status
+// NOTE:  If possible, use the `STATUS/SLEEP_not` (XBee pin 13) for status, but
+// the `CTS` pin can also be used if necessary
+DigiXBeeCellularTransparent modemXBCT(&modemSerHw, modemVccPin, modemStatusPin,
+                                      useCTSforStatus, modemResetPin,
+                                      modemSleepRqPin, apn);
+// Create an extra reference to the modem by a generic name
+DigiXBeeCellularTransparent modemPhy = modemXBCT;
+#define MODEM_DEF F("Modem LTE XB3"))
+/** End [digi_xbee_cellular_transparent] */
+#elif USE_MODEM == USE_CELL_SIMCON_SIM7080
+#warning Specified USE_CELL_SIMCON_SIM7080
+/** Start [sim_com_sim7080] */
+// For almost anything based on the SIMCom SIM7080G
+#include <modems/SIMComSIM7080.h>
+
+// Network connection information
+const char* apn =
+    "iot0119.com.attz";  // APN connection name, typically Hologram unless you have a
+                 // different provider's SIM card. Change as needed
+const int32_t   modemBaud   = modemBaud_Upstream_DEF ;   // Default 9600?
+const bool useCTSforStatus  = false;  // Flag to use the XBee CTS pin for status
+// Create the modem object
+SIMComSIM7080 modem7080(&modemSerHw, modemVccPin, modemStatusPin,
+                        modemSleepRqPin, apn);
+// Create an extra reference to the modem by a generic name
+SIMComSIM7080 modemPhy = modem7080;
+#define MODEM_DEF (F("Modem LTE SIM7080"))
+/** End [sim_com_sim7080] */
+#elif USE_MODEM == USE_WIFI_DIGI_S6B
+#warning Specified USE_WIFI_DIGI_S6B
+/** Start [digi_xbee_wifi] */
+// For the Digi Wifi XBee (S6B)
+#include <modems/DigiXBeeWifi.h>
+
+// Network connection information
+const char* wifiId  = WIFIID_SSID_DEF;  // WiFi access point name
+const char* wifiPwd = WIFIPWD_DEF;  // WiFi password (WPA2)
+
+const int32_t   modemBaud   = modemBaud_Upstream_DEF ;   // All XBee's use 9600 by default
+const bool useCTSforStatus  = true;  // Flag to use the XBee CTS pin for status
+// Create the modem object
+DigiXBeeWifi modemXBWF(&modemSerHw, modemVccPin, modemStatusPin,
+                       useCTSforStatus, modemResetPin, modemSleepRqPin, wifiId,
+                       wifiPwd);
+// Create an extra reference to the modem by a generic name
+DigiXBeeWifi modemPhy = modemXBWF;
+#define MODEM_DEF F("Modem WiFi S6B")
+/** End [digi_xbee_wifi] */
+#elif USE_MODEM == USE_WIFI_ENVIRODIY_ESP32
+#warning Specified USE_WIFI_ENVIRODIY_ESP32
+/** Start [espressif_esp32] */
+#include <modems/EspressifESP32.h>
+
+// Network connection information
+const char* wifiId  = WIFIID_SSID_DEF;  // WiFi access point name
+const char* wifiPwd = WIFIPWD_DEF;  // WiFi password (WPA2)
+
+#define ESP32_MODEM_115K_BAUD 115200
+#define ESP32_MODEM_57K_BAUD  57600
+#define ESP32_MODEM_9K6_BAUD   9600
+#define ESP32_MODEM_DEF_BAUD  ESP32_MODEM_57K_BAUD 
+const uint32_t modemBaud   = ESP32_MODEM_DEF_BAUD;   // Expected speed of the modem, default is 115200 
+const int8_t    modemEspResetPin = -1;
+// Create the modem object
+EspressifESP32 modemESP(&modemSerHw, modemVccPin, modemEspResetPin, wifiId,
+                        wifiPwd);
+// Create an extra reference to the modem by a generic name
+EspressifESP32 modemPhy = modemESP;
+#define MODEM_DEF F("Modem WiFi ESP32")
+
+#else
+#error "modem not defined "
+#endif // USE_CELL_DIGI_LTE_XBM3
+
+#elif defined WIO_TERMINAL 
+/** Start [WIO_TERMINAL_COMMS] */
+// For WIO_TERMINAL that has WiFi and BT
+// WioT uses an  API Message/SPI (Mayfly has AT over UART)
+#include <modems/WioTerminal_rpcwifi.h>
+
+// Create a reference to the serial port for the modem
+
+// Modem Pins - Describe the physical pin connection of your modem to your board
+// NOTE:  Use -1 for pins that do not apply
+//const int8_t modemVccPin    = RTL8720D_CHIP_PU; //future 
 const int8_t modemVccPin    = modemVccPin_DEF;    // MCU pin controlling modem power
 const int8_t modemStatusPin = -1;//modemStatusPin_DEF; // MCU pin used to read modem status
 const bool useCTSforStatus  = false;  // Flag to use the XBee CTS pin for status
@@ -122,83 +270,22 @@ const int8_t modemSleepRqPin = -1;//modemSleepRqPin_DEF;    // MCU pin for modem
 const int8_t espSleepRqPin = -1;  // ESP8266 light sleep request
 const int8_t espStatusPin = -1;   // ESP8266 light sleep status
 // Network connection information
-const char* wifi_ssid = WIFIID_CDEF;  // The WiFi access point
-const char* wifi_pwd  = WIFIPWD_CDEF;  // The password for connecting to WiFi
+const char* wifi_ssid = WIFIID_SSID_DEF;  // The WiFi access point
+const char* wifi_pwd  = WIFIPWD_DEF;  // The password for connecting to WiFi
 
 // Create the loggerModem object
-
-
-#if 0
-WioTerminal_rpcwifi modemWIOT(/*&modemSerial,*/ modemVccPin, 
+WioTerminal_rpcwifi modemWIOT( modemVccPin, 
                         modemStatusPin, modemResetPin, modemSleepRqPin,  
-                        wifi_ssid, wifi_pwd, 
-                        espSleepRqPin, espStatusPin);*/
-#endif
-WioTerminal_rpcwifi modemWIOT(/*&modemSerial,*/ 
-                        wifi_ssid, wifi_pwd);
+                        wifi_ssid, wifi_pwd
+                        //,espSleepRqPin, espStatusPin
+                        );
 WioTerminal_rpcwifi modemPhy = modemWIOT;
 /** End [WIO_TERMINAL_COMMS] */
-#elif defined(ARDUINO_AVR_ENVIRODIY_MAYFLY)
-// Create a reference to the serial port for the modem
-HardwareSerial& modemSerial = modemSerial_Upstream_DEF;  // Use hardware serial if possible
-const int32_t   modemBaud   = modemBaud_Upstream_DEF ;   // All XBee's use 9600 by default
-
-// Modem Pins - Describe the physical pin connection of your modem to your board
-// NOTE:  Use -1 for pins that do not apply
-const int8_t modemVccPin    = modemVccPin_DEF;    // MCU pin controlling modem power
-const int8_t modemStatusPin = modemStatusPin_DEF; // MCU pin used to read modem status
-const bool useCTSforStatus  = true;  // Flag to use the XBee CTS pin for status
-const int8_t modemResetPin  = modemResetPin_DEF;     // MCU pin connected to modem reset pin
-const int8_t modemSleepRqPin = modemSleepRqPin_DEF;    // MCU pin for modem sleep/wake request
-const int8_t modemLEDPin = redLED;    // MCU pin connected an LED to show modem
-                                      // status (-1 if unconnected)
-#if 0
-/** Start [digi_xbee_cellular_transparent] */
-// For any Digi Cellular XBee's
-// NOTE:  The u-blox based Digi XBee's (3G global and LTE-M global) can be used
-// in either bypass or transparent mode, each with pros and cons
-// The Telit based Digi XBees (LTE Cat1) can only use this mode.
-#include <modems/DigiXBeeCellularTransparent.h>
-
-
-
-//njh need to make WiFI
-// Network connection information
-const char* apn = "xxxxx";  // The APN for the gprs connection
-
-
-// NOTE:  If possible, use the `STATUS/SLEEP_not` (XBee pin 13) for status, but
-// the `CTS` pin can also be used if necessary
-DigiXBeeCellularTransparent modemXBCT(&modemSerial, modemVccPin, modemStatusPin,
-                                      useCTSforStatus, modemResetPin,
-                                      modemSleepRqPin, apn);
-// Create an extra reference to the modem by a generic name
-DigiXBeeCellularTransparent modemPhy = modemXBCT;
-/** End [digi_xbee_cellular_transparent] */
-#else 
-/** Start [digi_xbee_wifi] */
-// For the Digi Wifi XBee (S6B)
-#include <modems/DigiXBeeWifi.h>
-
-
-// Network connection information
-const char* wifiId  = "xxxxx";  // WiFi access point name
-const char* wifiPwd = "xxxxx";  // WiFi password (WPA2)
-
-// Create the modem object
-DigiXBeeWifi modemXBWF(&modemSerial, modemVccPin, modemStatusPin,
-                       useCTSforStatus, modemResetPin, modemSleepRqPin, wifiId,
-                       wifiPwd);
-// Create an extra reference to the modem by a generic name
-DigiXBeeWifi modemPhy = modemXBWF;
-/** End [digi_xbee_wifi] */
-#endif //digi
 #endif //ARDUINO_AVR_ENVIRODIY_MAYFLY
 
 // ==========================================================================
 //  Using the Processor as a Sensor
 // ==========================================================================
-#if 1
 /** Start [processor_sensor] */
 #include <sensors/ProcessorStats.h>
 
@@ -206,24 +293,25 @@ DigiXBeeWifi modemPhy = modemXBWF;
 const char*    mcuBoardVersion = "v1.1";
 ProcessorStats mcuBoard(mcuBoardVersion);
 /** End [processor_sensor] */
-#endif
+
 
 // ==========================================================================
 //  Maxim DS3231 RTC (Real Time Clock)
 // ==========================================================================
-#if 0
+#if USE_DS3231
 /** Start [ds3231] */
 #include <sensors/MaximDS3231.h>
 
 // Create a DS3231 sensor object
 MaximDS3231 ds3231(1);
 /** End [ds3231] */
-#endif //00
+#endif //USE_DS3231
+
 
 // ==========================================================================
 //  Bosch BME280 Environmental Sensor
 // ==========================================================================
-#if 0
+#if USE_BME280
 /** Start [bme280] */
 #include <sensors/BoschBME280.h>
 
@@ -235,7 +323,7 @@ uint8_t      BMEi2c_addr = 0x76;
 // Create a Bosch BME280 sensor object
 BoschBME280 bme280(I2CPower, BMEi2c_addr);
 /** End [bme280] */
-#endif //0
+#endif //USE_BME280
 
 // ==========================================================================
 //  Maxim DS18 One Wire Temperature Sensor
@@ -247,7 +335,7 @@ BoschBME280 bme280(I2CPower, BMEi2c_addr);
 // If only using a single sensor on the OneWire bus, you may omit the address
 // DeviceAddress OneWireAddress1 = {0x28, 0xFF, 0xBD, 0xBA, 0x81, 0x16, 0x03,
 // 0x0C};
-const int8_t OneWirePower = sensorPowerPin;  // Power pin (-1 if unconnected)
+const int8_t OneWirePower = -1;//sensorPowerPin;  Power pin (-1 if unconnected)
 const int8_t OneWireBus   = OneWireBus_DEF;  // OneWire Bus Pin (-1 if unconnected)
 
 // Create a Maxim DS18 sensor objects (use this form for a known address)
@@ -255,7 +343,18 @@ const int8_t OneWireBus   = OneWireBus_DEF;  // OneWire Bus Pin (-1 if unconnect
 
 // Create a Maxim DS18 sensor object (use this form for a single sensor on bus
 // with an unknown address)
-MaximDS18 ds18(OneWirePower, OneWireBus);
+// tbd how to do this for a number of same sensors.
+// Could configure in .ini ~ which means 1) determining number of sensors 2) each sensors address
+//Address OneWireSearch: 0x28, 0x8A, 0xAB, 0xD9, 0x06, 0x00, 0x00, 0x3B
+uint8_t Dev1_Ds18Addr_a[8]= {0x28, 0x8A, 0xAB, 0xD9, 0x06, 0x00, 0x00, 0x3A};
+uint8_t Dev1_Ds18Addr_b[8]= {0x28, 0x8A, 0xAB, 0xD9, 0x06, 0x00, 0x00, 0x3B};
+uint8_t Dev1_Ds18Addr_c[8]= {0x28, 0x8A, 0xAB, 0xD9, 0x06, 0x00, 0x00, 0x3C};
+uint8_t Dev1_Ds18Addr_d[8]= {0x28, 0x8A, 0xAB, 0xD9, 0x06, 0x00, 0x00, 0x3D};
+//Prototype 4 devices, using same address till new parts arrive
+MaximDS18 ds18phy_a(Dev1_Ds18Addr_a,OneWirePower, OneWireBus);
+MaximDS18 ds18phy_b(Dev1_Ds18Addr_b,OneWirePower, OneWireBus);
+MaximDS18 ds18phy_c(Dev1_Ds18Addr_c,OneWirePower, OneWireBus);
+MaximDS18 ds18phy_d(Dev1_Ds18Addr_d,OneWirePower, OneWireBus);
 /** End [ds18] */
 
 
@@ -264,17 +363,15 @@ MaximDS18 ds18(OneWirePower, OneWireBus);
 // ==========================================================================
 /** Start [variable_arrays] */
 Variable* variableList[] = {
-    new ProcessorStats_SampleNumber(&mcuBoard, SEQUENCE_NUMBER_UUID),
-    //new BoschBME280_Temp(&bme280, "12345678-abcd-1234-ef00-1234567890ab"),
-    //new BoschBME280_Humidity(&bme280, "12345678-abcd-1234-ef00-1234567890ab"),
-    //new BoschBME280_Pressure(&bme280, "12345678-abcd-1234-ef00-1234567890ab"),
-    //new BoschBME280_Altitude(&bme280, "12345678-abcd-1234-ef00-1234567890ab"),
-    //debug disable new MaximDS18_Temp(&ds18, "12345678-abcd-1234-ef00-1234567890ab"),
-    new ProcessorStats_Battery(&mcuBoard,BAT_VOLTAGE_UUID ),
-    //new MaximDS3231_Temp(&ds3231, "12345678-abcd-1234-ef00-1234567890ab"),
+    new ProcessorStats_SampleNumber(&mcuBoard),
+    #if defined TEMPERATURE_A_UUID
+    new MaximDS18_Temp(&ds18phy_a, TEMPERATURE_A_UUID,"Ds18Ta"),
+    new MaximDS18_Temp(&ds18phy_b, TEMPERATURE_B_UUID,"Ds18Tb"),
+    new MaximDS18_Temp(&ds18phy_c, TEMPERATURE_C_UUID,"Ds18Tc"),
+    new MaximDS18_Temp(&ds18phy_d, TEMPERATURE_D_UUID,"Ds18Td"),
+    #endif //TEMPERATURE_A_UUID
     #if defined(ARDUINO_AVR_ENVIRODIY_MAYFLY)
-    new Modem_RSSI(&modemPhy, "12345678-abcd-1234-ef00-1234567890ab"),
-    //new Modem_SignalPercent(&modem, "12345678-abcd-1234-ef00-1234567890ab"),
+    new ProcessorStats_Battery(&mcuBoard ),
     #endif // ARDUINO_AVR_ENVIRODIY_MAYFLY
 };
 
@@ -283,7 +380,7 @@ Variable* variableList[] = {
 int variableCount = sizeof(variableList) / sizeof(variableList[0]);
 
 // Create the VariableArray object
-VariableArray varArray(variableCount, variableList);
+VariableArray varArray(variableCount, variableList,UUIDs);
 /** End [variable_arrays] */
 
 
@@ -303,22 +400,20 @@ Logger dataLogger(LoggerID, loggingIntervaldef, &varArray);
 // A Publisher to Monitor My Watershed / EnviroDIY Data Sharing Portal
 // Device registration and sampling feature information can be obtained after
 // registration at https://monitormywatershed.org or https://data.envirodiy.org
-const char* registrationToken = registrationToken_UUID;
-const char* samplingFeature =   samplingFeature_UUID;
+// see ms_cfg.h const char* registrationToken = registrationToken;
+//const char* samplingFeature =   samplingFeature;
 
 // Create a data publisher for the Monitor My Watershed/EnviroDIY POST endpoint
 #include <publishers/EnviroDIYPublisher.h>
-//EnviroDIYPublisher EnviroDIYPOST(dataLogger, &modemPhy.Client, //WiFiClient,
-//                                 registrationToken, samplingFeature);
-
-//Add later EnviroDIYPOST.setClient(&modemPhy.(Class *inClient))
 //An Arduino client instance to use to print data to.
 //     * Allows the use of any type of client and multiple clients tied to a
-//     * single TinyGSM modem instance 
+//     * single modem instance 
+#if defined WIO_TERMINAL
 EnviroDIYPublisher EnviroDIYPOST(dataLogger, 15, 0);
-
-//EnviroDIYPublisher EnviroDIYPOST(dataLogger, registrationToken, samplingFeature);
-
+#else 
+EnviroDIYPublisher EnviroDIYPOST(dataLogger, &modemPhy.gsmClient,
+                                 registrationToken, samplingFeature);
+#endif // WIO_TERMINAL
 /** End [publishers] */
 
 
@@ -327,6 +422,7 @@ EnviroDIYPublisher EnviroDIYPOST(dataLogger, 15, 0);
 // ==========================================================================
 /** Start [working_functions] */
 #if defined USE_LEDS
+// Mayfly has 2 LEDs, WIO_T only greenLED
 // Flashes the LED's on the primary board
 void greenredflash(uint8_t numFlash = 4, uint8_t rate = 75) {
     for (uint8_t i = 0; i < numFlash; i++) {
@@ -355,36 +451,69 @@ float getBatteryVoltage() {
 // ==========================================================================
 /** Start [setup] */
 void setup() {
-// Wait for USB connection to be established by PC
+// Serial debug could be Serial1 or USB connection established by PC
 // NOTE:  Only use this when debugging - if not connected to a PC, this
 // could prevent the script from starting
-#if defined SERIAL_PORT_USBVIRTUAL
-    while (!SERIAL_PORT_USBVIRTUAL && (millis() < 10000)) {}
-#endif
+    bool statusUsb=false;
+#if defined WIO_TERMINAL 
+#if !defined USE_SERIAL1 & defined MS_LOGGING_TO_MMW_DEBUG
+#pragma message "WIO TERM Output debug to USB "
+    //Be nice to detect if USB is plugged in, but how?
+    delay(10);
+    statusUsb = USBDevice.ready();
+    uint32_t start_ms=millis();
+    uint32_t startupUsbDelay_ms;
+    // Wait for up to 10seconds for a USB COM to be detected
+    #define USB_WAIT_FOR_TERM_MS 10000
+    while (!SerialStd && (millis() < USB_WAIT_FOR_TERM_MS )) {}
+    startupUsbDelay_ms = millis()-start_ms;
+#else  
+#pragma message ("WIO TERRM Output to UART ") 
+    statusUsb = USBDevice.ready();
+    USBDevice.detach();
+    //Serial.end();
+    //statusUsb &= USBDevice.end(); !not uspported 
+#endif // USE_SERIAL1
+#endif // WIO_TERMINAL
 
     // Start the primary serial connection
-    Serial.begin(serialBaud);
-    while (!Serial); // debug wait for serial port to connect. Needed for native USB
-
+    SerialStd.begin(serialBaud);
 
     // Print a start-up note to the first serial port
-    Serial.print(F("\n---Boot("));
-    //Serial.print(mcu_status,HEX);
-    Serial.print(F(") Sw Build: "));
-    Serial.print(build_ref);
-    Serial.print(" ");
-    Serial.println(git_usr);
-    Serial.print(" ");
-    Serial.println(git_branch);
+    SerialStd.print(F("\n---Boot("));
+    //SerialStd.print(mcu_status,HEX);
+    SerialStd.print(F(") Sw Build: "));
+    SerialStd.print(build_ref);
+    SerialStd.print(" ");
+    SerialStd.println(git_usr);
+    SerialStd.print(" ");
+    SerialStd.println(git_branch);
 
-    Serial.print(F("Sw Name: "));
-    Serial.println(configDescription);
+    SerialStd.print(F("Sw Name: "));
+    SerialStd.println(configDescription);
+    #if defined WIO_TERMINAL 
+    SerialStd.print("  ***** Low Power RTC SAMD51 ");
+    SerialStd.print(F_CPU);
+    SerialStd.println("MHz ***** ");
+    #else //assume Mayfly
+    SerialStd.print(MODEM_DEF);
+    SerialStd.print(F(" TinyGSM Library version "));
+    SerialStd.println(TINYGSM_VERSION);
 
-    Serial.print(F("Using ModularSensors Library version "));
-    Serial.println(MODULAR_SENSORS_VERSION);
-    //Serial.print(F("TinyGSM Library version "));
-    //Serial.println(TINYGSM_VERSION);
-    Serial.println();
+    #endif //WIO_TERMINAL 
+    SerialStd.print(F("Using ModularSensors Library version "));
+    SerialStd.println(MODULAR_SENSORS_VERSION);
+
+#if defined USB_SERIALSTD
+    SerialStd.print(" USB UsbStat=");
+    SerialStd.print(statusUsb);
+    SerialStd.print(" StartDelay=");
+    SerialStd.print(startupUsbDelay_ms);
+#else
+    SerialStd.print(" UART UsbStat=");
+    SerialStd.print(statusUsb);
+#endif // USB_SERIALSTD
+    SerialStd.println();
 
 // Allow interrupts for software serial
 #if defined SoftwareSerial_ExtInts_h
@@ -395,8 +524,6 @@ void setup() {
     enableInterrupt(neoSSerial1Rx, neoSSerial1ISR, CHANGE);
 #endif
 
-    // Start the serial connection with the modem
-    // nh modemSerial.begin(modemBaud);
 
     // Set up pins for the LED's
     #if defined USE_LEDS
@@ -416,24 +543,120 @@ void setup() {
     // Attach the modem and information pins to the logger
     dataLogger.attachModem(modemPhy);
     //modemPhy.setModemLED(modemLEDPin);
-    dataLogger.setLoggerPins(wakePin, sdCardSSPin, sdCardPwrPin, buttonPin,
+    dataLogger.setLoggerPins(wakePin, sdCardSSPin, sdCardPwrPin, wakePin,
                              greenLED);
-    dataLogger.setLoggerID("logdef");
-    dataLogger.setLoggingInterval(2);
+    dataLogger.setLoggerID("logmmw");
+    dataLogger.setLoggingInterval(2); //loggingInterval_CDEF_MIN
+    dataLogger.setSendEveryX(1); //Default 2
+    dataLogger.setSendOffset(0);
+    dataLogger.setPostMax_num(20);
     delay(500);
     // Begin the logger
     dataLogger.begin();
+    EnviroDIYPOST.setQuedState(true);
+    EnviroDIYPOST.setTimerPostTimeout_mS(15432); //15.4Sec
+    EnviroDIYPOST.setTimerPostPacing_mS(500);
+#if USE_MODEM == USE_WIFI_ENVIRODIY_ESP32
+    /** Start [setup_esp] */
+       // Modem wroom default baud is 115200
+    // Mayfly TinyGSM read() processing doesn't work at 115200.
+    // It needs to be slowed down.
+    // On a newly installed modem, it will be at 115200, 
+    // however previously programmed modems could be 57600 or 9600
+    uint32_t cfgMdmBaud = modemBaud;
+    SerialStd.print("ModemESP32 init default ");
+    SerialStd.println(cfgMdmBaud );
+    //modemSerial.end();
+    modemSerial.begin(cfgMdmBaud );
 
-    Serial.println(F("Setting up modemPhy as WiFiClient..."));
-    //EnviroDIYPOST.setClient(&modemPhy.endClient);
+    for (uint8_t ntries = 0; ntries<5; ntries++) {
+        // This will also verify communication and set up the modem
+        if (modemPhy.modemWake())  break;
+
+        // if that didn't work, try changing baud rate
+        cfgMdmBaud= ESP32_MODEM_115K_BAUD;
+        SerialStd.print(ntries);
+        SerialStd.print("] ModemESP32 init ");
+        SerialStd.println(cfgMdmBaud);
+        modemPhy.gsmModem.sendAT(GF("+UART_DEF=115200,8,1,0,0"));
+        modemPhy.gsmModem.waitResponse();
+        modemSerial.end();
+        modemSerial.begin(cfgMdmBaud);
+        if (modemPhy.modemWake()) break;
+
+        // if that didn't work, try changing baud rate
+        cfgMdmBaud= ESP32_MODEM_57K_BAUD;
+        SerialStd.print(ntries);
+        SerialStd.print("] ModemESP32 init ");
+        SerialStd.println(cfgMdmBaud);
+        modemPhy.gsmModem.sendAT(GF("+UART_DEF=57600,8,1,0,0"));
+        modemPhy.gsmModem.waitResponse();
+        modemSerial.end();
+        modemSerial.begin(cfgMdmBaud);
+        if (modemPhy.modemWake()) break;
+
+
+        cfgMdmBaud=ESP32_MODEM_9K6_BAUD;
+        SerialStd.print(ntries);
+        SerialStd.print("] ModemESP32 init ");
+        SerialStd.println(cfgMdmBaud );
+        modemPhy.gsmModem.sendAT(GF("+UART_DEF=9600,8,1,0,0"));
+        modemPhy.gsmModem.waitResponse();
+        modemSerial.end();
+        modemSerial.begin(cfgMdmBaud);
+    }
+    // set BAUD if not expected value
+    if (ESP32_MODEM_DEF_BAUD== cfgMdmBaud ) {
+        cfgMdmBaud= ESP32_MODEM_57K_BAUD;
+        modemPhy.gsmModem.sendAT(GF("+UART_DEF=57600,8,1,0,0"));
+        modemPhy.gsmModem.waitResponse();
+        modemSerial.end();
+        modemSerial.begin(cfgMdmBaud);
+    }
+    SerialStd.print("ModemESP32 connected at baud ");
+    SerialStd.println(cfgMdmBaud);
+
+    modemPhy.gsmModem.sendAT(GF("+GMR"));
+    //String MdmRsp;
+    modemPhy.gsmModem.waitResponse();   
+    modemPhy.gsmModem.sendAT(GF("+UART_DEF?"));
+    modemPhy.gsmModem.waitResponse();   
+    //modemPhy.gsmModem.sendAT(GF("+UART_DEF=115200,8,1,0,0"));
+    //modemPhy.gsmModem.waitResponse();  
+    modemPhy.gsmModem.sendAT(GF("+UART_CUR?"));
+    modemPhy.gsmModem.waitResponse();     
+    /** End [setup_esp] */
+#elif USE_MODEM == USE_CELL_SIMCON_SIM7080 
+    modemSerial.begin(modemBaud);
+    modemPhy.setModemWakeLevel(HIGH);   // ModuleFun Bee inverts the signal
+    modemPhy.setModemResetLevel(HIGH);  // ModuleFun Bee inverts the signal
+    Serial.println(F("Waking modem and setting Cellular Carrier Options..."));
+    modemPhy.modemWake();  // NOTE:  This will also set up the modem
+    modemPhy.gsmModem.setBaud(modemBaud);   // Make sure we're *NOT* auto-bauding!
+    modemPhy.gsmModem.setNetworkMode(38);   // set to LTE only
+                                        // 2 Automatic
+                                        // 13 GSM only
+                                        // 38 LTE only
+                                        // 51 GSM and LTE only
+    modemPhy.gsmModem.setPreferredMode(1);  // set to CAT-M
+                                        // 1 CAT-M
+                                        // 2 NB-IoT
+                                        // 3 CAT-M and NB-IoT
+
+    Serial.println(F("SIM7080 left on for NIST time sync"));
+
+#endif  //USE_WIFI_ENVIRODIY_ESP32    
+#if defined WIO_TERMINAL 
+    SerialStd.println(F("Setting up modemPhy as RTL8270 WiFiClient..."));
+    EnviroDIYPOST.setClient(&modemPhy.endClient);
+    //EnviroDIYPOST.setClient(&modemPhy.(Class *inClient))
     EnviroDIYPOST.begin(dataLogger, &modemPhy.endClient, registrationToken, samplingFeature);
     //EnviroDIYPOST.setDIYHost("data.envirodiy.org"); //use default & port
-    EnviroDIYPOST.setQuedState(true);
-    EnviroDIYPOST.setTimerPostTimeout_mS(5432); //5.4Sec
-    EnviroDIYPOST.setTimerPostPacing_mS(500);
-    dataLogger.setLoggingInterval(1); //Set every minute, default 5min
+
+#endif //WIO_TERMINAL 
+
     //dataLogger.setSendQueSz_num(ps_ram.app.msn.s.sendQueSz_num); 
-    dataLogger.setSendEveryX(1); //Default 2
+
     //dataLogger.setSendOffset(ps_ram.app.msn.s.sendOffset_min);  // delay Minutes
     //dataLogger.setPostMax_num(ps_ram.app.msn.s.postMax_num); 
 
@@ -441,20 +664,40 @@ void setup() {
     // Set up the sensors, except at lowest battery level
     //if (getBatteryVoltage() > 3.4) 
     {
-        Serial.println(F("Setting up sensors..."));
+        SerialStd.println(F("Setting up sensors..."));
         delay(1000);
         varArray.setupSensors();
     }
+    // Customize setups as using same OneWire bus
+    const char *ds18Name_a = "DS18a";
+    const char *ds18Name_b = "DS18b";
+    const char *ds18Name_c = "DS18c";
+    const char *ds18Name_d = "DS18d";    
+    ds18phy_a.set_sensorName(ds18Name_a);
+    ds18phy_b.set_sensorName(ds18Name_b);    
+    ds18phy_c.set_sensorName(ds18Name_c);
+    ds18phy_d.set_sensorName(ds18Name_d);
+
+    ds18phy_a.set_warmUpTime_ms(  50); //default 2mS
+    ds18phy_b.set_warmUpTime_ms(1000);
+    ds18phy_c.set_warmUpTime_ms(2000);
+    ds18phy_d.set_warmUpTime_ms(3000); 
+
+    ds18phy_a.set_stabilizationTime_ms(100);
+    ds18phy_b.set_stabilizationTime_ms(100);
+    ds18phy_c.set_stabilizationTime_ms(100);
+    ds18phy_d.set_stabilizationTime_ms(100); //default 0mS
 
     // Sync the clock if it isn't valid or we have battery to spare
-    if (0)///*getBatteryVoltage() > 3.55 ||*/ !dataLogger.isRTCSane()) 
+    #if !defined NO_FIRST_SYNC_WITH_NIST
+    if (1)///*getBatteryVoltage() > 3.55 ||*/ !dataLogger.isRTCSane()) 
     {
         // Synchronize the RTC with NIST
         // This will also set up the modem
-        Serial.println(F("Synchronize the RTC with NIST"));
+        SerialStd.println(F("Synchronize the RTC with NIST"));
         dataLogger.syncRTC();
     }
-
+    #endif //NO_FIRST_SYNC_WITH_NIST
     // Create the log file, adding the default header to it
     // Do this last so we have the best chance of getting the time correct and
     // all sensor names correct
@@ -462,7 +705,7 @@ void setup() {
     // the sensor setup we'll skip this too.
     //if (getBatteryVoltage() > 3.4) 
     {
-        Serial.println(F("Setting up file on SD card"));
+        SerialStd.println(F("Setting up file on SD card"));
         dataLogger.turnOnSDcard(
             true);  // true = wait for card to settle after power up
         dataLogger.createLogFile(true);  // true = write a new header
@@ -470,14 +713,12 @@ void setup() {
             true);  // true = wait for internal housekeeping after write
     }
 
-    //dataLogger.setSendOffset=0;
-    dataLogger._sendEveryX_cnt=1;
-    //dataLogger.setPostMax_num(100);
-    //dataLogger.logDataAndPubReliably(0x3);
+
+    dataLogger.logDataAndPubReliably(0x3);
     // Call the processor sleep
-    Serial.println(F("Putting processor to sleep\n"));
+    SerialStd.println(F("Starting periodic logging\n"));
     delay(100);
-    dataLogger.systemSleep();
+    // do reading & then sleep- dataLogger.systemSleep();
 }
 /** End [setup] */
 
@@ -490,27 +731,30 @@ void setup() {
 void loop() {
     // Note:  primitive but take a guess and set voltages
     // For hardware always take one reading and reference that  can change each time read
+    /* Wio_T doesn't support BatteryV - its a seperate unit.
     float battery_V = 4.123;//nh dbg getBatteryVoltage() ;
     // At very low battery, just go back to sleep
-    Serial.print(F("BatteryVoltage="));
-    Serial.print(battery_V);
+
+    SerialStd.print(F("BatteryVoltage="));
+    SerialStd.print(battery_V);
     if (battery_V < 3.4) 
     {
-        Serial.println(F(" systemSleep"));
+        SerialStd.println(F(" systemSleep"));
         delay(500);
         dataLogger.systemSleep();
     }
     // At moderate voltage, log data but don't send it over the modem
     else if (battery_V  < 3.55)  {
-        Serial.println(F(" logData"));
+        SerialStd.println(F(" logData"));
         delay(500);
         dataLogger.logData();
     }
     // If the battery is good, send the data to the world
-    else {
-        Serial.println(F(" logDataAndPublish"));
-        delay(500);
-        dataLogger.logDataAndPubReliably(0);
+    else 
+    */{
+        //SerialStd.println(F("Start LogDataAndPubReliably"));
+        //delay(500);
+        dataLogger.logDataAndPubReliably();  //TCP / RTL !there
     }
 }
 /** End [loop] */

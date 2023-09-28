@@ -109,10 +109,11 @@ ProcessorStats::ProcessorStats(const char* version)
 #elif defined(ARDUINO_AVR_FEATHER32U4) || defined(ARDUINO_SAMD_FEATHER_M0) || \
     defined(ARDUINO_SAMD_FEATHER_M0_EXPRESS)
     _batteryPin        = 9;
-#elif defined(ADAFRUIT_FEATHER_M4_EXPRESS) || defined(WIO_TERMINAL) || \
-    defined(adafruit_pygamer_advance_m4)
-#warning need to check WIO TERMINAL
+#elif defined(ADAFRUIT_FEATHER_M4_EXPRESS)  || defined(adafruit_pygamer_advance_m4)
     _batteryPin = A6;  // 20;  //Dedicated PB01 V_DIV
+#elif defined(WIO_TERMINAL)
+#pragma message ("WIO TERMINAL V reads Light Source")
+    _batteryPin = 27;  //WIO_LIGHT framework-arduino-samd-seeed\variants\wio_terminal\variant.cpp
 #elif defined(ARDUINO_SODAQ_ONE) || defined(ARDUINO_SODAQ_ONE_BETA) || \
     defined(ARDUINO_AVR_SODAQ_NDOGO)
     _batteryPin = 10;
@@ -229,7 +230,12 @@ float ProcessorStats::readSensorVbat(void) {
     measuredvbat *= 3.3;   // Multiply by 3.3V, our reference voltage
     measuredvbat /= 1024;  // convert to voltage
     sensorValue_battery_V       = measuredvbat;
-
+#elif defined(WIO_TERMINAL)
+    float measuredvbat = analogRead(_batteryPin);
+    measuredvbat *= 2;     // we divided by 2, so multiply back
+    measuredvbat *= 3.3;   // Multiply by 3.3V, our reference voltage
+    measuredvbat /= 1024;  // convert to voltage
+    sensorValue_battery_V       = measuredvbat;
 #elif defined(ARDUINO_SODAQ_ONE) || defined(ARDUINO_SODAQ_ONE_BETA)
     if (strcmp(_version, "v0.1") == 0) {
         // Get the battery voltage

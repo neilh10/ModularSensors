@@ -64,12 +64,21 @@ MS_MODEM_GET_MODEM_TEMPERATURE_DATA(DigiXBeeCellularTransparent);
 // We turn off airplane mode in the wake.
 bool DigiXBeeCellularTransparent::modemWakeFxn(void) {
     if (_modemSleepRqPin >= 0) {
-        // Don't go to sleep if there's not a wake pin!
         MS_DBG(F("Setting pin"), _modemSleepRqPin,
                _wakeLevel ? F("HIGH") : F("LOW"), F("to wake"), _modemName);
         digitalWrite(_modemSleepRqPin, _wakeLevel);
         return true;
     } else {
+        // no wake pin, use airplane mode command 
+        MS_DBG(F("Turning off airplane mode..."));
+        if (gsmModem.commandMode()) {
+            gsmModem.sendAT(GF("AM"), 0);
+            gsmModem.waitResponse(TGWRIDT+0x01);
+            // apply change
+            gsmModem.sendAT(GF("AC"));
+            gsmModem.waitResponse(TGWRIDT+0x01);
+            gsmModem.exitCommand();
+        }
         return true;
     }
 }
@@ -84,6 +93,13 @@ bool DigiXBeeCellularTransparent::modemSleepFxn(void) {
         digitalWrite(_modemSleepRqPin, !_wakeLevel);
         return true;
     } else {
+        // no wake pin, use airplane mode command 
+        MS_DBG(F("Turning on airplane mode..."));
+        if (gsmModem.commandMode()) {
+            gsmModem.sendAT(GF("AM"), 1);
+            gsmModem.waitResponse(TGWRIDT+0x00);
+            gsmModem.exitCommand();
+        }
         return true;
     }
 }
@@ -218,7 +234,7 @@ bool DigiXBeeCellularTransparent::extraModemSetup(void) {
         MS_DBG(F("Version "), ui_vers);
 #endif
         uint16_t loops = 0;
-        int16_t  ui_db;
+        int16_t  ui_db=0;
         uint8_t  status;
         String   ui_op;
         bool     cellRegistered = false;
@@ -227,7 +243,10 @@ bool DigiXBeeCellularTransparent::extraModemSetup(void) {
         uint8_t reg_count = 1;
         for (unsigned long start = millis(); millis() - start < 300000;
              ++loops) {
-            ui_db = 0;  // gsmModem.getSignalQuality();
+            //ui_db =  gsmModem.getSignalQuality();
+            //Read the uncached cell tower signal strength in hex
+            //gsmModem.sendAT(GF("DB"), 0);
+            //ui_db = gsmModem.readResponseInt(10000L);
             gsmModem.sendAT(GF("AI"));
             status = gsmModem.readResponseInt(10000L);
             ui_op  = String(loops) + "=" + String((float)millis() / 1000) +
@@ -251,10 +270,11 @@ bool DigiXBeeCellularTransparent::extraModemSetup(void) {
                     registering, However throwing this in, might do something or
                     maybe just coincedence that it started working after this
                     */
-                    gsmModem.sendAT(GF("+CREG"));
+//                    PRINTOUT(F("Try +CREG '"));
+//                    gsmModem.sendAT(GF("+CREG"));
+//                    status = gsmModem.readResponseInt(10000L);
                     // String ui_creg=gsmModem.readResponseInt(10000L);
                     // PRINTOUT(F("UseRandom +CREG '"), ui_creg,"'");
-                    PRINTOUT(F("Try +CREG '"));
                 }
             }
             delay(1000);
@@ -285,7 +305,7 @@ bool DigiXBeeCellularTransparent::extraModemSetup(void) {
             bool   AllocatedIpSuccess = false;
 // Checkfor IP allocation
 #define MDM_IP_STR_MIN_LEN 7
-#define MDM_LP_IPMAX 16
+#define MDM_LP_IPMAX 24
             gsmModem.sendAT(F("MY"));  // Request IP #
             gsmModem.waitResponse(TGWRIDT+0x11,1000, xbeeRsp);
             MS_DBG(F("Flush rsp "), xbeeRsp);
@@ -483,44 +503,84 @@ bool DigiXBeeCellularTransparent::updateModemMetadata(void) {
     // loggerModem::_priorBatteryPercent = SENSOR_DEFAULT;
     // loggerModem::_priorBatteryPercent = SENSOR_DEFAULT;
     loggerModem::_priorModemTemp = SENSOR_DEFAULT_F;
-
-    // Initialize variable
-    int16_t signalQual = SENSOR_DEFAULT_I;
-
+    
+    MS_DBG(F("updateModemMetadata:"),String(_pollModemMetaData, BIN));
     // if not enabled don't collect data
-    if (!loggerModem::_pollModemMetaData) return false;
+    if (_pollModemMetaData == 0) {
+        MS_DBG(F("No modem metadata to update"));
+        return false;
+    }
 
     // Enter command mode only once
-    MS_DBG(F("Entering Command Mode:"));
-    gsmModem.commandMode();
+    //MS_DBG(F("Entering Command Mode to update modem metadata:"));
+    success &= gsmModem.commandMode();
 
-    // Try for up to 15 seconds to get a valid signal quality
-    // NOTE:  We can't actually distinguish between a bad modem response, no
-    // modem response, and a real response from the modem of no service/signal.
-    // The TinyGSM getSignalQuality function returns the same "no signal"
-    // value (99 CSQ or 0 RSSI) in all 3 cases.
-    uint32_t startMillis = millis();
-    do {
-        MS_DBG(F("Getting signal quality:"));
-        signalQual = gsmModem.getSignalQuality();
-        MS_DBG(F("Raw signal quality:"), signalQual);
-        if (signalQual != 0 && signalQual != -9999) break;
-        delay(250);
-    } while ((signalQual == 0 || signalQual == -9999) &&
-             millis() - startMillis < 15000L && success);
+    if ((_pollModemMetaData & MODEM_RSSI_ENABLE_BITMASK) ==
+            MODEM_RSSI_ENABLE_BITMASK ||
+        (_pollModemMetaData & MODEM_PERCENT_SIGNAL_ENABLE_BITMASK) ==
+            MODEM_PERCENT_SIGNAL_ENABLE_BITMASK) {
+        // Assume a signal has already been established.
+        // Try to get a valid signal quality
+        // NOTE:  We can't actually distinguish between a bad modem response, no
+        // modem response, and a real response from the modem of no
+        // service/signal. The TinyGSM getSignalQuality function returns the
+        // same "no signal" value (99 CSQ or 0 RSSI) in all 3 cases.
+        int16_t rssi = SENSOR_DEFAULT_I;
+        // Try up to 5 times to get a signal quality
+        int8_t num_trys_remaining = 5;
+        do {
+            rssi = gsmModem.getSignalQuality();
+            MS_DBG(F("Raw signal quality ("), num_trys_remaining, F("):"),
+                   rssi);
+            if (rssi != 0 && rssi != SENSOR_DEFAULT_I) break;
+            num_trys_remaining--;
+        } while ((rssi == 0 || rssi == SENSOR_DEFAULT_I) && num_trys_remaining);
 
-    // Convert signal quality to RSSI
-    loggerModem::_priorRSSI = signalQual;
-    MS_DBG(F("CURRENT RSSI:"), signalQual);
-    loggerModem::_priorSignalPercent = getPctFromRSSI(signalQual);
-    MS_DBG(F("CURRENT Percent signal strength:"), getPctFromRSSI(signalQual));
 
-    MS_DBG(F("Getting chip temperature:"));
-    loggerModem::_priorModemTemp = getModemChipTemperature();
-    MS_DBG(F("CURRENT Modem temperature:"), loggerModem::_priorModemTemp);
+        loggerModem::_priorSignalPercent = getPctFromRSSI(rssi);
+        MS_DBG(F("CURRENT Percent signal strength:"),
+               loggerModem::_priorSignalPercent);
+
+        loggerModem::_priorRSSI = rssi;
+        MS_DBG(F("CURRENT RSSI:"), rssi);
+    } else {
+        MS_DBG(F("Polling for both RSSI and signal strength is disabled"));
+    }
+
+#ifdef MS_DIGIXBEECELLULARTRANSPARENT_BATTVOLTAGE
+    // this is getting the Voltage on the Xbee pin - relatively meangless
+    // Not tested on XB3
+    #define XBEE_V_KEY 9999
+    uint16_t volt_mV = XBEE_V_KEY;
+    if ((_pollModemMetaData & MODEM_BATTERY_VOLTAGE_ENABLE_BITMASK) ==
+        MODEM_BATTERY_VOLTAGE_ENABLE_BITMASK) {
+        //MS_DBG(F("Getting input voltage:"));
+        volt_mV = gsmModem.getBattVoltage();
+        MS_DBG(F("CURRENT Modem battery (mV):"), volt_mV);
+        if (volt_mV != XBEE_V_KEY) {
+            loggerModem::_priorBatteryVoltage =
+                static_cast<float>(volt_mV / 1000);
+        } else {
+            loggerModem::_priorBatteryVoltage =
+                static_cast<float>(SENSOR_DEFAULT_I);
+        }
+    } else {
+        MS_DBG(F("Polling for modem battery voltage is disabled"));
+    }
+#endif //MS_DIGIXBEECELLULARTRANSPARENT_BATTVOLTAGE
+
+    if ((_pollModemMetaData & MODEM_TEMPERATURE_ENABLE_BITMASK) ==
+        MODEM_TEMPERATURE_ENABLE_BITMASK) {
+        //MS_DBG(F("Getting chip temperature:"));
+        loggerModem::_priorModemTemp = getModemChipTemperature();
+        MS_DBG(F("CURRENT Modem temperature(C):"),
+               loggerModem::_priorModemTemp);
+    } else {
+        MS_DBG(F("Polling for modem chip temperature is disabled"));
+    }
 
     // Exit command modem
-    MS_DBG(F("Leaving Command Mode:"));
+    //MS_DBG(F("Leaving Command Mode:"));
     gsmModem.exitCommand();
 
     return success;

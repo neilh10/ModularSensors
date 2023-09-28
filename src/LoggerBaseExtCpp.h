@@ -672,17 +672,6 @@ bool Logger::parseAndRename(const char ini_ext, const char* ini_filename, ini_ha
 } //parseAndRename
 #endif // __AVR__
 
-void Logger::forceSysReset(uint8_t source, uint16_t simpleMagicNumber) {
-    
-    if (4567 !=simpleMagicNumber) return;
-
-    PRINTOUT(F("Forcing reset"), source);
-    delay(20);
-    watchDogTimer.setupWatchDog(1);
-    watchDogTimer.enableWatchDog();
-    delay(100000); //Expect watchdog to kick in within 8secs
-} //forceReset
-
 #ifdef USE_MS_SD_INI
 void Logger::setPs_cache(persistent_store_t* ps_ram) {
     ps_cache = ps_ram;
@@ -748,13 +737,57 @@ USE_RTCLIB* Logger::rtcExtPhyObj() {
 
 // End parse.ini
 
+#if defined(__AVR__)
+
+//Verify EveryMinute on the RTC DS3231M
+void Logger::setExtRtcSleep() {
+    uint8_t isRtcRegBad;
+
+    #if defined ARDUINO_AVR_ENVIRODIY_MAYFLY
+    #define MAYFLY_WR_RETRYS 3
+    for (uint8_t chklp=0;chklp<MAYFLY_WR_RETRYS;chklp++) {
+        isRtcRegBad = rtcExtPhy.enableInterruptsCheckAlm1(EveryMinute);
+        if (0==isRtcRegBad) {
+            MS_DBG(F("RTC Alarm good." ));
+            break;
+        }
+        Serial.print(chklp);
+        Serial.print(F("]RTC Alarm set for every minute. Reg check was 0x"));
+        Serial.println(isRtcRegBad,HEX);
+        rtcExtPhy.enableInterrupts(EveryMinute);
+        //rtc.enableInterruptsAlm2(EveryMinute);
+    } 
+    #else
+    rtc.enableInterrupts(EveryMinute);
+    #endif 
+}
+#endif // __AVR__
+
+void Logger::forceSysReset(uint8_t source, uint16_t simpleMagicNumber) {
+    
+    if (4567 !=simpleMagicNumber) return;
+
+    PRINTOUT(F("Forcing reset"), source);
+    delay(20);
+    watchDogTimer.setupWatchDog(1);
+    watchDogTimer.enableWatchDog();
+    delay(100000); //Expect watchdog to kick in within 8secs
+} //forceReset
+
 // ===================================================================== //
 // Reliable Delivery functions
 // see class headers
 // ===================================================================== //
 
-// This is a one-and-done to log data
 void Logger::logDataAndPubReliably(uint8_t cia_val_override) {
+
+    if (cia_val_override & CIA_NO_SLEEP) {
+        cia_val_override &= ~CIA_NO_SLEEP;
+    } else {
+        // Sleep at start of cycle, so data is available for caller at the end
+        systemSleep();
+    }
+
     // Reset the watchdog
     watchDogTimer.resetWatchDog();
 
@@ -908,6 +941,7 @@ void Logger::logDataAndPubReliably(uint8_t cia_val_override) {
 
         // Unset flag
         Logger::isLoggingNow = false;
+        Logger::startTesting = false; //Interrupt going off
         dumpFreeRam(8256); //large Number
     }
 
@@ -915,33 +949,8 @@ void Logger::logDataAndPubReliably(uint8_t cia_val_override) {
     if (Logger::startTesting) testingMode();
 
     // Call the processor sleep
-    systemSleep();
-}
-
-#if defined(__AVR__)
-//Verify EveryMinute on the RTC DS3231M
-void Logger::setExtRtcSleep() {
-    uint8_t isRtcRegBad;
-
-    #if defined ARDUINO_AVR_ENVIRODIY_MAYFLY
-    #define MAYFLY_WR_RETRYS 3
-    for (uint8_t chklp=0;chklp<MAYFLY_WR_RETRYS;chklp++) {
-        isRtcRegBad = rtcExtPhy.enableInterruptsCheckAlm1(EveryMinute);
-        if (0==isRtcRegBad) {
-            MS_DBG(F("RTC Alarm good." ));
-            break;
-        }
-        Serial.print(chklp);
-        Serial.print(F("]RTC Alarm set for every minute. Reg check was 0x"));
-        Serial.println(isRtcRegBad,HEX);
-        rtcExtPhy.enableInterrupts(EveryMinute);
-        //rtc.enableInterruptsAlm2(EveryMinute);
-    } 
-    #else
-    rtc.enableInterrupts(EveryMinute);
-    #endif 
-}
-#endif // __AVR__
+    //systemSleep();
+} // logDataAndPubReliably
 
 bool Logger::publishRspCodeAccepted(int16_t  rspCode) {
     if (HTTPSTATUS_CREATED_201 == rspCode) return true;
@@ -1151,7 +1160,7 @@ void Logger::publishDataQuedToRemotes(bool internetPresent) {
         }
     }
     postLogClose();
-}
+} // publishDataQuedToRemotes
 
 // ===================================================================== //
 // Serialize/deserialize functions
@@ -1598,7 +1607,7 @@ bool Logger::postLogOpen(const char* postLogNam_str) {
             PRINTOUT(F("logPLO err opening"), charFileName);
 
         } else {
-            setFileTimestampTz(postsLogHndl, T_CREATE);
+            setFileTimestamp(postsLogHndl, T_CREATE,true);
             MS_DBG(F("logPLO new file"), charFileName);
         }
     }
@@ -1615,7 +1624,7 @@ bool Logger::postLogOpen() {
 void        Logger::postLogClose() {
 #if defined MS_LOGGERBASE_POSTS
 
-    setFileTimestampTz(postsLogHndl, (T_WRITE));  //| T_ACCESS
+    setFileTimestamp(postsLogHndl, (T_WRITE),true);  //| T_ACCESS
     postsLogHndl.close();
 
 
