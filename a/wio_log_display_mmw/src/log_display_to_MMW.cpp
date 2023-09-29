@@ -414,6 +414,10 @@ void setup() {
    
 #if defined USE_DISPLAY
     ui_display.begin();
+
+    SerialStd.print(" Setup Display wake. Backlight=");
+    SerialStd.println(ui_display.tft.backlight());
+    ui_display.display_on();
     ui_display.fillscreen("Modular Sensors: request time");
 #endif //USE_DISPLAY
 
@@ -516,25 +520,34 @@ void setup() {
 /** End [setup] */
 
 
+uint16_t displayOn_timer=0;
+#define DISPLAY_ON_MASK 0x3
 // ==========================================================================
 //  Arduino Loop Function
 // ==========================================================================
 /** Start [loop] */
-// Use this short loop for simple data logging and sending
 void loop() {
 
 
     #if defined USE_DISPLAY
-    DateTime now_dt(dataLogger.markedLocalEpochTime);
-    String ui_status("Stn#3 ");
-    ui_status += now_dt.timestamp(DateTime::TIMESTAMP_FULL).c_str();
-    uiParm6_t parm6 = {&ui_status,
-        //Use variable list starting from 2nd sensor or offset [1] 
-        variableList[1]->getValue(),variableList[2]->getValue(), //AM23xx Humidity and Temperature
-        variableList[3]->getValue(),variableList[4]->getValue(), //One wire temperature sensors
-        variableList[5]->getValue(),variableList[6]->getValue()  //
-    };
-    ui_display.update6(&parm6 );
+    if ((displayOn_timer++)&DISPLAY_ON_MASK) {
+        DateTime now_dt(dataLogger.markedLocalEpochTime);
+        String ui_status("Stn#3 ");
+        ui_display.display_on();
+
+        ui_status += now_dt.timestamp(DateTime::TIMESTAMP_FULL).c_str();
+        uiParm6_t parm6 = {&ui_status,
+            //Use variable list starting from 2nd sensor or offset [1] 
+            variableList[1]->getValue(),variableList[2]->getValue(), //AM23xx Humidity and Temperature
+            variableList[3]->getValue(),variableList[4]->getValue(), //One wire temperature sensors
+            variableList[5]->getValue(),variableList[6]->getValue()  //
+        };
+        ui_display.update6(&parm6 );
+    } else {
+        ui_display.display_off();
+        //Check switch 
+
+    }
     #endif // USE_DISPLAY
 
     dataLogger.logDataAndPubReliably();  //TCP / RTL !there
