@@ -254,6 +254,35 @@ AOSongAM2315 am23xx(I2CPower);
 /** End [ao_song_am2315] */
 #endif  // ASONG_AM23XX_UUID
 
+#if defined(BAT_VOLTAGE_UUID )
+#include "SparkFunBQ27441.h"
+const unsigned int BATTERY_CAPACITY = 650; // Set Wio Terminal Battery's Capacity 
+
+#define CHASSIS_BATTERY_NOT_PRESENT -0.123
+float chassisBattery_volt = CHASSIS_BATTERY_NOT_PRESENT;
+
+bool battery_present=false;
+
+float getChassisBattery_volt(void) {
+    if (battery_present) {
+        // Read battery stats from the BQ27441-G1A
+        uint16_t volts_mv = lipo.voltage(); // Read battery voltage (mV)
+        chassisBattery_volt = ((float)volts_mv)/1000; //Convert to Volts
+    }
+    return chassisBattery_volt;
+ } //getChassisBattery_volt
+
+Variable*     chassisBattery_variable = new Variable(
+    getChassisBattery_volt, // function that does the calculation
+    3,                      // resolution
+    "batteryVoltage",     // var name. This must be a value from
+                    // http://vocabulary.odm2.org/variablename/
+    "volts",  // var unit. This must be a value from This must be a
+            // value from http://vocabulary.odm2.org/units/
+    "Volt1",  // var code
+    BAT_VOLTAGE_UUID);
+
+#endif //BAT_VOLTAGE_UUID 
 
 // ==========================================================================
 //  Creating the Variable Array[s] and Filling with Variable Objects
@@ -272,12 +301,11 @@ Variable* variableList[] = {
     new MaximDS18_Temp(&ds18phy_c, TEMPERATURE_C_UUID,"Ds18Tc"),
     new MaximDS18_Temp(&ds18phy_d, TEMPERATURE_D_UUID,"Ds18Td"),
 #endif //TEMPERATURE_ALL_DS18
-
-// calcAM2315_TempF
 #endif  // ASONG_AM23XX_UUID    
-    #if defined(ARDUINO_AVR_ENVIRODIY_MAYFLY)
-    new ProcessorStats_Battery(&mcuBoard,BAT_VOLTAGE_UUID ),
-    #endif // ARDUINO_AVR_ENVIRODIY_MAYFLY
+
+#if defined(BAT_VOLTAGE_UUID) 
+    chassisBattery_variable,
+#endif // BAT_VOLTAGE_UUID 
 };
 
 
@@ -340,6 +368,59 @@ uiHelperWioT ui_display;
 #endif //USE_DISPLAY
 /** End [working_functions] */
 
+#if defined(BAT_VOLTAGE_UUID )
+
+void setupBQ27441(void)
+{
+  // Use lipo.begin() to initialize the BQ27441-G1A and confirm that it's
+  // connected and communicating.
+  if (!lipo.begin()) // begin() will return true if communication is successful
+  {
+  // If communication fails, print an error message and loop forever.
+    Serial.println("Error: Unable to communicate with BQ27441.");
+    Serial.println("  Check battery unit plugged in.");
+
+    battery_present=false;
+    return;
+  }
+  battery_present=true;
+  Serial.println("Connected to BQ27441!");
+  
+  // Uset lipo.setCapacity(BATTERY_CAPACITY) to set the design capacity
+  // of your battery.
+  lipo.setCapacity(BATTERY_CAPACITY);
+
+}  // setupBQ27441
+
+void printBatteryStats()
+{
+    if (battery_present) {
+        // Read battery stats from the BQ27441-G1A
+        unsigned int soc = lipo.soc();  // Read state-of-charge (%)
+        unsigned int volts_mv = lipo.voltage(); // Read battery voltage (mV)
+        int current = lipo.current(AVG); // Read average current (mA)
+        //unsigned int fullCapacity = lipo.capacity(FULL); // Read full capacity (mAh)
+        unsigned int capacity = lipo.capacity(REMAIN); // Read remaining capacity (mAh)
+        int power = lipo.power(); // Read average power draw (mW)
+        int health = lipo.soh(); // Read state-of-health (%)
+        // Now print out those values:
+        String toPrint = "BatteryStats, ";
+        toPrint += String(soc) + ",%, ";
+        toPrint += String(volts_mv) + " ,mV, ";
+        toPrint += String(current) + ",mA,";
+        toPrint += String(capacity) + ",mAh, ";
+        //toPrint += String(fullCapacity) + " mAh | ";
+        toPrint += String(power) + ",mW,";
+        toPrint += String(health) + ",%";
+        
+        Serial.println(toPrint);
+    }
+} // printBatteryStats()
+
+#else 
+void setupBQ27441(void) {}
+void printBatteryStats() {Serial.println("Battery : No battery present")}
+#endif // BAT_VOLTAGE_UUID 
 
 // ==========================================================================
 //  Arduino Setup Function
@@ -427,6 +508,8 @@ void setup() {
     // Always set the RTC to be in UTC (UTC+0)
     Logger::setRTCTimeZone(0);
 
+    setupBQ27441();
+    printBatteryStats();
     // Attach the modem and information pins to the logger
     dataLogger.attachModem(modemPhy);
     //modemPhy.setModemLED(modemLEDPin); //not mapped/tested WioTerminal
@@ -550,6 +633,7 @@ void loop() {
     }
     #endif // USE_DISPLAY
 
+    printBatteryStats();
     dataLogger.logDataAndPubReliably();  //TCP / RTL !there
 
 
