@@ -25,7 +25,7 @@
  * Future
  * * Noise Level  internal micrcophone 
  *
- * 
+ * 230928 - 0.34.1-acb builds, has SIM7080G intergrated in my fork.
  * 2023 Feb 21 WioT Power Measured USB Stick on USB-C
  *  USB active with WiFi 54mA, startup is 100mA
  * with lowpower WiFi/RTL87280 is unreliable
@@ -55,9 +55,11 @@
 #define USE_CELL_SIMCON_SIM7080 2
 #define USE_WIFI_DIGI_S6B 3
 #define USE_WIFI_ENVIRODIY_ESP32 4
+//USE WIO_TERMINAL
 
 //#define USE_MODEM USE_WIFI_DIGI_S6B
-#define USE_MODEM USE_CELL_SIMCON_SIM7080
+//#define USE_MODEM USE_CELL_SIMCON_SIM7080
+//#define default USE WIO_TERMINAL
 //https://monitormywatershed.org/sites/intg_test01/
 #include "ms_cfg.h"  //must be before ms_common.h & Arduino.h
 

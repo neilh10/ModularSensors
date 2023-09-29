@@ -14,6 +14,7 @@ UM0401_RTL872xD_Datasheet_v3.4_watermark.pdf
 https://files.seeedstudio.com/products/102110419/Basic%20documents/UM0401_RTL872xD_Datasheet_v3.4_watermark.pdf
 
 Date:
+        2023-09-29 0.34.1-aca  builds OK. Has SIM7080G intergration with my fork. 
         2023-02-20 Reliable ntp and POST/MMW (though MMW seems touchy)
         2023-02-19 Failing when turning off RTL. RTL stops responding when turned on
         2023-02-18 POST but not reliably or powering off RTL
