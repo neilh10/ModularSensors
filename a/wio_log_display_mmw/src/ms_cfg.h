@@ -1,12 +1,12 @@
 /*****************************************************************************
 ms_cfg.h_wio_wifi - ModularSensors Config - MMW _Wio/Mayfly WiFi
-Status 220617: 0.33.1.abaa
+Status 230929: 0.34.1.acb
 Written By:  Neil Hancock www.envirodiy.org/members/neilh20/
 Development Environment: PlatformIO
 Hardware Platform(s): EnviroDIY Mayfly Arduino Datalogger+RS485 Wingboard
 
 Software License: BSD-3.
-  Copyright (c) 2022, Neil Hancock - all rights assigned to Stroud Water
+  Copyright (c) 2023, Neil Hancock - all rights assigned to Stroud Water
 Research Center (SWRC) and they may change this title to Stroud Water Research
 Center as required and the EnviroDIY Development Team
 
@@ -91,6 +91,24 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define HwName_DEF "WioTerminal"
 #define CONFIGURATION_DESCRIPTION_STR "WioTerm WiFi 4 Temperature to MMW"
 
+// Definitions of Modems
+#define BUILD_MODEM_SIM_COM_SIM7080 4
+#define BUILD_MODEM_FACTORY 5
+#define BUILD_MODEM_WIO_WIFI 6
+
+#define BUILD_MODEM_TYPE BUILD_MODEM_WIO_WIFI
+// Define the Modem Description
+#if BUILD_MODEM_TYPE ==  BUILD_MODEM_FACTORY 
+#define CONFIG_EXT "internal WiFi or LTE SIM7080"
+#elif BUILD_MODEM_TYPE ==  BUILD_MODEM_WIO_WIFI 
+#define CONFIG_EXT "internal WiFi"
+#elif BUILD_MODEM_TYPE == BUILD_MODEM_SIM_COM_SIM7080
+#define CONFIG_EXT "LTE SIM7080"
+#else 
+#define CONFIG_EXT "No Modem"
+#endif //BUILD_MODEM_TYPE == 
+#define CONFIGURATION_DESCRIPTION_STR "WioTerm 5*Temperature Monitor to MMW" CONFIG_EXT
+
 #define USE_MS_SD_INI 1
 //#define USE_PS_EEPROM 1
 //#define USE_PS_HW_BOOT 1
@@ -145,9 +163,8 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define loggingInterval_MAX_CDEF_MIN 6 * 60
 
 
-// Supports DigiXBeeCellularTransparent & DigiXBeeWifi
-#define UseModem_Module 1
-#if UseModem_Module 
+#if defined BUILD_MODEM_TYPE 
+// Supports Modems
 // The Modem is used to push data and also sync Time
 // In standalong logger, no internet, Modem can be required at factor to do a
 // sync Time Normally enable both of the following. In standalone, disable
@@ -159,8 +176,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 //#define USE_PUB_TSMQTT   1
 //#define  USE_PUB_UBIDOTS 1
 
-// Required for TinyGsmClient.h
-#define TINY_GSM_MODEM_XBEE
+#endif // BUILD_MODEM_TYPE
 
 // The APN for the gprs connection, unnecessary for WiFi
 #define APN_CDEF "VZWINTERNET"
@@ -177,7 +193,6 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 //Manage Internet - common for all providers
 #define MNGI_COLLECT_READINGS_DEF 1
 #define MNGI_SEND_OFFSET_MIN_DEF 0
-#endif  // UseModem_Module 
 
 // This might need revisiting
 #define ARD_ANLAOG_MULTIPLEX_PIN A6

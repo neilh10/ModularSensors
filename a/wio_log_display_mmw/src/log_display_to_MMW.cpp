@@ -106,6 +106,14 @@ const uint8_t loggingIntervaldef = loggingInterval_CDEF_MIN;
 const int8_t timeZone = CONFIG_TIME_ZONE_DEF;  
 // NOTE:  Daylight savings time will not be applied!  Please use standard time!
 
+// ==========================================================================
+//     Local storage - evolving
+// ==========================================================================
+#ifdef USE_MS_SD_INI
+persistent_store_t ps_ram;
+#define epc ps_ram
+#endif  //#define USE_MS_SD_INI
+
 // Serial Debug Output routing
 // For Mayfly its always a Serial though this connects with a USB chip
 // For WioT it can be built in USB Serial or UART Serial1 that requires an FTDI or similar debug port.
@@ -255,6 +263,11 @@ AOSongAM2315 am23xx(I2CPower);
 #endif  // ASONG_AM23XX_UUID
 
 #if defined(BAT_VOLTAGE_UUID )
+// ==========================================================================
+//    Wio Terminal Chassis Battery Sensor
+// ==========================================================================
+// Basic Wio Terminal doesn't have a battery to read 
+// requires the plug-in Chassis Battery backpack
 #include "SparkFunBQ27441.h"
 const unsigned int BATTERY_CAPACITY = 650; // Set Wio Terminal Battery's Capacity 
 
@@ -353,6 +366,14 @@ EnviroDIYPublisher EnviroDIYPOST(dataLogger, &modemPhy.gsmClient,
 // ==========================================================================
 //  Working Functions
 // ==========================================================================
+#define SerialStd Serial
+//Force use of ps_ram
+#define USE_PS_EEPROM 1
+//debug 
+// #include "ModemTypes.h"
+#include "battery_types.h"
+#include "iniHandler.h"
+
 /** Start [working_functions] */
 
 // Reads the battery voltage
@@ -421,6 +442,16 @@ void printBatteryStats()
 void setupBQ27441(void) {}
 void printBatteryStats() {Serial.println("Battery : No battery present")}
 #endif // BAT_VOLTAGE_UUID 
+bool userPushedButton = false;
+void push_button() {
+    if ( (digitalRead(BUTTON_1) == HIGH )
+    || (digitalRead(BUTTON_2) == HIGH )
+    || (digitalRead(BUTTON_3) == HIGH )
+    ) {
+        userPushedButton = true;
+        SerialStd.println(F("userPushButton"));
+    }
+} // push_button
 
 // ==========================================================================
 //  Arduino Setup Function
@@ -515,27 +546,53 @@ void setup() {
     //modemPhy.setModemLED(modemLEDPin); //not mapped/tested WioTerminal
     dataLogger.setLoggerPins(wakePin, sdCardSSPin, sdCardPwrPin, wakePin,
                              greenLED);
-    dataLogger.setLoggerID("logdef");
-    dataLogger.setLoggingInterval(2);
+    // For manual settings use the following, over riden if ms_cfg.ini present
+    //dataLogger.setLoggerID("logdef");
+    //dataLogger.setLoggingInterval(15);
+    //dataLogger.setSendOffset=0;
+    //dataLogger._sendEveryX_cnt=1;
+    //dataLogger.setPostMax_num(100);
+
+#ifdef USE_MS_SD_INI
+    PRINTOUT(F("---parseIni Start"));
+    //Sets up local store for provisional readings
+    dataLogger.setPs_cache(&ps_ram);
+    //Parses ms_cfg.h into local ps_ram
+    dataLogger.parseIniSd(configIniID_def, inihUnhandledFn);
+    // parse ps_ram to classes that need it.
+    epcParser(); //use ps_ram to update classes
+    PRINTOUT(F("---parseIni complete\n"));
+#endif  // USE_MS_SD_INI
+
     delay(500);
     // Begin the logger
     dataLogger.begin();
 
     SerialStd.println(F("Setting up modemPhy as RTL8270 WiFiClient..."));
     EnviroDIYPOST.setClient(&modemPhy.endClient);
-    EnviroDIYPOST.begin(dataLogger, &modemPhy.endClient, registrationToken, samplingFeature);
-    //EnviroDIYPOST.setDIYHost("data.envirodiy.org"); //use default & port
+    EnviroDIYPOST.begin(dataLogger, &modemPhy.endClient, 
+                        ps_ram.app.provider.s.ed.registration_token,
+                        ps_ram.app.provider.s.ed.sampling_feature);
     EnviroDIYPOST.setQuedState(true);
+#ifdef USE_MS_SD_INI
+    EnviroDIYPOST.setDIYHost(ps_ram.app.provider.s.ed.cloudId);
+    EnviroDIYPOST.setTimerPostTimeout_mS(ps_ram.app.provider.s.ed.timerPostTout_ms);
+    EnviroDIYPOST.setTimerPostPacing_mS(ps_ram.app.provider.s.ed.timerPostPace_ms);
+    dataLogger.setSendQueSz_num(ps_ram.app.msn.s.sendQueSz_num); //60days 
+    dataLogger.setSendEveryX(ps_ram.app.msn.s.collectReadings_num); //Default 2
+    dataLogger.setSendOffset(ps_ram.app.msn.s.sendOffset_min);  // delay Minutes
+    dataLogger.setPostMax_num(ps_ram.app.msn.s.postMax_num); 
+#else
+    //EnviroDIYPOST.setDIYHost("data.envirodiy.org"); //use default & port
     EnviroDIYPOST.setTimerPostTimeout_mS(15432); //15.4Sec
     EnviroDIYPOST.setTimerPostPacing_mS(500);
     dataLogger.setLoggingInterval(2); //Set every minute, default 5min
-
     //dataLogger.setSendQueSz_num(100*60); //60days 
     dataLogger.setSendEveryX(1); //Default 2
     //dataLogger.setSendOffset(1);  // delay Minutes
     //dataLogger.setPostMax_num(100); 
+#endif  
 
-    // Note: Basic Wio Terminal doesn't support reading the voltage
     SerialStd.println(F("Setting up sensors..."));
     delay(1000);
     varArray.setupSensors();
@@ -582,10 +639,6 @@ void setup() {
         true);  // true = wait for internal housekeeping after write
 
 
-    //dataLogger.setSendOffset=0;
-    dataLogger._sendEveryX_cnt=1;
-    dataLogger.setPostMax_num(100);
-
 
     #if defined USE_DISPLAY
     DateTime now_dt= dataLogger.zero_sleep_rtc.now(); 
@@ -599,12 +652,20 @@ void setup() {
     SerialStd.println(F("Starting periodic logging\n"));
     delay(100);
     // do reading & then sleep- dataLogger.systemSleep();
+    // If user touches the top left thrre buttons cause an interrupt 
+    // - except system does deep sleep and may not wake 
+    attachInterrupt(digitalPinToInterrupt(BUTTON_1), push_button, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(BUTTON_2), push_button, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(BUTTON_2), push_button, CHANGE);
+
 }
 /** End [setup] */
 
 
-uint16_t displayOn_timer=0;
+#define DISPLAY_ON_COUNT 0x3
+uint16_t displayOn_timer=DISPLAY_ON_COUNT;
 #define DISPLAY_ON_MASK 0x3
+
 // ==========================================================================
 //  Arduino Loop Function
 // ==========================================================================
@@ -613,9 +674,20 @@ void loop() {
 
 
     #if defined USE_DISPLAY
-    if ((displayOn_timer++)&DISPLAY_ON_MASK) {
+
+
+    if ((displayOn_timer ) || userPushedButton) {
         DateTime now_dt(dataLogger.markedLocalEpochTime);
-        String ui_status("Stn#3 ");
+        String ui_status(String(displayOn_timer)+"]Stn#3 ");
+
+        if (userPushedButton)  {
+            userPushedButton= false;
+            displayOn_timer = DISPLAY_ON_COUNT;
+            SerialStd.println(F("displayOn timer"));
+        } else {
+            displayOn_timer--;
+        }
+
         ui_display.display_on();
 
         ui_status += now_dt.timestamp(DateTime::TIMESTAMP_FULL).c_str();

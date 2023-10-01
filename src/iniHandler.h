@@ -264,7 +264,7 @@ static void populateUuidMatchIni(const char* name, const char* value,
 }
 #endif // USE_PUB_MMW || USE_PUB_UBIDOTS
 
-#if defined USE_PS_EEPROM && defined ARDUINO_AVR_ENVIRODIY_MAYFLY
+#if defined USE_PS_EEPROM 
 /* Parse the pesistent configuration data.
  * The data has been read from EEPROM into a ram cache, 
  * and then if exists in the .ini file, overwritten in the ram
@@ -955,7 +955,7 @@ const char SD_INIT_ID_pm[] EDIY_PROGMEM = "SD_INIT_ID";
 #endif  // USE_PS_HW_BOOT
     } else if (strcmp_P(section, USER_pm) == 0) {
         if (strcmp_P(name, ACTION_pm) == 0) {
-#if defined USE_PS_EEPROM
+#if defined USE_PS_EEPROM && defined ARDUINO_AVR_ENVIRODIY_MAYFLY
             if (strcmp_P(value, WRITE_pm) == 0) {
                 localEepromAppWr("User"); 
             } else
@@ -1075,6 +1075,7 @@ void localAppStorageInit()
     #endif //  BUILD_MODEM_TYPE
 } // localAppStorageInit()
 
+#if defined ARDUINO_AVR_ENVIRODIY_MAYFLY
 void readAvrEeprom() {
     uint16_t crc16;
     // Read EEPROM in sections, and verify CRC
@@ -1208,6 +1209,7 @@ void readAvrEeprom() {
 #endif // USE_PUB_UBIDOTS
 
 } // readAvrEeprom
+#endif  // ARDUINO_AVR_ENVIRODIY_MAYFLY
 #endif  // USE_PS_EEPROM
 
 // Decode reason for this Reset
