@@ -25,8 +25,8 @@
 #define samplingFeature_UUID   "samplingFeature_UUID"
 
 #define SEQUENCE_NUMBER_UUID   "SampleNumber_UUID"
-#define BAT_VOLTAGE_UUID       "Batt_UUID"
-
+#define BAT_VOLTAGE_UUID       "Batt_V_UUID"
+#define BAT_Ahr_UUID       "Batt_Ahr_UUID"
 
 #if defined ASONG_AM23XX_UUID 
 #define ASONG_AM23_Air_Temperature_UUID "Air_Temperature_UUID"
