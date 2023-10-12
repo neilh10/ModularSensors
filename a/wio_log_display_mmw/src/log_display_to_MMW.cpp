@@ -269,10 +269,16 @@ AOSongAM2315 am23xx(I2CPower);
 // Basic Wio Terminal doesn't have a battery to read 
 // requires the plug-in Chassis Battery backpack
 #include "SparkFunBQ27441.h"
-const unsigned int BATTERY_CAPACITY = 650; // Set Wio Terminal Battery's Capacity 
+const unsigned int BATTERY_INT_CAPACITY = 650; // Set Wio Terminal Battery's Capacity 
+#if !defined BATTERY_EXT_CAPACITY
+#define BATTERY_EXT_CAPACITY 6600
+#endif 
+// Working Definition for Wio Terminal Battery's Capacity
+const unsigned int BATTERY_CAPACITY = (BATTERY_INT_CAPACITY +BATTERY_EXT_CAPACITY); 
 
 #define CHASSIS_BATTERY_NOT_PRESENT -0.123
 float chassisBattery_volt = CHASSIS_BATTERY_NOT_PRESENT;
+float chassisBatteryCapacity_Ahr = CHASSIS_BATTERY_NOT_PRESENT;
 
 bool battery_present=false;
 
@@ -285,7 +291,7 @@ float getChassisBattery_volt(void) {
     return chassisBattery_volt;
  } //getChassisBattery_volt
 
-Variable*     chassisBattery_variable = new Variable(
+Variable*     chassisBattery_V_variable = new Variable(
     getChassisBattery_volt, // function that does the calculation
     3,                      // resolution
     "batteryVoltage",     // var name. This must be a value from
@@ -294,6 +300,25 @@ Variable*     chassisBattery_variable = new Variable(
             // value from http://vocabulary.odm2.org/units/
     "Volt1",  // var code
     BAT_VOLTAGE_UUID);
+
+float getChassisBattery_Ahr(void) {
+    if (battery_present) {
+        // Read battery stats from the BQ27441-G1A
+        uint16_t capacity_mAhr = lipo.capacity(); // Read battery mAhr
+        chassisBatteryCapacity_Ahr = ((float)capacity_mAhr)/1000; //Convert to Volts
+    }
+    return chassisBatteryCapacity_Ahr;
+ } //getChassisBattery_volt
+
+Variable*     chassisBattery_Ahr_variable = new Variable(
+    getChassisBattery_Ahr, // function that does the calculation
+    3,                      // resolution  effectively to mAhr
+    "electricEnergy",     // var name. This must be a value from
+                    // http://vocabulary.odm2.org/variablename/
+    "A-hr",  // var unit. This must be a value from This must be a
+            // value from http://vocabulary.odm2.org/units/
+    "Ahr1",  // var code
+    BAT_Ahr_UUID);
 
 #endif //BAT_VOLTAGE_UUID 
 
@@ -317,7 +342,8 @@ Variable* variableList[] = {
 #endif  // ASONG_AM23XX_UUID    
 
 #if defined(BAT_VOLTAGE_UUID) 
-    chassisBattery_variable,
+    chassisBattery_V_variable,
+    chassisBattery_Ahr_variable,
 #endif // BAT_VOLTAGE_UUID 
 };
 
