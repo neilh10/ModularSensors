@@ -262,6 +262,23 @@ AOSongAM2315 am23xx(I2CPower);
 /** End [ao_song_am2315] */
 #endif  // ASONG_AM23XX_UUID
 
+#if defined(SENSIRION_SHT3X_UUID)
+// ==========================================================================
+//  Sensirion SHT3X Digital Humidity and Temperature Sensor
+//  Seperate Sensor - incompatible with Mayfly1.1 SHT4X as uses same I2C address
+// ==========================================================================
+/** Start [sensirion_sht4x] */
+#include <sensors/SensirionSHT3x.h>
+
+// NOTE: Use -1 for any pins that don't apply or aren't being used.
+const int8_t SHT3xPower     = sensorPowerPin;  // Power pin
+const bool   SHT3xUseHeater = false;
+
+// Create an Sensirion SHT4X sensor object
+SensirionSHT3x sht3x(SHT3xPower, SHT3xUseHeater);
+/** End [sensirion_sht4x] */
+#endif  // SENSIRION_SHT4X_UUID
+
 #if defined(BAT_VOLTAGE_UUID )
 // ==========================================================================
 //    Wio Terminal Chassis Battery Sensor
@@ -333,13 +350,21 @@ Variable* variableList[] = {
     new AOSongAM2315_Humidity(&am23xx, ASONG_AM23_Air_Humidity_UUID),
     new AOSongAM2315_Temp(&am23xx, ASONG_AM23_Air_Temperature_UUID),
 // ASONG_AM23_Air_TemperatureF_UUID
+#endif  // ASONG_AM23XX_UUID 
+
+#if defined SENSIRION_SHT3X_UUID
+    new SensirionSHT3x_Humidity(&sht3x, SENSIRION_SHT3X_Air_Humidity_UUID),
+    new SensirionSHT3x_Temp(&sht3x, SENSIRION_SHT3X_Air_Temperature_UUID),
+// ASONG_AM23_Air_TemperatureF_UUID
+#endif  // SENSIRION_SHT3X_UUID 
+
 #if defined TEMPERATURE_ALL_DS18
     new MaximDS18_Temp(&ds18phy_a, TEMPERATURE_A_UUID,"Ds18Ta"),
     new MaximDS18_Temp(&ds18phy_b, TEMPERATURE_B_UUID,"Ds18Tb"),
     new MaximDS18_Temp(&ds18phy_c, TEMPERATURE_C_UUID,"Ds18Tc"),
     new MaximDS18_Temp(&ds18phy_d, TEMPERATURE_D_UUID,"Ds18Td"),
 #endif //TEMPERATURE_ALL_DS18
-#endif  // ASONG_AM23XX_UUID    
+   
 
 #if defined(BAT_VOLTAGE_UUID) 
     chassisBattery_V_variable,
@@ -548,6 +573,7 @@ void setup() {
 #if defined NeoSWSerial_h
     enableInterrupt(neoSSerial1Rx, neoSSerial1ISR, CHANGE);
 #endif
+
 
    
 #if defined USE_DISPLAY

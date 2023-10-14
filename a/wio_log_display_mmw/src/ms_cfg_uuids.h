@@ -32,6 +32,10 @@
 #define ASONG_AM23_Air_Temperature_UUID "Air_Temperature_UUID"
 #define ASONG_AM23_Air_Humidity_UUID "Air_Humidity_UUID"
 #endif //ASONG_AM23XX_UUID 
+#if defined SENSIRION_SHT3X_UUID
+#define SENSIRION_SHT3X_Air_Temperature_UUID "Air_Temperature_UUID"
+#define SENSIRION_SHT3X_Air_Humidity_UUID "Air_Humidity_UUID"
+#endif // 
 
 #define TEMPERATURE_ALL_DS18 1
 #define TEMPERATURE_A_UUID     "DS18A_UUID"

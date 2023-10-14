@@ -39,7 +39,10 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 
 //Only define 1 below . SENSIRION_SHT4X is on Mayfly 1.x
 //#define SENSIRION_SHT4X_UUID
-#define ASONG_AM23XX_UUID 1
+// This is seperate and can be used on WIO-TERMINAL - otherwise similar to SHT4X
+#define SENSIRION_SHT3X_UUID 1
+//#define ASONG_AM23XX_UUID 1
+
 
 //Two heavy sensors with power useage
 #define BM_PWR_SENSOR_CONFIG_BUILD_SPECIFIC BM_PWR_LOW_REQ
