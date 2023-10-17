@@ -16,7 +16,8 @@
 // Include the libraries we need
 #include <OneWire.h>
 #include <DallasTemperature.h>
- 
+#include "OneWieSeearch_version.h" 
+
 #if defined WIO_TERMINAL
 #define ONE_WIRE_BUS 1     // For Wio_T Right side plug, white wire, PB8 works
 #elif defined ADAFRUIT_PYGAMER_M4_EXPRESS
@@ -130,7 +131,7 @@ void setup(void)
   //Do local display first in case not connected on USB
   ui_display.begin();
   ui_display.display_on();
-  String uiDisp(build_ref+"\nDallas OneWire IC\n search on Ard Pin "+String(ONE_WIRE_BUS));
+  String uiDisp(build_ref+" vers:"+String(ONEWIRESEARCH_VERSION)+"\nDallas OneWire IC\n search on Ard Pin "+String(ONE_WIRE_BUS));
   ui_display.fillscreen(uiDisp.c_str());
   #endif // USE_DISPLAY
 
@@ -141,6 +142,8 @@ void setup(void)
 
   debug.println(F("\n\n---Boot Sw Build: "));
   debug.println(build_ref);
+  debug.print("Version:");
+  debug.println(ONEWIRESEARCH_VERSION);
   debug.print("  ***** Low Power RTC SAMD51 ");
   debug.print(F_CPU);
   debug.print("MHz ***** ");
