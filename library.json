@@ -63,7 +63,7 @@
   },
   "dependencies": [
     {
-      "name": "EnviroDIY_DS3231use_neilh10",
+      "name": "EnviroDIY_DS3231-use-neilh10",
       "owner": "envirodiy",
       "library id": "2079",
       "url": "https://github.com/EnviroDIY/Sodaq_DS3231",
@@ -72,6 +72,17 @@
       "authors": ["Kees Bakker", "Sara Damiano"],
       "frameworks": "arduino",
       "platforms": "atmelavr, atmelsam"
+    },
+    {
+      "name": "RTCZero-delete",
+      "owner": "arduino-libraries",
+      "library id": "873",
+      "url": "https://github.com/arduino-libraries/RTCZero",
+      "version": "~1.6.0",
+      "note": "Functions for using the processor real time clock in SAMD21 processors",
+      "authors": ["Arduino"],
+      "frameworks": "arduino",
+      "platforms": "atmelsam"
     },
     {
       "name": "EnableInterrupt",
@@ -96,7 +107,7 @@
       "platforms": "atmelavr, atmelsam"
     },
     {
-      "name": "TinyGSMxxx",
+      "name": "TinyGSM-use-neilh10",
       "owner": "vshymanskyy",
       "version": "~0.11.5",
       "note": "A small Arduino library for GPRS modules.",
@@ -150,7 +161,7 @@
       "owner": "adafruit",
       "library id": "773",
       "url": "https://github.com/adafruit/Adafruit_AM2315",
-      "version": "~2.2.1",
+      "version": "~2.2.3",
       "note": "AOSong AM2315 I2C Temp/Humidity Sensor Library by Adafruit",
       "authors": ["Adafruit"],
       "frameworks": "arduino",
@@ -168,6 +179,15 @@
       "platforms": "atmelavr, atmelsam"
     },
     {
+      "name": "BMP388_DEV",
+      "owner": "MartinL1",
+      "version": "~1.0.11",
+      "note": "An Arduino compatible, non-blocking, I2C/SPI library for the Bosch BMP388 barometer.",
+      "authors": ["Martin Lindupp"],
+      "frameworks": "arduino",
+      "platforms": "atmelavr, atmelsam"
+    },
+    {
       "name": "DHT sensor library",
       "owner": "adafruit",
       "library id": "19",
@@ -179,7 +199,7 @@
       "platforms": "atmelavr, atmelsam"
     },
     {
-      "name": "Adafruit_INA219xxx",
+      "name": "Adafruit INA219-use-neilh10",
       "owner": "adafruit",
       "library id": "160",
       "url": "https://github.com/adafruit/Adafruit_INA219",
@@ -194,7 +214,7 @@
       "owner": "adafruit",
       "library id": "406",
       "url": "https://github.com/adafruit/Adafruit_MPL115A2",
-      "version": "~2.0.0",
+      "version": "~2.0.2",
       "note": "MPL115A2 Barometer Library by Adafruit",
       "authors": ["Adafruit"],
       "frameworks": "arduino"
@@ -245,7 +265,7 @@
       "platforms": "atmelavr, atmelsam"
     },
     {
-      "name": "SDI-12xxx",
+      "name": "SDI-12-use-neilh10",
       "owner": "envirodiy",
       "library id": "1486",
       "version": "~2.1.4",
