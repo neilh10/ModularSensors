@@ -1104,11 +1104,11 @@ void Logger::publishDataQuedToRemotes(bool internetPresent) {
                              * Each publish creates and tears down a TCP connection */
                             MS_DBG(F("pubDQTR2 delay"),delay_posted_pacing_ms ,F("mS : total posted"), published_this_pass);
                             delay(delay_posted_pacing_ms);
-
+                            tmrGateway_ms = millis();
                             // setup for publisher to call deszqNextCh()
                             rspCode = dataPublishers[i]->publishData();
                             watchDogTimer.resetWatchDog();
-                            postLogLine(i, rspCode);
+                            postLogLine((millis() -tmrThisPublish_ms), rspCode);
                             if (false == publishRspCodeAccepted(rspCode)) break;
 
                             tot_posted++;
