@@ -1271,7 +1271,7 @@ void lowpower_disable_ints(void) {
 #endif //PIN_WIRE1_SLEEP
 
 #if defined WIO_TERMINAL
-#pragma message ("Low Power for WIO_TERMINAL") 
+  // Set "Low Power for WIO_TERMINAL 
   // in ordfder of variant.h 
   // LED
   // TX/RX - can be switched with ROLE

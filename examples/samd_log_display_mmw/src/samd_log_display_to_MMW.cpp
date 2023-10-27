@@ -124,7 +124,11 @@ persistent_store_t ps_ram;
 // for USB requires special handling for USBDevice Driver
 // else could be Serial1 - com1 etc
 
+#if defined ARDUINO_ARCH_SAMD 
+#define SerialStd Serial
+#else
 #define SerialStd STANDARD_SERIAL_OUTPUT
+#endif
 
 // Set the input and output pins for the logger
 // NOTE:  Use -1 for pins that do not apply
@@ -417,7 +421,7 @@ EnviroDIYPublisher EnviroDIYPOST(dataLogger, &modemPhy.gsmClient,
 // ==========================================================================
 //  Working Functions
 // ==========================================================================
-#define SerialStd Serial
+
 //Force use of ps_ram
 #define USE_PS_EEPROM 1
 //debug 
@@ -609,6 +613,7 @@ void setup() {
     PRINTOUT(F("---parseIni Start"));
     //Sets up local store for provisional readings
     dataLogger.setPs_cache(&ps_ram);
+    localAppStorageInit(); // Init ps_ram before calling iniReader
     //Parses ms_cfg.h into local ps_ram
     dataLogger.parseIniSd(configIniID_def, inihUnhandledFn);
     // parse ps_ram to classes that need it.
