@@ -1,12 +1,12 @@
 /*****************************************************************************
 ms_cfg.h_wio_wifi - ModularSensors Config - MMW _Wio/Mayfly WiFi
-Status 220617: 0.33.1.abaa
+Status 230929: 0.34.1.acb
 Written By:  Neil Hancock www.envirodiy.org/members/neilh20/
 Development Environment: PlatformIO
 Hardware Platform(s): EnviroDIY Mayfly Arduino Datalogger+RS485 Wingboard
 
 Software License: BSD-3.
-  Copyright (c) 2022, Neil Hancock - all rights assigned to Stroud Water
+  Copyright (c) 2023, Neil Hancock - all rights assigned to Stroud Water
 Research Center (SWRC) and they may change this title to Stroud Water Research
 Center as required and the EnviroDIY Development Team
 
@@ -39,7 +39,10 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 
 //Only define 1 below . SENSIRION_SHT4X is on Mayfly 1.x
 //#define SENSIRION_SHT4X_UUID
-#define ASONG_AM23XX_UUID 1
+// This is seperate and can be used on WIO-TERMINAL - otherwise similar to SHT4X
+#define SENSIRION_SHT3X_UUID 1
+//#define ASONG_AM23XX_UUID 1
+
 
 //Two heavy sensors with power useage
 #define BM_PWR_SENSOR_CONFIG_BUILD_SPECIFIC BM_PWR_LOW_REQ
@@ -89,7 +92,24 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 
 
 #define HwName_DEF "WioTerminal"
-#define CONFIGURATION_DESCRIPTION_STR "WioTerm WiFi 4 Temperature to MMW"
+
+// Definitions of Modems
+#define BUILD_MODEM_SIM_COM_SIM7080 4
+#define BUILD_MODEM_FACTORY 5
+#define BUILD_MODEM_WIO_WIFI 6
+
+#define BUILD_MODEM_TYPE BUILD_MODEM_WIO_WIFI
+// Define the Modem Description
+#if BUILD_MODEM_TYPE ==  BUILD_MODEM_FACTORY 
+#define CONFIG_EXT "internal WiFi or LTE SIM7080"
+#elif BUILD_MODEM_TYPE ==  BUILD_MODEM_WIO_WIFI 
+#define CONFIG_EXT "internal WiFi"
+#elif BUILD_MODEM_TYPE == BUILD_MODEM_SIM_COM_SIM7080
+#define CONFIG_EXT "LTE SIM7080"
+#else 
+#define CONFIG_EXT "No Modem"
+#endif //BUILD_MODEM_TYPE == 
+#define CONFIGURATION_DESCRIPTION_STR "WioTerm 5*Temperature Monitor to MMW" CONFIG_EXT
 
 #define USE_MS_SD_INI 1
 //#define USE_PS_EEPROM 1
@@ -145,9 +165,8 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 #define loggingInterval_MAX_CDEF_MIN 6 * 60
 
 
-// Supports DigiXBeeCellularTransparent & DigiXBeeWifi
-#define UseModem_Module 1
-#if UseModem_Module 
+#if defined BUILD_MODEM_TYPE 
+// Supports Modems
 // The Modem is used to push data and also sync Time
 // In standalong logger, no internet, Modem can be required at factor to do a
 // sync Time Normally enable both of the following. In standalone, disable
@@ -159,8 +178,7 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 //#define USE_PUB_TSMQTT   1
 //#define  USE_PUB_UBIDOTS 1
 
-// Required for TinyGsmClient.h
-#define TINY_GSM_MODEM_XBEE
+#endif // BUILD_MODEM_TYPE
 
 // The APN for the gprs connection, unnecessary for WiFi
 #define APN_CDEF "VZWINTERNET"
@@ -177,38 +195,12 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 //Manage Internet - common for all providers
 #define MNGI_COLLECT_READINGS_DEF 1
 #define MNGI_SEND_OFFSET_MIN_DEF 0
-#endif  // UseModem_Module 
 
 // This might need revisiting
 #define ARD_ANLAOG_MULTIPLEX_PIN A6
 
 //#define SENSOR_CONFIG_GENERAL 1
 //#define KellerAcculevel_ACT 1
-// Defaults for data.envirodiy.org
-//Test08 https://monitormywatershed.org/sites/tu_rc_test08/
-#define LOGGERID_DEF_STR "test08"
 #define NEW_LOGGERID_MAX_SIZE 40
-#define registrationToken_UUID "0cf7c40a-232e-457d-87d6-cea5c0757fec"
-#define samplingFeature_UUID   "236c674b-69b9-43af-b0d6-33d67b870ecc"
-#define SEQUENCE_NUMBER_UUID   "8c57835f-a32f-4d62-82dc-0ba09f04cf52"
-
-#define TEMPERATURE_ALL_DS18 1
-#define TEMPERATURE_A_UUID     "03e7b375-97a7-4423-a3f0-1d822d8b19b9"
-#define TEMPERATURE_B_UUID     "c62fcd8a-406e-4fe1-87d9-ff3dca8e1b90"
-#define TEMPERATURE_C_UUID     "43bcda9b-2973-4639-af2c-f0b6bb3fa44b"
-#define TEMPERATURE_D_UUID     "ff4d732d-88d8-4a1b-b499-16417603edfe"
-#define BAT_VOLTAGE_UUID       "3bebd4a3-8b54-4f92-ba55-5fd2fd021358"
-
-#if defined SENSIRION_SHT4X_UUID
-#define SENSIRION_SHT4X_Air_Temperature_UUID "Air_Temperature_UUID"
-//#define SENSIRION_SHT4X_Air_TemperatureF_UUID "Air_TemperatureF_UUID"
-#define SENSIRION_SHT4X_Air_Humidity_UUID "Air_Humidity_UUID"
-#elif defined ASONG_AM23XX_UUID 
-//#define ASONG_AM23_Air_Temperature_UUID "Air_Temperature_UUID"
-#define ASONG_AM23_Air_Temperature_UUID "8849814d-1603-4a2f-861f-f31ae68cccf3"
-//#define ASONG_AM23_Air_TemperatureF_UUID "Air_TemperatureF_UUID"
-//#define ASONG_AM23_Air_Humidity_UUID "Air_Humidity_UUID"
-#define ASONG_AM23_Air_Humidity_UUID    "08646cc3-c5de-414c-af65-c795b2dcac24"
-#endif  // ASONG_AM23XX_UUID
-
+#include "ms_cfg_uuids.h"
 #endif  // ms_cfg_h

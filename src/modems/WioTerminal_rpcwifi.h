@@ -83,6 +83,7 @@
 #include "ModSensorDebugger.h"
 #undef MS_DEBUGGING_STD
 #undef MS_DEBUGGING_DEEP
+#include "ModemTypes.h"
 
 /** @ingroup modem_rpcWifiRTL8720 */
 /**@{*/

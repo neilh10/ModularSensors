@@ -106,6 +106,14 @@ const uint8_t loggingIntervaldef = loggingInterval_CDEF_MIN;
 const int8_t timeZone = CONFIG_TIME_ZONE_DEF;  
 // NOTE:  Daylight savings time will not be applied!  Please use standard time!
 
+// ==========================================================================
+//     Local storage - evolving
+// ==========================================================================
+#ifdef USE_MS_SD_INI
+persistent_store_t ps_ram;
+#define epc ps_ram
+#endif  //#define USE_MS_SD_INI
+
 // Serial Debug Output routing
 // For Mayfly its always a Serial though this connects with a USB chip
 // For WioT it can be built in USB Serial or UART Serial1 that requires an FTDI or similar debug port.
@@ -116,7 +124,11 @@ const int8_t timeZone = CONFIG_TIME_ZONE_DEF;
 // for USB requires special handling for USBDevice Driver
 // else could be Serial1 - com1 etc
 
+#if defined ARDUINO_ARCH_SAMD 
+#define SerialStd Serial
+#else
 #define SerialStd STANDARD_SERIAL_OUTPUT
+#endif
 
 // Set the input and output pins for the logger
 // NOTE:  Use -1 for pins that do not apply
@@ -254,6 +266,82 @@ AOSongAM2315 am23xx(I2CPower);
 /** End [ao_song_am2315] */
 #endif  // ASONG_AM23XX_UUID
 
+#if defined(SENSIRION_SHT3X_UUID)
+// ==========================================================================
+//  Sensirion SHT3X Digital Humidity and Temperature Sensor
+//  Seperate Sensor - incompatible with Mayfly1.1 SHT4X as uses same I2C address
+// ==========================================================================
+/** Start [sensirion_sht4x] */
+#include <sensors/SensirionSHT3x.h>
+
+// NOTE: Use -1 for any pins that don't apply or aren't being used.
+const int8_t SHT3xPower     = sensorPowerPin;  // Power pin
+const bool   SHT3xUseHeater = false;
+
+// Create an Sensirion SHT4X sensor object
+SensirionSHT3x sht3x(SHT3xPower, SHT3xUseHeater);
+/** End [sensirion_sht4x] */
+#endif  // SENSIRION_SHT4X_UUID
+
+#if defined(BAT_VOLTAGE_UUID )
+// ==========================================================================
+//    Wio Terminal Chassis Battery Sensor
+// ==========================================================================
+// Basic Wio Terminal doesn't have a battery to read 
+// requires the plug-in Chassis Battery backpack
+#include "SparkFunBQ27441.h"
+const unsigned int BATTERY_INT_CAPACITY = 650; // Set Wio Terminal Battery's Capacity 
+#if !defined BATTERY_EXT_CAPACITY
+#define BATTERY_EXT_CAPACITY 6600
+#endif 
+// Working Definition for Wio Terminal Battery's Capacity
+const unsigned int BATTERY_CAPACITY = (BATTERY_INT_CAPACITY +BATTERY_EXT_CAPACITY); 
+
+#define CHASSIS_BATTERY_NOT_PRESENT -0.123
+float chassisBattery_volt = CHASSIS_BATTERY_NOT_PRESENT;
+float chassisBatteryCapacity_Ahr = CHASSIS_BATTERY_NOT_PRESENT;
+
+bool battery_present=false;
+
+float getChassisBattery_volt(void) {
+    if (battery_present) {
+        // Read battery stats from the BQ27441-G1A
+        uint16_t volts_mv = lipo.voltage(); // Read battery voltage (mV)
+        chassisBattery_volt = ((float)volts_mv)/1000; //Convert to Volts
+    }
+    return chassisBattery_volt;
+ } //getChassisBattery_volt
+
+Variable*     chassisBattery_V_variable = new Variable(
+    getChassisBattery_volt, // function that does the calculation
+    3,                      // resolution
+    "batteryVoltage",     // var name. This must be a value from
+                    // http://vocabulary.odm2.org/variablename/
+    "volts",  // var unit. This must be a value from This must be a
+            // value from http://vocabulary.odm2.org/units/
+    "Volt1",  // var code
+    BAT_VOLTAGE_UUID);
+
+float getChassisBattery_Ahr(void) {
+    if (battery_present) {
+        // Read battery stats from the BQ27441-G1A
+        uint16_t capacity_mAhr = lipo.capacity(); // Read battery mAhr
+        chassisBatteryCapacity_Ahr = ((float)capacity_mAhr)/1000; //Convert to Volts
+    }
+    return chassisBatteryCapacity_Ahr;
+ } //getChassisBattery_volt
+
+Variable*     chassisBattery_Ahr_variable = new Variable(
+    getChassisBattery_Ahr, // function that does the calculation
+    3,                      // resolution  effectively to mAhr
+    "electricEnergy",     // var name. This must be a value from
+                    // http://vocabulary.odm2.org/variablename/
+    "A-hr",  // var unit. This must be a value from This must be a
+            // value from http://vocabulary.odm2.org/units/
+    "Ahr1",  // var code
+    BAT_Ahr_UUID);
+
+#endif //BAT_VOLTAGE_UUID 
 
 // ==========================================================================
 //  Creating the Variable Array[s] and Filling with Variable Objects
@@ -266,18 +354,26 @@ Variable* variableList[] = {
     new AOSongAM2315_Humidity(&am23xx, ASONG_AM23_Air_Humidity_UUID),
     new AOSongAM2315_Temp(&am23xx, ASONG_AM23_Air_Temperature_UUID),
 // ASONG_AM23_Air_TemperatureF_UUID
+#endif  // ASONG_AM23XX_UUID 
+
+#if defined SENSIRION_SHT3X_UUID
+    new SensirionSHT3x_Humidity(&sht3x, SENSIRION_SHT3X_Air_Humidity_UUID),
+    new SensirionSHT3x_Temp(&sht3x, SENSIRION_SHT3X_Air_Temperature_UUID),
+// ASONG_AM23_Air_TemperatureF_UUID
+#endif  // SENSIRION_SHT3X_UUID 
+
 #if defined TEMPERATURE_ALL_DS18
     new MaximDS18_Temp(&ds18phy_a, TEMPERATURE_A_UUID,"Ds18Ta"),
     new MaximDS18_Temp(&ds18phy_b, TEMPERATURE_B_UUID,"Ds18Tb"),
     new MaximDS18_Temp(&ds18phy_c, TEMPERATURE_C_UUID,"Ds18Tc"),
     new MaximDS18_Temp(&ds18phy_d, TEMPERATURE_D_UUID,"Ds18Td"),
 #endif //TEMPERATURE_ALL_DS18
+   
 
-// calcAM2315_TempF
-#endif  // ASONG_AM23XX_UUID    
-    #if defined(ARDUINO_AVR_ENVIRODIY_MAYFLY)
-    new ProcessorStats_Battery(&mcuBoard,BAT_VOLTAGE_UUID ),
-    #endif // ARDUINO_AVR_ENVIRODIY_MAYFLY
+#if defined(BAT_VOLTAGE_UUID) 
+    chassisBattery_V_variable,
+    chassisBattery_Ahr_variable,
+#endif // BAT_VOLTAGE_UUID 
 };
 
 
@@ -325,6 +421,14 @@ EnviroDIYPublisher EnviroDIYPOST(dataLogger, &modemPhy.gsmClient,
 // ==========================================================================
 //  Working Functions
 // ==========================================================================
+
+//Force use of ps_ram
+#define USE_PS_EEPROM 1
+//debug 
+// #include "ModemTypes.h"
+#include "battery_types.h"
+#include "iniHandler.h"
+
 /** Start [working_functions] */
 
 // Reads the battery voltage
@@ -340,6 +444,69 @@ uiHelperWioT ui_display;
 #endif //USE_DISPLAY
 /** End [working_functions] */
 
+#if defined(BAT_VOLTAGE_UUID )
+
+void setupBQ27441(void)
+{
+  // Use lipo.begin() to initialize the BQ27441-G1A and confirm that it's
+  // connected and communicating.
+  if (!lipo.begin()) // begin() will return true if communication is successful
+  {
+  // If communication fails, print an error message and loop forever.
+    Serial.println("Error: Unable to communicate with BQ27441.");
+    Serial.println("  Check battery unit plugged in.");
+
+    battery_present=false;
+    return;
+  }
+  battery_present=true;
+  Serial.println("Connected to BQ27441!");
+  
+  // Uset lipo.setCapacity(BATTERY_CAPACITY) to set the design capacity
+  // of your battery.
+  lipo.setCapacity(BATTERY_CAPACITY);
+
+}  // setupBQ27441
+
+void printBatteryStats()
+{
+    if (battery_present) {
+        // Read battery stats from the BQ27441-G1A
+        unsigned int soc = lipo.soc();  // Read state-of-charge (%)
+        unsigned int volts_mv = lipo.voltage(); // Read battery voltage (mV)
+        int current = lipo.current(AVG); // Read average current (mA)
+        //unsigned int fullCapacity = lipo.capacity(FULL); // Read full capacity (mAh)
+        unsigned int capacity = lipo.capacity(REMAIN); // Read remaining capacity (mAh)
+        int power = lipo.power(); // Read average power draw (mW)
+        int health = lipo.soh(); // Read state-of-health (%)
+        // Now print out those values:
+        String toPrint = "BatteryStats, ";
+        toPrint += String(soc) + ",%, ";
+        toPrint += String(volts_mv) + " ,mV, ";
+        toPrint += String(current) + ",mA,";
+        toPrint += String(capacity) + ",mAh, ";
+        //toPrint += String(fullCapacity) + " mAh | ";
+        toPrint += String(power) + ",mW,";
+        toPrint += String(health) + ",%";
+        
+        Serial.println(toPrint);
+    }
+} // printBatteryStats()
+
+#else 
+void setupBQ27441(void) {}
+void printBatteryStats() {Serial.println("Battery : No battery present")}
+#endif // BAT_VOLTAGE_UUID 
+bool userPushedButton = false;
+void push_button() {
+    if ( (digitalRead(BUTTON_1) == HIGH )
+    || (digitalRead(BUTTON_2) == HIGH )
+    || (digitalRead(BUTTON_3) == HIGH )
+    ) {
+        userPushedButton = true;
+        SerialStd.println(F("userPushButton"));
+    }
+} // push_button
 
 // ==========================================================================
 //  Arduino Setup Function
@@ -411,9 +578,14 @@ void setup() {
     enableInterrupt(neoSSerial1Rx, neoSSerial1ISR, CHANGE);
 #endif
 
+
    
 #if defined USE_DISPLAY
     ui_display.begin();
+
+    SerialStd.print(" Setup Display wake. Backlight=");
+    SerialStd.println(ui_display.tft.backlight());
+    ui_display.display_on();
     ui_display.fillscreen("Modular Sensors: request time");
 #endif //USE_DISPLAY
 
@@ -423,32 +595,61 @@ void setup() {
     // Always set the RTC to be in UTC (UTC+0)
     Logger::setRTCTimeZone(0);
 
+    setupBQ27441();
+    printBatteryStats();
     // Attach the modem and information pins to the logger
     dataLogger.attachModem(modemPhy);
     //modemPhy.setModemLED(modemLEDPin); //not mapped/tested WioTerminal
     dataLogger.setLoggerPins(wakePin, sdCardSSPin, sdCardPwrPin, wakePin,
                              greenLED);
-    dataLogger.setLoggerID("logdef");
-    dataLogger.setLoggingInterval(2);
+    // For manual settings use the following, over riden if ms_cfg.ini present
+    //dataLogger.setLoggerID("logdef");
+    //dataLogger.setLoggingInterval(15);
+    //dataLogger.setSendOffset=0;
+    //dataLogger._sendEveryX_cnt=1;
+    //dataLogger.setPostMax_num(100);
+
+#ifdef USE_MS_SD_INI
+    PRINTOUT(F("---parseIni Start"));
+    //Sets up local store for provisional readings
+    dataLogger.setPs_cache(&ps_ram);
+    localAppStorageInit(); // Init ps_ram before calling iniReader
+    //Parses ms_cfg.h into local ps_ram
+    dataLogger.parseIniSd(configIniID_def, inihUnhandledFn);
+    // parse ps_ram to classes that need it.
+    epcParser(); //use ps_ram to update classes
+    PRINTOUT(F("---parseIni complete\n"));
+#endif  // USE_MS_SD_INI
+
     delay(500);
     // Begin the logger
     dataLogger.begin();
 
     SerialStd.println(F("Setting up modemPhy as RTL8270 WiFiClient..."));
     EnviroDIYPOST.setClient(&modemPhy.endClient);
-    EnviroDIYPOST.begin(dataLogger, &modemPhy.endClient, registrationToken, samplingFeature);
-    //EnviroDIYPOST.setDIYHost("data.envirodiy.org"); //use default & port
+    EnviroDIYPOST.begin(dataLogger, &modemPhy.endClient, 
+                        ps_ram.app.provider.s.ed.registration_token,
+                        ps_ram.app.provider.s.ed.sampling_feature);
     EnviroDIYPOST.setQuedState(true);
+#ifdef USE_MS_SD_INI
+    EnviroDIYPOST.setDIYHost(ps_ram.app.provider.s.ed.cloudId);
+    EnviroDIYPOST.setTimerPostTimeout_mS(ps_ram.app.provider.s.ed.timerPostTout_ms);
+    EnviroDIYPOST.setTimerPostPacing_mS(ps_ram.app.provider.s.ed.timerPostPace_ms);
+    dataLogger.setSendQueSz_num(ps_ram.app.msn.s.sendQueSz_num); //60days 
+    dataLogger.setSendEveryX(ps_ram.app.msn.s.collectReadings_num); //Default 2
+    dataLogger.setSendOffset(ps_ram.app.msn.s.sendOffset_min);  // delay Minutes
+    dataLogger.setPostMax_num(ps_ram.app.msn.s.postMax_num); 
+#else
+    //EnviroDIYPOST.setDIYHost("data.envirodiy.org"); //use default & port
     EnviroDIYPOST.setTimerPostTimeout_mS(15432); //15.4Sec
     EnviroDIYPOST.setTimerPostPacing_mS(500);
     dataLogger.setLoggingInterval(2); //Set every minute, default 5min
-
     //dataLogger.setSendQueSz_num(100*60); //60days 
     dataLogger.setSendEveryX(1); //Default 2
     //dataLogger.setSendOffset(1);  // delay Minutes
     //dataLogger.setPostMax_num(100); 
+#endif  
 
-    // Note: Basic Wio Terminal doesn't support reading the voltage
     SerialStd.println(F("Setting up sensors..."));
     delay(1000);
     varArray.setupSensors();
@@ -495,10 +696,6 @@ void setup() {
         true);  // true = wait for internal housekeeping after write
 
 
-    //dataLogger.setSendOffset=0;
-    dataLogger._sendEveryX_cnt=1;
-    dataLogger.setPostMax_num(100);
-
 
     #if defined USE_DISPLAY
     DateTime now_dt= dataLogger.zero_sleep_rtc.now(); 
@@ -512,31 +709,60 @@ void setup() {
     SerialStd.println(F("Starting periodic logging\n"));
     delay(100);
     // do reading & then sleep- dataLogger.systemSleep();
+    // If user touches the top left thrre buttons cause an interrupt 
+    // - except system does deep sleep and may not wake 
+    attachInterrupt(digitalPinToInterrupt(BUTTON_1), push_button, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(BUTTON_2), push_button, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(BUTTON_2), push_button, CHANGE);
+
 }
 /** End [setup] */
 
+
+#define DISPLAY_ON_COUNT 0x3
+uint16_t displayOn_timer=DISPLAY_ON_COUNT;
+#define DISPLAY_ON_MASK 0x3
 
 // ==========================================================================
 //  Arduino Loop Function
 // ==========================================================================
 /** Start [loop] */
-// Use this short loop for simple data logging and sending
 void loop() {
 
 
     #if defined USE_DISPLAY
-    DateTime now_dt(dataLogger.markedLocalEpochTime);
-    String ui_status("Stn#3 ");
-    ui_status += now_dt.timestamp(DateTime::TIMESTAMP_FULL).c_str();
-    uiParm6_t parm6 = {&ui_status,
-        //Use variable list starting from 2nd sensor or offset [1] 
-        variableList[1]->getValue(),variableList[2]->getValue(), //AM23xx Humidity and Temperature
-        variableList[3]->getValue(),variableList[4]->getValue(), //One wire temperature sensors
-        variableList[5]->getValue(),variableList[6]->getValue()  //
-    };
-    ui_display.update6(&parm6 );
+
+
+    if ((displayOn_timer ) || userPushedButton) {
+        DateTime now_dt(dataLogger.markedLocalEpochTime);
+        String ui_status(String(displayOn_timer)+"]Stn#3 ");
+
+        if (userPushedButton)  {
+            userPushedButton= false;
+            displayOn_timer = DISPLAY_ON_COUNT;
+            SerialStd.println(F("displayOn timer"));
+        } else {
+            displayOn_timer--;
+        }
+
+        ui_display.display_on();
+
+        ui_status += now_dt.timestamp(DateTime::TIMESTAMP_FULL).c_str();
+        uiParm6_t parm6 = {&ui_status,
+            //Use variable list starting from 2nd sensor or offset [1] 
+            variableList[1]->getValue(),variableList[2]->getValue(), //AM23xx Humidity and Temperature
+            variableList[3]->getValue(),variableList[4]->getValue(), //One wire temperature sensors
+            variableList[5]->getValue(),variableList[6]->getValue()  //
+        };
+        ui_display.update6(&parm6 );
+    } else {
+        ui_display.display_off();
+        //Check switch 
+
+    }
     #endif // USE_DISPLAY
 
+    printBatteryStats();
     dataLogger.logDataAndPubReliably();  //TCP / RTL !there
 
 

@@ -15,6 +15,8 @@
 //uiHelperWioT::~uiHelperWioT() {}
 
 //uiHelperWioT:: {}
+//#define SerialStd STANDARD_SERIAL_OUTPUT
+#define SerialStd Serial
 
 void uiHelperWioT::begin() {
     tft.begin();
@@ -27,8 +29,8 @@ void uiHelperWioT::begin() {
 void uiHelperWioT::fillscreen(const char *msg) {
     tft.fillScreen(TFT_BLACK);
     int16_t msg_width = tft.textWidth(msg);
-    Serial.print("uiHelperWioT fillscreen txt width ");
-    Serial.println(msg_width);
+    //Serial.print("uiHelperWioT fillscreen txt width ");
+    //Serial.println(msg_width);
 
     #define WIO_T_SCREEN_X 320
     if (WIO_T_SCREEN_X < msg_width) {
@@ -153,8 +155,36 @@ void uiHelperWioT::update6(uiParm6_t *pms) {
 }
 
 void uiHelperWioT::update3(String status, float param1,float param2, float param3) {
-
 }
+
+// https://github.com/Bodmer/TFT_eSPI/issues/671
+void uiHelperWioT::display_off(bool force) {
+    if (!_display_active_state || force) {
+        SerialStd.print(" UiHelper::display_off. Backlight=");
+        SerialStd.println(tft.backlight());
+        tft.writecommand(0x10); // Sleep
+        delay(5); // Delay for shutdown time before another command can be sent
+        _display_active_state = false;
+        tft.setBacklight(0);
+    } else {
+        SerialStd.println(" UiHelper::display_off already");
+    }
+}
+void uiHelperWioT::display_on(bool force) {
+    if (!_display_active_state || force) {
+        tft.writecommand(0x11); // Wake display
+        delay(120); // Delay for pwer supplies to stabilise
+        _display_active_state = false;
+        tft.setBacklight(0xffff);
+        //SerialStd.println(" UiHelper::display_on turnedOn");
+    } else {
+        //SerialStd.println(" UiHelper::display_on already");
+    }
+}
+bool uiHelperWioT::display_state() {
+    return _display_active_state;
+};
+
 
 
 
