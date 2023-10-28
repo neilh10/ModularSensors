@@ -6,7 +6,11 @@ This is is configured for 4 Temperature probes + temperature/humidity
 The 4 temperature probes pluge into the right hand socket
 The 1 Temperature/humidity plugs into the left hand socket
 
-The per site UUIDs are added in a ms_cfg.ind file that is on the uSD.
+When built - lookfor firmware.uif2 can be found in 
+ModularSensors\a\samd_log_display_mmw\.pio\build\seeed_wio_terminal
+This can be dropped on the Wio Terminal USB boot disk
+
+The per site UUIDs are added in a ms_cfg.ini file that is on the uSD.
 
 This program is based on logging_to_MMW  
 

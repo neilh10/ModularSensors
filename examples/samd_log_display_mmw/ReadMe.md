@@ -6,7 +6,15 @@ This is is configured for 4 Temperature probes + temperature/humidity
 The 4 temperature probes pluge into the right hand socket
 The 1 Temperature/humidity plugs into the left hand socket
 
-The per site UUIDs are added in a ms_cfg.ind file that is on the uSD.
+When built - a firmware.uf2 can be generated with  
+$python ../../tools/build/uf2conv.py -c -b 0x4000 -o firmware.uf2 .pio\build\seeed_wio_terminal\firmware.bin
+then 
+$move .\firmware.uf2 ..\..\..\releases\wiot_yymmdd_hhmm.uf2
+(ss build_uf2.py for bug description )
+
+This can be dropped on the Wio Terminal USB boot disk
+
+The per site UUIDs are added in a ms_cfg.ini file that is on the uSD.
 
 This program is based on logging_to_MMW  
 
