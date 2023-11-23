@@ -1751,7 +1751,10 @@ void setup() {
     // Set up SD card access
     PRINTOUT(F("---parseIni Start"));
     dataLogger.setPs_cache(&ps_ram);
-    dataLogger.parseIniSd(configIniID_def, inihUnhandledFn);
+    if (!dataLogger.parseIniSd(configIniID_def, inihUnhandledFn))
+    {
+        PRINTOUT(F(" parseIni No uSD Card or invalid"));
+    }
     epcParser(); //use ps_ram to update classes
     PRINTOUT(F("---parseIni complete\n"));
 #endif  // USE_MS_SD_INI
