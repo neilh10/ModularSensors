@@ -33,6 +33,7 @@ const char LIION_TYPE_pm[] EDIY_PROGMEM =
 const char TIME_ZONE_pm[] EDIY_PROGMEM          = "TIME_ZONE";
 
 const char GEOGRAPHICAL_ID_pm[] EDIY_PROGMEM    = "GEOGRAPHICAL_ID";
+const char CMID_ADDR_A_pm[] EDIY_PROGMEM    = "CMID_ADDR_A";
 
 const char NETWORK_pm[] EDIY_PROGMEM = "NETWORK";
 const char apn_pm[] EDIY_PROGMEM     = "apn";
@@ -88,6 +89,9 @@ const char ACTION_pm[] EDIY_PROGMEM = "ACTION";
 const char WRITE_pm[] EDIY_PROGMEM  = "WRITE";
 const char DEFAULT_APP_EEPROM_pm[] EDIY_PROGMEM  = "DEFAULT_APP_EEPROM";
 const char COPY_pm[] EDIY_PROGMEM   = "COPY";
+
+// ONE_WIRE_ADDR_LEN 8
+#define W1A_SZ 8
 
 #if defined USE_PS_EEPROM && defined ARDUINO_AVR_ENVIRODIY_MAYFLY
 //
@@ -207,6 +211,10 @@ static void populateUuidMatchEpc(ini_name_value_t *uuidTable)
         }
     }while (epc_idx < PROVID_UUID_SENSOR_CNTMAX_SZ );
 }
+
+//static void populateCmidMatchIni(const char* name, const char* value,
+//                           ini_name_value_t *uuidTable) 
+//https://github.com/neilh10/ModularSensors/issues/154
 
 static void populateUuidMatchIni(const char* name, const char* value,
                            ini_name_value_t *uuidTable) 
@@ -722,11 +730,62 @@ static int inihUnhandledFn(const char* section, const char* name,
 #if defined USE_PS_EEPROM
             strcpy((char*)epc.app.msc.s.geolocation_id, value);
 #endif  // USE_PS_EEPROM
+#ifdef CMID_ADDR_NUM
+        } else if (strcmp_P(name, CMID_ADDR_A_pm) == 0) {
+            SerialStd.print(F("CMID_ADDR_A:"));
+            SerialStd.print(value);
+            if (strlen(value) >= ( CMID_ADDR_SZ - 1)) {
+                MS_DBG(F("Too long limited to "),  CMID_ADDR_SZ - 1);
+                *((char*)((int)value +  CMID_ADDR_SZ)) = 0;
+            }
+#if defined USE_PS_EEPROM
+            //expect hex of form value=  28 4f 0e 9d 0e 00 00 65
+            //delay(100);
+            uint8_t token_num=0;
+            long int conv_num;
+            const char CONV_BASE=16;
+            char * pStart;// = (char *)value;
+            char * pEnd=  (char *)value;
+            uint8_t Dev1_addr[W1A_SZ] ={0,0,0,0, 0,0,0,0};
+            while (pEnd != NULL) {
+                pStart = pEnd;
+                conv_num = strtol(pEnd,&pEnd,CONV_BASE);
+                //SerialStd.printf("%d [%d] %x \n",errno, token_num, conv_num);
+                if (errno) break;
+                Dev1_addr[token_num ] = conv_num ;
+                //token = strtok(NULL, dlmtr);
+                 if (++token_num > 8) {token_num=8;break;}
+            }
+            //delay(100);
+            if ((W1A_SZ != token_num) || errno) {
+                MS_DBG(F("Error reading "),  value);
+            } else {
+                for (uint8_t i = 0; i < token_num ; i++) {
+                    epc.app.msc.s.cmid_addr[0][i] =  Dev1_addr[i];
+                }
+                SerialStd.print("   Set:");
+                for (uint8_t i = 0; i < token_num ; i++) {
+                    SerialStd.print(epc.app.msc.s.cmid_addr[0][i],HEX );
+                    SerialStd.print(" ");
+                }
+                SerialStd.println();
+            }
+
+#endif  // USE_PS_EEPROM
+#endif //CMID_ADDR_NUM
         } else {
-            SerialStd.print(F("COMMON tbd "));
-            SerialStd.print(name);
-            SerialStd.print(F(" to "));
-            SerialStd.println(value);
+            /* CMIDs are applied to internal sensor Array as follows:
+            1) "CMID_label"="CMID_A"
+            eg ASQ212_PAR="CMID_A"
+            search variableList for CMID_label and if found replace with "CMID_A"
+            */
+            //if !populateCmidMatchIni( name,  value, ps_ram.app.provider.s.ed.uuid) {
+
+                SerialStd.print(F("COMMON tbd "));
+                SerialStd.print(name);
+                SerialStd.print(F(" to "));
+                SerialStd.println(value);
+            //}
         }
     } else if (strcmp_P(section, SENSORS_pm) == 0) {
 #if defined INA219M_PHY_ACT

@@ -213,7 +213,7 @@ BoschBME280 bme280(I2CPower, BMEi2c_addr);
 //  Maxim DS18 One Wire Temperature Sensor
 // ==========================================================================
 
-#if defined TEMPERATURE_ALL_DS18
+#if defined TEMPERATURE_NUM_DS18
 /** Start [ds18] */
 
 #include <sensors/MaximDS18.h>
@@ -234,18 +234,35 @@ const int8_t OneWireBus   = OneWireBus_DEF;  // OneWire Bus Pin (-1 if unconnect
 // Could configure in .ini ~ which means 1) determining number of sensors 2) each sensors address
 //4 Address found through using a OneWireSearch:
 // ONE_WIRE_ADDR_LEN 8
-#define W1AL 8
-uint8_t Dev1_Ds18Addr_a[W1AL]= {0x28, 0x4f, 0x0e, 0x9d, 0x0e, 0x00, 0x00, 0x65 };
-//uint8_t Dev1_Ds18Addr_a[8]= { 0x28, 0x8A, 0xAB, 0xD9, 0x06, 0x00, 0x00, 0x3B };
-uint8_t Dev1_Ds18Addr_b[8]= { 0x28, 0x8A, 0x92, 0x9C, 0x0E, 0x00, 0x00, 0x08 };
-uint8_t Dev1_Ds18Addr_c[8]= { 0x28, 0xCB, 0x12, 0x9D, 0x0E, 0x00, 0x00, 0x0E };
-uint8_t Dev1_Ds18Addr_d[8]= { 0x28, 0xE4, 0x78, 0x9C, 0x0E, 0x00, 0x00, 0xBF };
-//4 Instances of the sensor
+#define W1A_SZ 8
+uint8_t Dev1_Ds18Addr_a[W1A_SZ]= {0x28, 0x4f, 0x0e, 0x9d, 0x0e, 0x00, 0x00, 0x65 };
+uint8_t Dev1_Ds18Addr_b[W1A_SZ]= { 0x28, 0x8A, 0x92, 0x9C, 0x0E, 0x00, 0x00, 0x08 };
+uint8_t Dev1_Ds18Addr_c[W1A_SZ]= { 0x28, 0xCB, 0x12, 0x9D, 0x0E, 0x00, 0x00, 0x0E };
+uint8_t Dev1_Ds18Addr_d[W1A_SZ]= { 0x28, 0xE4, 0x78, 0x9C, 0x0E, 0x00, 0x00, 0xBF };
+uint8_t Dev1_Ds18Addr_n[W1A_SZ]= {  0x0,  0x0,  0x0,  0x0,  0x0,  0x0,  0x0,  0x0 };
+//uint8_t Dev1_DS18Addr[W1A_SZ][TEMPERATURE_NUM_DS18];
+//4 Instances of the sensor  set the address dynamically
+#define DS18PHY_STATIC_INIT 1
+#ifdef DS18PHY_STATIC_INIT
 MaximDS18 ds18phy_a(Dev1_Ds18Addr_a,OneWirePower, OneWireBus);
 MaximDS18 ds18phy_b(Dev1_Ds18Addr_b,OneWirePower, OneWireBus);
 MaximDS18 ds18phy_c(Dev1_Ds18Addr_c,OneWirePower, OneWireBus);
 MaximDS18 ds18phy_d(Dev1_Ds18Addr_d,OneWirePower, OneWireBus);
-#endif // TEMPERATURE_ALL_DS18
+#else 
+
+#if 0
+MaximDS18 ds18phy_a(Dev1_Ds18Addr_n,OneWirePower, OneWireBus);
+MaximDS18 ds18phy_b(Dev1_Ds18Addr_n,OneWirePower, OneWireBus);
+MaximDS18 ds18phy_c(Dev1_Ds18Addr_n,OneWirePower, OneWireBus);
+MaximDS18 ds18phy_d(Dev1_Ds18Addr_n,OneWirePower, OneWireBus);
+#else
+MaximDS18 ds18phy_a(OneWirePower, OneWireBus);
+MaximDS18 ds18phy_b(OneWirePower, OneWireBus);
+MaximDS18 ds18phy_c(OneWirePower, OneWireBus);
+MaximDS18 ds18phy_d(OneWirePower, OneWireBus);
+#endif //0
+#endif //DS18PHY_STATIC_INIT
+#endif // TEMPERATURE_NUM_DS18
 
 /** End [ds18] */
 
@@ -353,6 +370,7 @@ Variable*     chassisBattery_Ahr_variable = new Variable(
 Variable* variableList[] = {
     //Order of the variable need to be consistent with reporting
     new ProcessorStats_SampleNumber(&mcuBoard, SEQUENCE_NUMBER_UUID),
+
 #if defined ASONG_AM23XX_UUID
     new AOSongAM2315_Humidity(&am23xx, ASONG_AM23_Air_Humidity_UUID),
     new AOSongAM2315_Temp(&am23xx, ASONG_AM23_Air_Temperature_UUID),
@@ -365,12 +383,12 @@ Variable* variableList[] = {
 // ASONG_AM23_Air_TemperatureF_UUID
 #endif  // SENSIRION_SHT3X_UUID 
 
-#if defined TEMPERATURE_ALL_DS18
+#if defined TEMPERATURE_NUM_DS18
     new MaximDS18_Temp(&ds18phy_a, TEMPERATURE_A_UUID,"Ds18Ta"),
     new MaximDS18_Temp(&ds18phy_b, TEMPERATURE_B_UUID,"Ds18Tb"),
     new MaximDS18_Temp(&ds18phy_c, TEMPERATURE_C_UUID,"Ds18Tc"),
     new MaximDS18_Temp(&ds18phy_d, TEMPERATURE_D_UUID,"Ds18Td"),
-#endif //TEMPERATURE_ALL_DS18
+#endif //TEMPERATURE_NUM_DS18
    
 
 #if defined(BAT_VOLTAGE_UUID) 
@@ -653,10 +671,7 @@ void setup() {
     //dataLogger.setPostMax_num(100); 
 #endif  
 
-    SerialStd.println(F("Setting up sensors..."));
-    delay(1000);
-    varArray.setupSensors();
-
+    SerialStd.println(F("Configuring DS18s ..."));
     // Customize setups as using same OneWire bus
     const char *ds18Name_a = "DS18a";
     const char *ds18Name_b = "DS18b";
@@ -667,15 +682,35 @@ void setup() {
     ds18phy_c.set_sensorName(ds18Name_c);
     ds18phy_d.set_sensorName(ds18Name_d);
 
-    ds18phy_a.set_warmUpTime_ms(  50); //default 2mS
-    ds18phy_b.set_warmUpTime_ms(1000);
-    ds18phy_c.set_warmUpTime_ms(2000);
-    ds18phy_d.set_warmUpTime_ms(3000); 
+    //WarmUp has no meaning as power always on.
+    //ds18phy_a.set_warmUpTime_ms(  50); //default 2mS
+   // ds18phy_b.set_warmUpTime_ms(1000);
+   // ds18phy_c.set_warmUpTime_ms(2000);
+    //ds18phy_d.set_warmUpTime_ms(3000); 
 
-    ds18phy_a.set_stabilizationTime_ms(100);
-    ds18phy_b.set_stabilizationTime_ms(100);
-    ds18phy_c.set_stabilizationTime_ms(100);
-    ds18phy_d.set_stabilizationTime_ms(100); //default 0mS
+    ds18phy_a.set_stabilizationTime_ms(  10);
+    ds18phy_b.set_stabilizationTime_ms( 100);
+    ds18phy_c.set_stabilizationTime_ms( 200);
+    ds18phy_d.set_stabilizationTime_ms( 300); //default 0mS
+
+
+    ds18phy_a.setAddr(Dev1_Ds18Addr_a);
+    //ds18phy_a.setAddr(&epc.app.msc.s.cmid_addr[0][0]); //Dev1_Ds18Addr_a
+    ds18phy_b.setAddr(Dev1_Ds18Addr_b);
+    ds18phy_c.setAddr(Dev1_Ds18Addr_c);
+    ds18phy_d.setAddr(Dev1_Ds18Addr_d);
+    SerialStd.print("DS18A=");
+    SerialStd.println(ds18phy_a.getAddrStr());
+    SerialStd.print("DS18B=");
+    SerialStd.println(ds18phy_b.getAddrStr());
+    SerialStd.print("DS18C=");
+    SerialStd.println(ds18phy_c.getAddrStr());
+    SerialStd.print("DS18D=");
+    SerialStd.println(ds18phy_d.getAddrStr());
+
+    SerialStd.println(F("Setting up sensors..."));
+    delay(1000);
+    varArray.setupSensors();
 
     // Sync the clock if it isn't valid or we have battery to spare
 #if !defined NO_FIRST_SYNC_WITH_NIST

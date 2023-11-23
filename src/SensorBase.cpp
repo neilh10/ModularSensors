@@ -162,7 +162,6 @@ bool Sensor::setup(void) {
 
 // The function to wake up a sensor
 bool Sensor::wake(void) {
-    MS_DBG(F("Waking"), getSensorNameAndLocation());
     // Set the status bit for sensor activation attempt (bit 3)
     // Setting this bit even if the activation failed, to show the attempt was
     // made
@@ -180,6 +179,8 @@ bool Sensor::wake(void) {
 
     // Mark the time that the sensor was activated
     _millisSensorActivated = millis();
+    MS_DBG(F("Waking"), getSensorNameAndLocation());
+    
     // Set the status bit for sensor wake/activation success (bit 4)
     _sensorStatus |= 0b00010000;
 
@@ -472,7 +473,7 @@ bool Sensor::isStable(bool debug) {
     // If the sensor has been activated and enough time has elapsed, it's stable
     if (elapsed_since_wake_up > _stabilizationTime_ms) {
         if (debug) {
-            MS_DBG(F("It's been"), elapsed_since_wake_up, F("ms, and"),
+            MS_DBG(F("It's been"), elapsed_since_wake_up,F("ms, out of"), _stabilizationTime_ms, F("ms, and"),
                    getSensorNameAndLocation(), F("should be stable!"));
         }
         return true;

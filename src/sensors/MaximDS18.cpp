@@ -114,6 +114,9 @@ bool MaximDS18::setup(void) {
             MS_DBG(F("This sensor is not currently connected:"),
                    makeAddressString(_OneWireAddress));
             retVal = false;
+        } else {
+            MS_DBG(F("Setup sensor:"),
+                makeAddressString(_OneWireAddress));    
         }
     }
 
@@ -154,7 +157,7 @@ bool MaximDS18::startSingleMeasurement(void) {
     if (!Sensor::startSingleMeasurement()) return false;
 
     // Send the command to get temperatures
-    MS_DBG(F("Asking DS18 to take a measurement"));
+    MS_DBG(getSensorNameAndLocation(), F(" starting measurement"));
     bool success =
         _internalDallasTemp.requestTemperaturesByAddress(_OneWireAddress);
 
@@ -208,4 +211,17 @@ bool MaximDS18::addSingleMeasurementResult(void) {
     _sensorStatus &= 0b10011111;
 
     return success;
+}
+
+ bool MaximDS18::setAddr(DeviceAddress OneWireAddress) {
+    for (uint8_t i = 0; i < 8; i++) _OneWireAddress[i] = OneWireAddress[i];
+    _addressKnown=true;
+    return true;
+ }
+
+DeviceAddress * MaximDS18::getAddrHex(void) {
+    return &_OneWireAddress;
+}
+String MaximDS18::getAddrStr(void) {
+    return makeAddressString(_OneWireAddress); 
 }

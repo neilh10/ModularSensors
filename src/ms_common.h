@@ -115,6 +115,8 @@ typedef struct {
 #if defined(USE_PS_modularSensorsCommon)
 #define MSC_LOGGER_ID_SZ 21
 #define MSC_GEOLOCATION_ID_SZ 61
+//Number of Hex characters
+#define CMID_ADDR_SZ 24
 typedef struct {
     // v01 Initial structure
     uint16_t logging_interval_min;
@@ -125,6 +127,9 @@ typedef struct {
     // uint8_t  sendOffset_min;
     uint8_t logger_id[MSC_LOGGER_ID_SZ];
     uint8_t geolocation_id[MSC_GEOLOCATION_ID_SZ];
+    #if defined CMID_ADDR_NUM 
+    uint8_t cmid_addr[CMID_ADDR_NUM][W1_ADDR_SZ];
+    #endif //CMID_ADDR_NUM 
 } msc01_t;
 #define MSC_ACTIVE msc01_t
 

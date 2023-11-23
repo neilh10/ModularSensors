@@ -214,6 +214,16 @@ class MaximDS18 : public Sensor {
     ~MaximDS18();
 
     /**
+     * @brief Set Addr before any attempt to init.
+     *
+     *
+     * @return **bool** True if a valid addr was used .
+     */
+    bool setAddr(DeviceAddress OneWireAddress);
+    DeviceAddress* getAddrHex();
+    String  getAddrStr(void);
+
+    /**
      * @brief Do any one-time preparations needed before the sensor will be able
      * to take readings.
      *
