@@ -857,6 +857,13 @@ void Logger::logDataAndPubReliably(uint8_t cia_val_override) {
 
             serzRdel_Line();  // Start Que
         }
+
+        /* If not set then cancel transmission */
+        if (strcmp_P(_samplingFeatureUUID,PROVID_DEF_STR)== 0) {
+            cia_val &= ~CIA_POST_READINGS;
+            PRINTOUT(F("Not sending. samplingFeature set to"), _samplingFeatureUUID);
+        }
+
         if (cia_val & CIA_POST_READINGS) {
             if (_logModem != NULL) {
                 MS_DBG(F("Waking up"), _logModem->getModemName(), F("..."));

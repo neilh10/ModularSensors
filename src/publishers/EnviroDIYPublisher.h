@@ -149,6 +149,7 @@ class EnviroDIYPublisher : public dataPublisher {
      * Monitor My Watershed data portal.
      */
     void setToken(const char* registrationToken);
+    const char* getToken();
 
     /**
      * @brief Calculates how long the outgoing JSON will be

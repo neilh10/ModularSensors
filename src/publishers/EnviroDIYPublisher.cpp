@@ -66,7 +66,9 @@ EnviroDIYPublisher::~EnviroDIYPublisher() {}
 void EnviroDIYPublisher::setToken(const char* registrationToken) {
     _registrationToken = registrationToken;
 }
-
+const char* EnviroDIYPublisher::getToken() {
+    return _registrationToken;
+}
 
 // Calculates how long the JSON will be
 uint16_t EnviroDIYPublisher::calculateJsonSize() {
