@@ -1651,7 +1651,7 @@ void Logger::systemSleep(uint8_t sleep_min) { //SAMDx
     ,targetWakeup_secs, timeNow_secs
 #endif //ARDUINO_ARCH_SAMD
     );
-    flash_builtinLed(10,500); //Power measurement
+    // debug only flash_builtinLed(10,500); //Power measurement
     // The logger will now start the next function after the systemSleep
     // function in either the loop or setup
 } //Logger::systemSleep SAMD
