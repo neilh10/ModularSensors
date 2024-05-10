@@ -23,9 +23,9 @@ The ModularSensors library is specifically designed to support wireless, solar-p
 * If the battery power drops below a threshold, it stops transmitting data to the web and conserves power by only polling the instruments. When the battery is charged it then delivers all the readings to the web. 
 * Manages the type of battery power, with best management practices for power demand management. One option is the LiIon rechargeable battery + solar panel. Another option is standalone, no solar panel capability. Confgiruable in the ms_cfg.ini
 * Adds electronic configuration information to the Mayfly board, so that the readings can be traced to specific mayfly at a specific geographical loction.
-* Adds battery power monitoring through a coloumb counter.
+* <del>Adds battery power monitoring through a coloumb counter.</del>
 * Tested for ruggedness/reliability with the Xbee LTE & WiFi S6 modules.
-* prebuilt hex files at https://github.com/neilh10/ms_releases/wiki
+* prebuilt hex files at https://github.com/neilh10/ms_releases .
  
 * ONLY applies to ModularSensors\examples\tu_xx01 (Mayfly)
 * Specific development stream in ModularSensors\a\.. directories (Mayfly and other ARM SAMDx boards) 

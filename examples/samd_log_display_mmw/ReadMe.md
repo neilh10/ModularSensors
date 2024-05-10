@@ -113,7 +113,7 @@ const char *LoggerID = "XXXX";
 - For each variable, find the dummy UUID (`"12345678-abcd-1234-ef00-1234567890ab"`) and replace it with the real UUID for the variable.
 
 ## Upload! <!-- {#example_mmw_upload} -->
-- Test everything at home **before** deploying out in the wild!
+- Test everything in staged configuration for debug monitoring **before** deploying out in the wild!
 
 _______
 

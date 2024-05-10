@@ -204,7 +204,7 @@ jobs:
             sensorFlag: NO_SENSORS
             publisherFlag: BUILD_PUB_UBIDOTS_PUBLISHER
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set environment variable for library installation source
         run: |
@@ -224,7 +224,7 @@ jobs:
           fi
 
       - name: Set up Python
-        uses: actions/setup-python@v4.4.0
+        uses: actions/setup-python@v5
 
       - name: Install PlatformIO
         run: |
@@ -234,10 +234,10 @@ jobs:
       # We use the `arduino/setup-arduino-cli` action to install and
       # configure the Arduino CLI on the system.
       - name: Setup Arduino CLI
-        uses: arduino/setup-arduino-cli@v1.1.1
+        uses: arduino/setup-arduino-cli@v1.1.2
 
       - name: Restore PlatformIO and Arduino platforms and libraries
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         id: cache_libraries
         with:
           path: |
