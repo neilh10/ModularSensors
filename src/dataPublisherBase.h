@@ -385,6 +385,7 @@ class dataPublisher {
  */
 
 #define HTTPSTATUS_CREATED_201 201
+#define HTTPSTATUS_SUCCESS_2XX 299
 // Server Error indicating a Gateway Timeout.
 // Server error that doesn't seem to receover 
 // https://github.com/ODM2/ODM2DataSharingPortal/issues/628
