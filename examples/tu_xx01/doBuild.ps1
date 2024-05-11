@@ -44,7 +44,16 @@ if (-not (Test-Path -Path $dest_dir)) {
     throw  "The file does not exist $dest_dir"
 }
 
-$envirodiy_dir = ".pio\libdeps\mayfly"
+$envirodiy_branch = git branch --show-current 
+if ($envirodiy_branch -like "release") {
+    # reference/delete whole build
+    $envirodiy_dir = ".pio\libdeps\mayfly"
+} else {
+    # reference/delete the one lib
+    $envirodiy_dir = ".pio\libdeps\mayfly\EnviroDIY_ModularSensors"
+}
+Write-Output  "Set to $envirodiy_dir `n"
+
 #Remove-item $envirodiy_dir -Recurse -Force
 if (Test-Path -Path $envirodiy_dir) {
     Write-Output  "Removing $envirodiy_dir to refresh for build`n"
