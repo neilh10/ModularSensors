@@ -751,7 +751,7 @@ void setup() {
     // - except system does deep sleep and may not wake 
     attachInterrupt(digitalPinToInterrupt(BUTTON_1), push_button, CHANGE);
     attachInterrupt(digitalPinToInterrupt(BUTTON_2), push_button, CHANGE);
-    attachInterrupt(digitalPinToInterrupt(BUTTON_2), push_button, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(BUTTON_3), push_button, CHANGE);
 
 }
 /** End [setup] */
