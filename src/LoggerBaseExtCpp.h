@@ -960,9 +960,11 @@ void Logger::logDataAndPubReliably(uint8_t cia_val_override) {
 } // logDataAndPubReliably
 
 bool Logger::publishRspCodeAccepted(int16_t  rspCode) {
-    if ((HTTPSTATUS_SUCCESS_2XX+1) > rspCode) return true;
-    //return (HTTPSTATUS_CREATED_201 == rspCode);
-    #if defined MS_DISCARD_HTTP_500
+    // Accept any 2XX SUCCESS
+    if (((HTTPSTATUS_SUCCESS_2XX+1) > rspCode) 
+        && (HTTPSTATUS_OK_200 <= rspCode)) {return true;}
+
+    #if 0 // defined MS_DISCARD_HTTP_500
     if (HTTPSTATUS_GT_500 == rspCode) {
         //As of 2022Sept15 this error is repetitive and prevents more messages being sent 
         // https://github.com/ODM2/ODM2DataSharingPortal/issues/628
