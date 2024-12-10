@@ -310,7 +310,7 @@
       "platforms": "atmelavr, atmelsam"
     },
     {
-      "name": "KellerModbus",
+      "name": "KellerModbus-use-neilh10",
       "owner": "envirodiy",
       "library id": "5439",
       "url": "https://github.com/EnviroDIY/KellerModbus",
