@@ -232,7 +232,6 @@ private:
 #define sd1_Err(s) sd1_card_fatfs.errorPrint(F(s))
 uint16_t deszq_status    = 0;  // Bit wise status of reading
 uint16_t deszLinesRead   = 0;
-uint16_t deszLinesUnsent = 0;
 #define QUEFILE_MAX_LINE 100
 char     deszq_line[QUEFILE_MAX_LINE] = "";
 uint16_t desz_pending_records         = 0;
