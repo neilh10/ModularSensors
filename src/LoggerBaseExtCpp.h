@@ -1105,7 +1105,8 @@ void Logger::publishDataQuedToRemotes(bool internetPresent) {
                         uint16_t tot_posted           = 0;
                         uint16_t cnt_for_pwr_analysis = 1;
                         MS_DBG(F("pubDQTR retry from"), serzQuedFn);
-                         deszQuedStart();
+                        deszQuedStart();
+                        tmrGateway_ms = millis();
                         while ((dslStatus = deszQuedLine()) )  {
 
                             /*At least one publish has been sucessfull.
@@ -1146,6 +1147,8 @@ void Logger::publishDataQuedToRemotes(bool internetPresent) {
                                 break; /// unsent lines are copied through
                             }
                         } //while
+                        PRINTOUT(F("Sent retrys"), deszLinesRead, F("readings in"),
+                         ((float)(millis() - tmrGateway_ms)) / 1000);
 // increment status of number attempts
 #if 0
                         if (deszq_line[DESLZ_STATUS_POS]++ >=
