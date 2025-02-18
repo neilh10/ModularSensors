@@ -131,9 +131,11 @@ bool InsituParent::addSingleMeasurementResult(void) {
     bool success = false;
 
     // Initialize float variables
-    float waterPressureBar   = -9999;
-    float waterTempertureC   = -9999;
-    float waterDepthM        = -9999;
+
+
+    float waterPressureBar   = SNSRDEF_IP_WATERPRESSUREBAR;
+    float waterTempertureC   = SNSRDEF_IP_WATERTEMPERATUREC;
+    float waterDepthM        = SNSRDEF_IP_WATERDEPTHM;
     float waterPressure_mBar = -9999;
 
     // Check a measurement was *successfully* started (status bit 6 set)
@@ -149,12 +151,12 @@ bool InsituParent::addSingleMeasurementResult(void) {
                                 // float waterTempertureC)
 
         // Fix not-a-number values
-        if (!success || isnan(waterPressureBar)) waterPressureBar = -9999;
-        if (!success || isnan(waterTempertureC)) waterTempertureC = -9999;
-        if (!success || isnan(waterDepthM)) waterDepthM = -9999;
+        if (!success || isnan(waterPressureBar)) waterPressureBar = SNSRDEF_IP_WATERPRESSUREBAR ;
+        if (!success || isnan(waterTempertureC)) waterTempertureC = SNSRDEF_IP_WATERTEMPERATUREC;
+        if (!success || isnan(waterDepthM)) waterDepthM = SNSRDEF_IP_WATERDEPTHM;
 
         // For waterPressureBar, convert bar to millibar
-        if (waterPressureBar != -9999)
+        if (waterPressureBar != SNSRDEF_IP_WATERPRESSUREBAR )
             waterPressure_mBar = 1000 * waterPressureBar;
 
         MS_DBG(F("  Pressure_mbar:"), waterPressure_mBar);

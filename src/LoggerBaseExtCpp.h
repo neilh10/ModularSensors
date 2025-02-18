@@ -960,9 +960,11 @@ void Logger::logDataAndPubReliably(uint8_t cia_val_override) {
 } // logDataAndPubReliably
 
 bool Logger::publishRspCodeAccepted(int16_t  rspCode) {
-    if ((HTTPSTATUS_SUCCESS_2XX+1) > rspCode) return true;
-    //return (HTTPSTATUS_CREATED_201 == rspCode);
-    #if defined MS_DISCARD_HTTP_500
+    // Accept any 2XX SUCCESS
+    if (((HTTPSTATUS_SUCCESS_2XX+1) > rspCode) 
+        && (HTTPSTATUS_OK_200 <= rspCode)) {return true;}
+
+    #if 0 // defined MS_DISCARD_HTTP_500
     if (HTTPSTATUS_GT_500 == rspCode) {
         //As of 2022Sept15 this error is repetitive and prevents more messages being sent 
         // https://github.com/ODM2/ODM2DataSharingPortal/issues/628
@@ -1103,7 +1105,8 @@ void Logger::publishDataQuedToRemotes(bool internetPresent) {
                         uint16_t tot_posted           = 0;
                         uint16_t cnt_for_pwr_analysis = 1;
                         MS_DBG(F("pubDQTR retry from"), serzQuedFn);
-                         deszQuedStart();
+                        deszQuedStart();
+                        tmrGateway_ms = millis();
                         while ((dslStatus = deszQuedLine()) )  {
 
                             /*At least one publish has been sucessfull.
@@ -1111,7 +1114,7 @@ void Logger::publishDataQuedToRemotes(bool internetPresent) {
                              * Each publish creates and tears down a TCP connection */
                             MS_DBG(F("pubDQTR2 delay"),delay_posted_pacing_ms ,F("mS : total posted"), published_this_pass);
                             delay(delay_posted_pacing_ms);
-                            tmrGateway_ms = millis();
+                            tmrThisPublish_ms = millis();
                             // setup for publisher to call deszqNextCh()
                             rspCode = dataPublishers[i]->publishData();
                             watchDogTimer.resetWatchDog();
@@ -1144,6 +1147,8 @@ void Logger::publishDataQuedToRemotes(bool internetPresent) {
                                 break; /// unsent lines are copied through
                             }
                         } //while
+                        PRINTOUT(F("Sent retrys"), deszLinesRead, F("readings in"),
+                         ((float)(millis() - tmrGateway_ms)) / 1000);
 // increment status of number attempts
 #if 0
                         if (deszq_line[DESLZ_STATUS_POS]++ >=
@@ -1403,7 +1408,7 @@ char* Logger::deszFind(const char* in_line, char caller_id) {
 
 
 bool Logger::deszRdelStart() {
-    deszLinesRead = deszLinesUnsent = 0;
+    deszLinesRead = 0;
 
     deszq_nextChar = deszq_line;
     // Open - RD & WR. WR needed to be able to delete when complete.
@@ -1417,7 +1422,7 @@ bool Logger::deszRdelStart() {
 }
 
 bool Logger::deszQuedStart() {
-    deszLinesRead = deszLinesUnsent = 0;
+    deszLinesRead = 0;
 
     deszq_nextChar = deszq_line;
     // Open - RD & WR. WR needed to be able to delete when complete.

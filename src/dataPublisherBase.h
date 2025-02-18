@@ -384,6 +384,7 @@ class dataPublisher {
  * https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
  */
 
+#define HTTPSTATUS_OK_200      200
 #define HTTPSTATUS_CREATED_201 201
 #define HTTPSTATUS_SUCCESS_2XX 299
 // Server Error indicating a Gateway Timeout.
